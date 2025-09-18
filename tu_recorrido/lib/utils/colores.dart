@@ -8,6 +8,6 @@ class Coloressito {
 
   //aqui esta los colores de fondo de la app
 
-  static const Color background = Color(0xFFF5F5F5);
+  static const Color background = Color.fromARGB(255, 13, 192, 10);
   
 }
