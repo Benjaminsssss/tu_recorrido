@@ -3,7 +3,7 @@ import '../models/regioycomu.dart';
 import '../utils/colores.dart';
 
 class RegistroScreen extends StatefulWidget {
-  const RegistroScreen({super.key});
+  const RegistroScreen({super.key});// esta linea sirva para que no de error al crear la clase
 
   @override
   State<RegistroScreen> createState() => RegistroScreenState();
@@ -26,6 +26,8 @@ class RegistroScreenState extends State<RegistroScreen> {
   String? regionSeleccionada;
   String? comunaSeleccionada;
   List<String> comunas = [];
+
+// creamos las expresiones regulares para validar los campos
 
   // nombre: letras y espacios, acentos permitidos, 3-20
   final RegExp nombreReg = RegExp(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,20}$");
@@ -90,7 +92,7 @@ class RegistroScreenState extends State<RegistroScreen> {
           content: const Text('Registro exitoso.'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(context).pop(),// aqui se cierra el dialogo y se vuelve a la pantalla anterior
               child: const Text('Aceptar'),
             )
           ],

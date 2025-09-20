@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/registro.dart'; 
+import '../screens/login.dart';
 
 void main() {
   runApp(const MainApp());
@@ -12,7 +13,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       home: Scaffold(
-        body: RegistroScreen(),
+        body: LoginScreen(),
       ),
     );
   }
