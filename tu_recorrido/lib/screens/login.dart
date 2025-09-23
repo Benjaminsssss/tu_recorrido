@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/colores.dart';
-import '../screens/menu.dart';
+import '../screens/Menu.dart';
 
 //AQUI creamos la clase de login , la cual sera stateful widget porque va a tener un formulario de login
 // ya que otro tipo de widget no nos sirve ,por ejemplo stateless widget no nos sirve por que 
