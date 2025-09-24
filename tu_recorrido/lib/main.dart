@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tu_recorrido/screens/menu.dart'; 
-import 'package:tu_recorrido/screens/login.dart';
-import 'package:tu_recorrido/screens/registro.dart';
+
 
 void main() {
   runApp(const MainApp());
@@ -15,7 +14,7 @@ class MainApp extends StatelessWidget {
     return const MaterialApp(
       title: 'Tu Recorrido',
       home: Scaffold(
-        body: RegistroScreen(),
+        body: Mapita(),
       ),
     );
   }
