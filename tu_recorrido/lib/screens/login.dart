@@ -46,9 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // salio bien 
     if (correo.text == "usuario@ejemplo.com" && contra.text == "12345678") {
       // Navega a la pantalla principal 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => Menu()),// ESTO ME DIRECCION A LA PANTALL DE MENU
-      );
+      Navigator.of(context).pushReplacementNamed('/menu');
     } else {
       showDialog(
         context: context,
