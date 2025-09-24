@@ -41,34 +41,125 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Simulación de auth - aquí conectarías con Firebase
-      if (_isLogin) {
-        Navigator.pushReplacementNamed(context, '/menu');
-      } else {
-        // Registro exitoso, navegar al menu o mostrar confirmación
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1a1a1a),
-            title: const Text('¡Bienvenido a Recorrido!', 
-              style: TextStyle(color: Colors.white)),
-            content: const Text('Tu pasaporte digital está listo. Comienza a explorar.',
-              style: TextStyle(color: Colors.white70)),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.pushReplacementNamed(context, '/menu');
-                },
-                child: const Text('Comenzar', style: TextStyle(color: Color(0xFF1DB954))),
-              ),
-            ],
-          ),
-        );
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        if (_isLogin) {
+          // Iniciar sesión con email y contraseña
+          await AuthService.signInWithEmail(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } else {
+          // Registrarse con email y contraseña
+          await AuthService.registerWithEmail(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            displayName: _nameController.text.trim(),
+          );
+        }
+
+        // Navegar al menú principal si es exitoso
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/menu');
+        }
+      } catch (e) {
+        // Mostrar error
+        if (mounted) {
+          _showErrorDialog(e.toString());
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
+  }
+
+  void _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await AuthService.signInWithGoogle();
+      
+      if (userCredential != null && mounted) {
+        // Mostrar mensaje de bienvenida
+        _showWelcomeDialog(userCredential.user?.displayName ?? 'Usuario');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Coloressito.surfaceDark,
+        title: const Text(
+          'Error',
+          style: TextStyle(color: Coloressito.textPrimary),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(color: Coloressito.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Entendido',
+              style: TextStyle(color: Coloressito.adventureGreen),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showWelcomeDialog(String displayName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Coloressito.surfaceDark,
+        title: Text(
+          '¡Bienvenido, $displayName!',
+          style: const TextStyle(color: Coloressito.textPrimary),
+        ),
+        content: const Text(
+          'Tu pasaporte digital está listo. Comienza a explorar.',
+          style: TextStyle(color: Coloressito.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.pushReplacementNamed(context, '/menu');
+            },
+            child: const Text(
+              'Comenzar',
+              style: TextStyle(color: Coloressito.adventureGreen),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildFloatingElement({
@@ -324,7 +415,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
                         // Botón principal
                         ElevatedButton(
-                          onPressed: _submit,
+                          onPressed: _isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             foregroundColor: Coloressito.textPrimary,
@@ -340,9 +431,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             decoration: BoxDecoration(
-                              gradient: Coloressito.buttonGradient,
+                              gradient: _isLoading ? null : Coloressito.buttonGradient,
+                              color: _isLoading ? Coloressito.textMuted : null,
                               borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
+                              boxShadow: _isLoading ? [] : [
                                 BoxShadow(
                                   color: Coloressito.glowColor,
                                   blurRadius: 15,
@@ -351,15 +443,24 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ),
                               ],
                             ),
-                            child: Text(
-                              _isLogin ? 'Siguiente' : 'Siguiente',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Coloressito.textPrimary,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(Coloressito.textPrimary),
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    _isLogin ? 'Siguiente' : 'Siguiente',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: Coloressito.textPrimary,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -384,21 +485,30 @@ class _AuthScreenState extends State<AuthScreen> {
 
                         // Botón Google
                         OutlinedButton.icon(
-                          onPressed: () {
-                            // Implementar auth con Google
-                          },
-                          icon: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          icon: _isLoading 
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Coloressito.textPrimary),
+                                  ),
+                                )
+                              : Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    image: DecorationImage(
+                                      image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
                           label: Text(
-                            '${_isLogin ? 'Iniciar sesión' : 'Registrarte'} con Google',
+                            _isLoading 
+                                ? 'Conectando con Google...'
+                                : '${_isLogin ? 'Iniciar sesión' : 'Registrarte'} con Google',
                             style: const TextStyle(color: Coloressito.textPrimary),
                           ),
                           style: OutlinedButton.styleFrom(
