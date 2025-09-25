@@ -9,6 +9,8 @@ import 'screens/menu.dart';
 import 'screens/home.dart';
 import 'screens/auth.dart';
 
+import 'screens/places_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -47,6 +49,7 @@ class MainApp extends StatelessWidget {
         '/auth': (_) => const AuthScreen(),
         '/auth/login': (_) => const AuthScreen(isLogin: true),
         '/menu': (_) => Mapita(),
+        '/places': (_) => const PlacesScreen(), // NUEVA
       },
     );
   }
