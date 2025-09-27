@@ -1,29 +1,37 @@
+# pubspec.yaml (Versión con las dependencias más recientes)
 name: tu_recorrido
 description: "A new Flutter project."
 publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.9.0
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  # Flutter SDK
   flutter:
     sdk: flutter
-  google_maps_flutter: ^2.5.0
-  geolocator: ^11.0.0
-  google_sign_in: ^6.1.5
-  firebase_auth: ^4.15.3
-  firebase_core: ^2.24.2
+  
+  # DEPENDENCIAS FIREBASE (Sincronizadas a las últimas series para máxima compatibilidad con Dart 3.x)
+  firebase_auth: ^6.0.0 
+  firebase_core: ^4.1.1
+  
+  # OTRAS DEPENDENCIAS (Actualizadas)
+  geolocator: ^14.0.0
+  google_sign_in: ^6.2.1
+  google_maps_flutter: ^2.6.1
+  provider: ^6.1.2
+  cupertino_icons: ^1.0.8
 
+  # La librería 'js' ha sido eliminada. Si tu código la requiere, puedes re-añadirla.
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0 # Últimas reglas de lints
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/img/
-    
