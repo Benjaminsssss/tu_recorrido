@@ -100,7 +100,7 @@ class _Mapita extends State<Mapita> {
       );
     } catch (e) {
       // Manejar el error de obtener la ubicación, por ejemplo si el GPS está apagado.
-      print("Error al obtener la ubicación inicial: $e");
+      debugPrint("Error al obtener la ubicación inicial: $e");
     }
 
     //este comando es el que escucha los cambios en la ubicacion del usuario
@@ -115,7 +115,7 @@ class _Mapita extends State<Mapita> {
       (Position position) async {
       },
       onError: (e) {
-        print("Error en el stream de ubicación: $e");
+        debugPrint("Error en el stream de ubicación: $e");
       },
     );
   }
@@ -131,7 +131,7 @@ class _Mapita extends State<Mapita> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>  Perfil()),//nos lleva a la pantalla de perfil
+                MaterialPageRoute(builder: (context) => const Perfil()),//nos lleva a la pantalla de perfil
               );
             },
           ),
