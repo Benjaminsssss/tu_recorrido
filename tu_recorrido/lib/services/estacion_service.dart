@@ -7,11 +7,9 @@ class EstacionService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _collection = 'estaciones';
 
-  /// Crear una nueva estación
   /// Crea una nueva estación
   static Future<String> crearEstacion(Estacion estacion) async {
     try {
-      // Verificar que el código no exista
       // Verifica que el código no exista
       final existe = await _existeCodigo(estacion.codigo);
       if (existe) {
@@ -29,7 +27,6 @@ class EstacionService {
     }
   }
 
-  /// Obtener estación por código QR
   /// Obtiene estación por código QR
   static Future<Estacion?> obtenerPorCodigo(String codigo) async {
     try {
@@ -50,7 +47,6 @@ class EstacionService {
     }
   }
 
-  /// Obtener todas las estaciones activas
   /// Obtiene todas las estaciones activas
   static Future<List<Estacion>> obtenerEstacionesActivas() async {
     try {
@@ -68,7 +64,6 @@ class EstacionService {
     }
   }
 
-  /// Actualizar estación
   /// Actualiza una estación
   static Future<void> actualizarEstacion(String id, Estacion estacion) async {
     try {
@@ -81,7 +76,6 @@ class EstacionService {
     }
   }
 
-  /// Desactivar estación (no la elimina, solo la oculta)
   /// Desactiva una estación (no la elimina, solo la oculta)
   static Future<void> desactivarEstacion(String id) async {
     try {
@@ -94,7 +88,6 @@ class EstacionService {
     }
   }
 
-  /// Verificar si existe un código
   /// Verifica si existe un código
   static Future<bool> _existeCodigo(String codigo) async {
     final query = await _firestore
@@ -106,7 +99,6 @@ class EstacionService {
     return query.docs.isNotEmpty;
   }
 
-  /// Generar código único para nueva estación
   /// Genera un código único para nueva estación (ej: "Plaza de Armas" -> "PLAZA_ARMAS")
   static String generarCodigo(String nombre) {
     final codigoBase = nombre
@@ -115,7 +107,6 @@ class EstacionService {
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
     
-    // Agregar timestamp para unicidad
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString().substring(8);
     
     return '${codigoBase}_$timestamp';

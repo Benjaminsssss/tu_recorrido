@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/colores.dart';
 
-/// Widget reutilizable para mostrar estado vacío
-/// Se puede usar en diferentes pantallas cuando no hay contenido
 /// Widget reutilizable
 /// Se puede usar en diferentes vistas
 class EstadoVacio extends StatelessWidget {
@@ -33,7 +31,6 @@ class EstadoVacio extends StatelessWidget {
         descripcion = 'Ve al mapa y busca estaciones patrimoniales cerca de ti. ¡Escanea los códigos QR para agregarlas a tu colección!',
         textoBoton = 'Ir al Mapa';
 
-  /// Constructor para lista vacía genérica
   /// Constructor para lista vacía 
   const EstadoVacio.listaVacia({
     super.key,

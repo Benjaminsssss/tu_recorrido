@@ -2,7 +2,6 @@ import '../models/estacion.dart';
 import '../services/estacion_service.dart';
 
 /// Datos de ejemplo para estaciones patrimoniales de Santiago
-/// Permite crear estaciones de prueba para testing
 /// testing
 class EstacionesData {
   
@@ -58,7 +57,6 @@ class EstacionesData {
     },
   ];
 
-  /// Crear todas las estaciones de ejemplo en Firestore
   /// Crear todas las estaciones Firestore
   static Future<void> crearEstacionesEjemplo() async {
     try {
@@ -78,18 +76,15 @@ class EstacionesData {
         );
 
         final id = await EstacionService.crearEstacion(estacion);
-        print('✅ Creada: ${estacion.nombre} (${codigo})');
         print('Creada: ${estacion.nombre} (${codigo})');
         
         // Pequeña pausa para no saturar Firestore
         await Future.delayed(const Duration(milliseconds: 500));
       }
       
-      print('🎉 Todas las estaciones de ejemplo fueron creadas exitosamente');
       print('Todas las estaciones de ejemplo fueron creadas exitosamente');
       
     } catch (e) {
-      print('❌ Error creando estaciones: $e');
       print('Error creando estaciones: $e');
       rethrow;
     }

@@ -131,7 +131,6 @@ class _Mapita extends State<Mapita> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>  Perfil()),//nos lleva a la pantalla de perfil
                 MaterialPageRoute(builder: (context) => const Perfil()),//nos lleva a la pantalla de perfil
               );
             },
