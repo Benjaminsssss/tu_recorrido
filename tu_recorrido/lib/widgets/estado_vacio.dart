@@ -3,6 +3,8 @@ import '../utils/colores.dart';
 
 /// Widget reutilizable para mostrar estado vacío
 /// Se puede usar en diferentes pantallas cuando no hay contenido
+/// Widget reutilizable
+/// Se puede usar en diferentes vistas
 class EstadoVacio extends StatelessWidget {
   final IconData icono;
   final String titulo;
@@ -32,6 +34,7 @@ class EstadoVacio extends StatelessWidget {
         textoBoton = 'Ir al Mapa';
 
   /// Constructor para lista vacía genérica
+  /// Constructor para lista vacía 
   const EstadoVacio.listaVacia({
     super.key,
     required this.titulo,

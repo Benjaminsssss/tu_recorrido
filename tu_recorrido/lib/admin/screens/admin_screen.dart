@@ -1,11 +1,193 @@
 import 'package:flutter/material.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
+import '../../utils/estaciones_data.dart';
 import 'crear_estacion.dart';
 
 /// Acceso a todas las funcionalidades de admin
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
+
+  /// Crear UNA estación de prueba (para que se cargue más rápido)
+  Future<void> _crearEstacionPrueba(BuildContext context) async {
+    // Mostrar diálogo de confirmación
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Coloressito.surfaceDark,
+        title: const Text(
+          'Crear Estación de Prueba',
+          style: TextStyle(color: Coloressito.textPrimary),
+        ),
+        content: const Text(
+          '¿Crear Plaza de Armas en Firestore para probar el escáner QR?\n\nCódigo que obtendrás: PLAZA_ARMAS_001',
+          style: TextStyle(color: Coloressito.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Coloressito.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Coloressito.adventureGreen,
+            ),
+            child: const Text(
+              'Crear',
+              style: TextStyle(color: Coloressito.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    // Mostrar diálogo de progreso
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Coloressito.surfaceDark,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Creando Plaza de Armas...',
+              style: TextStyle(color: Coloressito.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await EstacionesData.crearEstacionPrueba();
+      
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar diálogo de progreso
+        
+        // Mostrar éxito con el código QR
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Plaza de Armas creada!\nUsa código: PLAZA_ARMAS_001'),
+            backgroundColor: Coloressito.adventureGreen,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar diálogo de progreso
+        
+        // Mostrar error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Coloressito.badgeRed,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Crear estaciones de ejemplo en Firestore
+  Future<void> _crearEstacionesEjemplo(BuildContext context) async {
+    // MUESTRA diálogo de confirmación
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Coloressito.surfaceDark,
+        title: const Text(
+          'Crear Estaciones de Ejemplo',
+          style: TextStyle(color: Coloressito.textPrimary),
+        ),
+        content: const Text(
+          '¿Deseas crear 8 estaciones patrimoniales de Santiago en Firestore?\n\nEsto incluye: Plaza de Armas, La Moneda, Cerro Santa Lucía, etc.',
+          style: TextStyle(color: Coloressito.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Coloressito.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Coloressito.adventureGreen,
+            ),
+            child: const Text(
+              'Crear',
+              style: TextStyle(color: Coloressito.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    // Muestra diálogo de progreso
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Coloressito.surfaceDark,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Creando estaciones...',
+              style: TextStyle(color: Coloressito.textPrimary),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await EstacionesData.crearEstacionesEjemplo();
+      
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar diálogo de progreso
+        
+        // Mostrar éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡8 estaciones patrimoniales creadas exitosamente!'),
+            backgroundColor: Coloressito.adventureGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar diálogo de progreso
+        
+        // Mostrar error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Coloressito.badgeRed,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +325,33 @@ class AdminScreen extends StatelessWidget {
                       ),
                     );
                   },
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Botones para crear estaciones
+          Row(
+            children: [
+              Expanded(
+                child: _buildBotonAccion(
+                  context: context,
+                  icono: Icons.science,
+                  texto: 'Crear 1 Estación\n(Plaza de Armas)',
+                  color: Coloressito.badgeGreen,
+                  onTap: () => _crearEstacionPrueba(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBotonAccion(
+                  context: context,
+                  icono: Icons.upload,
+                  texto: 'Crear 8 Estaciones\n(Todas)',
+                  color: Coloressito.badgeYellow,
+                  onTap: () => _crearEstacionesEjemplo(context),
                 ),
               ),
             ],

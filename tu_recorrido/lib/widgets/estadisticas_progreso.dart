@@ -3,6 +3,7 @@ import '../utils/colores.dart';
 
 /// Widget reutilizable para mostrar estadísticas de progreso
 /// Muestra visitadas, total y porcentaje con barra de progreso
+/// Mostramos visitadas, total y porcentaje con barra de progreso
 class EstadisticasProgreso extends StatelessWidget {
   final int visitadas;
   final int total;

@@ -8,9 +8,11 @@ class EstacionService {
   static const String _collection = 'estaciones';
 
   /// Crear una nueva estación
+  /// Crea una nueva estación
   static Future<String> crearEstacion(Estacion estacion) async {
     try {
       // Verificar que el código no exista
+      // Verifica que el código no exista
       final existe = await _existeCodigo(estacion.codigo);
       if (existe) {
         throw Exception('Ya existe una estación con el código: ${estacion.codigo}');
@@ -28,6 +30,7 @@ class EstacionService {
   }
 
   /// Obtener estación por código QR
+  /// Obtiene estación por código QR
   static Future<Estacion?> obtenerPorCodigo(String codigo) async {
     try {
       final query = await _firestore
@@ -48,6 +51,7 @@ class EstacionService {
   }
 
   /// Obtener todas las estaciones activas
+  /// Obtiene todas las estaciones activas
   static Future<List<Estacion>> obtenerEstacionesActivas() async {
     try {
       final query = await _firestore
@@ -65,6 +69,7 @@ class EstacionService {
   }
 
   /// Actualizar estación
+  /// Actualiza una estación
   static Future<void> actualizarEstacion(String id, Estacion estacion) async {
     try {
       await _firestore
@@ -77,6 +82,7 @@ class EstacionService {
   }
 
   /// Desactivar estación (no la elimina, solo la oculta)
+  /// Desactiva una estación (no la elimina, solo la oculta)
   static Future<void> desactivarEstacion(String id) async {
     try {
       await _firestore
@@ -89,6 +95,7 @@ class EstacionService {
   }
 
   /// Verificar si existe un código
+  /// Verifica si existe un código
   static Future<bool> _existeCodigo(String codigo) async {
     final query = await _firestore
         .collection(_collection)
@@ -100,8 +107,8 @@ class EstacionService {
   }
 
   /// Generar código único para nueva estación
+  /// Genera un código único para nueva estación (ej: "Plaza de Armas" -> "PLAZA_ARMAS")
   static String generarCodigo(String nombre) {
-    // Convertir nombre a código (ej: "Plaza de Armas" -> "PLAZA_ARMAS")
     final codigoBase = nombre
         .toUpperCase()
         .replaceAll(RegExp(r'[^A-Z0-9]'), '_')

@@ -3,6 +3,7 @@ import '../services/estacion_service.dart';
 
 /// Datos de ejemplo para estaciones patrimoniales de Santiago
 /// Permite crear estaciones de prueba para testing
+/// testing
 class EstacionesData {
   
   /// Lista de estaciones patrimoniales importantes de Santiago
@@ -58,6 +59,7 @@ class EstacionesData {
   ];
 
   /// Crear todas las estaciones de ejemplo en Firestore
+  /// Crear todas las estaciones Firestore
   static Future<void> crearEstacionesEjemplo() async {
     try {
       print('Creando estaciones de ejemplo...');
@@ -77,15 +79,18 @@ class EstacionesData {
 
         final id = await EstacionService.crearEstacion(estacion);
         print('✅ Creada: ${estacion.nombre} (${codigo})');
+        print('Creada: ${estacion.nombre} (${codigo})');
         
         // Pequeña pausa para no saturar Firestore
         await Future.delayed(const Duration(milliseconds: 500));
       }
       
       print('🎉 Todas las estaciones de ejemplo fueron creadas exitosamente');
+      print('Todas las estaciones de ejemplo fueron creadas exitosamente');
       
     } catch (e) {
       print('❌ Error creando estaciones: $e');
+      print('Error creando estaciones: $e');
       rethrow;
     }
   }
@@ -107,5 +112,32 @@ class EstacionesData {
   /// Generar códigos QR simulados (para testing)
   static String generarCodigoQRSimulado(String nombreEstacion) {
     return EstacionService.generarCodigo(nombreEstacion);
+  }
+
+  /// Crear solo UNA estación de prueba (Plaza de Armas)
+  static Future<void> crearEstacionPrueba() async {
+    try {
+      print('Creando estación de prueba...');
+      
+      final codigo = EstacionService.generarCodigo('Plaza de Armas');
+      
+      final estacion = Estacion(
+        id: '', // Se genera automáticamente
+        codigo: codigo,
+        nombre: 'Plaza de Armas',
+        descripcion: 'Corazón histórico de Santiago, fundada en 1541 por Pedro de Valdivia. Punto central de la ciudad colonial.',
+        latitud: -33.4372,
+        longitud: -70.6506,
+        fechaCreacion: DateTime.now(),
+      );
+
+      final id = await EstacionService.crearEstacion(estacion);
+      print('Estación creada: Plaza de Armas (Código: $codigo)');
+      print('¡Usa este código en el escáner QR: $codigo');
+      
+    } catch (e) {
+      print('Error creando estación: $e');
+      rethrow;
+    }
   }
 }

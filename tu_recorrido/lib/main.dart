@@ -48,6 +48,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/login',
       routes: {
+        '/': (_) => const LoginScreen(), // Ruta por defecto
         '/login': (_) => const LoginScreen(),
         '/registro': (_) => const RegistroScreen(),
         '/menu': (_) => Mapita(),
