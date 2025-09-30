@@ -1,47 +1,58 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // <-- NUEVO
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
   );
+  static final FirebaseFirestore _db = FirebaseFirestore.instance; // <-- NUEVO
 
   // Stream para escuchar cambios en el estado de autenticación
   static Stream<User?> get authStateChanges => _auth.authStateChanges();
-  
   // Usuario actual
   static User? get currentUser => _auth.currentUser;
+
+  // ------------------ Helper perfil en Firestore ------------------
+  static Future<void> _upsertUserProfile(User user, {String? displayName}) async {
+    final data = <String, dynamic>{
+      'email': user.email,
+      'displayName': displayName ?? user.displayName,
+      'photoURL': user.photoURL,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    // si es primera vez, también guardamos createdAt
+    await _db.collection('users').doc(user.uid).set({
+      'createdAt': FieldValue.serverTimestamp(),
+      ...data,
+    }, SetOptions(merge: true));
+  }
+  // ----------------------------------------------------------------
 
   // Iniciar sesión con Google
   static Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Activar el flujo de autenticación
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        // El usuario canceló el inicio de sesión
-        return null;
-      }
+      if (googleUser == null) return null; // usuario canceló
 
-      // Obtener los detalles de autenticación de la solicitud
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // Crear una nueva credencial
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Una vez firmado, devolver el UserCredential
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      
+
+      // <-- NUEVO: crear/actualizar perfil en Firestore
+      await _upsertUserProfile(userCredential.user!);
+
       if (kDebugMode) {
         print('Usuario autenticado: ${userCredential.user?.displayName}');
         print('Email: ${userCredential.user?.email}');
       }
-
       return userCredential;
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
@@ -72,10 +83,12 @@ class AuthService {
       await userCredential.user?.updateDisplayName(displayName);
       await userCredential.user?.reload();
 
+      // <-- NUEVO: crear/actualizar perfil en Firestore
+      await _upsertUserProfile(userCredential.user!, displayName: displayName);
+
       if (kDebugMode) {
         print('Usuario registrado: ${userCredential.user?.displayName}');
       }
-
       return userCredential;
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
@@ -96,10 +109,12 @@ class AuthService {
         password: password,
       );
 
+      // (Opcional pero recomendado) asegura existencia/actualización del perfil
+      await _upsertUserProfile(userCredential.user!);
+
       if (kDebugMode) {
         print('Usuario inició sesión: ${userCredential.user?.displayName}');
       }
-
       return userCredential;
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
@@ -116,7 +131,6 @@ class AuthService {
         _auth.signOut(),
         _googleSignIn.signOut(),
       ]);
-      
       if (kDebugMode) {
         print('Usuario cerró sesión');
       }
@@ -132,7 +146,6 @@ class AuthService {
   static Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      
       if (kDebugMode) {
         print('Email de restablecimiento enviado a: $email');
       }
@@ -144,7 +157,6 @@ class AuthService {
     }
   }
 
-  // Manejar errores de Firebase Auth
   static String _handleFirebaseAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
@@ -172,14 +184,11 @@ class AuthService {
     }
   }
 
-  // Verificar si el usuario está autenticado
   static bool get isAuthenticated => _auth.currentUser != null;
 
-  // Obtener información del usuario
   static Map<String, dynamic>? get userInfo {
     final user = _auth.currentUser;
     if (user == null) return null;
-
     return {
       'uid': user.uid,
       'email': user.email,

@@ -1,5 +1,12 @@
+
 import 'package:flutter/material.dart';
 import '../utils/colores.dart';
+
+import '../utils/seed.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'package:flutter/foundation.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,7 +22,6 @@ class HomeScreen extends StatelessWidget {
               gradient: Coloressito.backgroundGradient,
             ),
           ),
-          
           // Elementos decorativos flotantes
           Positioned(
             top: 100,
@@ -44,7 +50,6 @@ class HomeScreen extends StatelessWidget {
               size: 30,
             ),
           ),
-
           // Contenido principal
           SafeArea(
             child: Column(
@@ -69,10 +74,9 @@ class HomeScreen extends StatelessWidget {
                           size: 24,
                         ),
                       ),
-                      
                       // Botón login
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth/login'),
+                        onTap: () => Navigator.pushNamed(context, '/login'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
@@ -93,8 +97,7 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // contindo principala
+                // Contenido principal
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -127,7 +130,6 @@ class HomeScreen extends StatelessWidget {
                           color: Coloressito.textPrimary,
                         ),
                       ),
-
                       // Título
                       const Text(
                         'RECORRIDO',
@@ -145,9 +147,27 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      
+                          // Botón temporal para seedear lugares
+                          ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                await seedPlaces();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Seed places listo ✅')),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error al seedear: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Text('Cargar lugares de ejemplo'),
+                          ),
                       const SizedBox(height: 8),
-                      
                       // Subtítulo
                       const Text(
                         'Colecciona el mundo',
@@ -157,9 +177,7 @@ class HomeScreen extends StatelessWidget {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-
                       const SizedBox(height: 40),
-
                       // Stats o preview de funcionalidades
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -187,7 +205,6 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 // Botón principal de inicio
                 Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -195,7 +212,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       // Botón principal
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth'),
+                        onTap: () => Navigator.pushNamed(context, '/login'),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 18),
@@ -233,9 +250,13 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
+                      // Acceso a /places solo en debug
+                      if (kDebugMode)
+                        TextButton(
+                          onPressed: () => Navigator.pushNamed(context, '/places'),
+                          child: const Text('Ver / administrar lugares'),
+                        ),
                       // Texto adicional
                       const Text(
                         'Crea tu pasaporte digital y descubre\nlugares increíbles cerca de ti',
@@ -253,6 +274,35 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          try {
+            print('FAB pressed → signing in anonymously…');
+            await FirebaseAuth.instance.signInAnonymously();
+
+            print('Signed in. Writing to Firestore…');
+            await FirebaseFirestore.instance.collection('healthchecks').add({
+              'ts': DateTime.now().toIso8601String(),
+              'env': 'dev',
+            });
+
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Firestore OK ✅')),
+              );
+            }
+            print('Write done ✅');
+          } catch (e, st) {
+            print('🔥 Firestore write failed: $e\n$st');
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $e')),
+              );
+            }
+          }
+        },
+        child: const Icon(Icons.cloud_done),
       ),
     );
   }
@@ -342,7 +392,7 @@ class _StatCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+      );
+    }
 }
 
