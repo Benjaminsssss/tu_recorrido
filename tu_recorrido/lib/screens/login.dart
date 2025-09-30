@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/colores.dart';
-import '../screens/Menu.dart';
+import '../screens/menu.dart';
 
 //AQUI creamos la clase de login , la cual sera stateful widget porque va a tener un formulario de login
 // ya que otro tipo de widget no nos sirve ,por ejemplo stateless widget no nos sirve por que 
@@ -46,7 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
       // salio bien 
     if (correo.text == "usuario@ejemplo.com" && contra.text == "12345678") {
       // Navega a la pantalla principal 
-      Navigator.of(context).pushReplacementNamed('/menu');
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => Mapita()),// ESTO ME DIRECCION A LA PANTALL DE MENU
+      );
     } else {
       showDialog(
         context: context,

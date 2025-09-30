@@ -1,31 +1,40 @@
+# pubspec.yaml (Versión con las dependencias más recientes)
 name: tu_recorrido
 description: "A new Flutter project."
 publish_to: 'none'
 version: 0.1.0
 
 environment:
-  sdk: ^3.9.0
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  # Flutter SDK
   flutter:
     sdk: flutter
-  google_maps_flutter: ^2.5.0
-  geolocator: ^11.0.0
-  google_sign_in: ^6.1.5
-  firebase_auth: ^6.1.0
+  # Firebase packages
   firebase_core: ^4.1.1
+  firebase_auth: ^6.1.0
   cloud_firestore: ^6.0.2
   firebase_storage: ^13.0.2
 
+  # Location / maps / auth
+  google_maps_flutter: ^2.6.1
+  geolocator: ^14.0.0
+  google_sign_in: ^6.3.0
+
+  # UI / utilities
+  provider: ^6.1.5+1
+  cupertino_icons: ^1.0.8
+
+  # La librería 'js' ha sido eliminada. Si tu código la requiere, puedes re-añadirla.
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0 # Últimas reglas de lints
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/img/
-    
