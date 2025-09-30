@@ -76,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       // Botón login
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth/login'),
+                        onTap: () => Navigator.pushNamed(context, '/login'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
@@ -212,7 +212,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       // Botón principal
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth'),
+                        onTap: () => Navigator.pushNamed(context, '/login'),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 18),

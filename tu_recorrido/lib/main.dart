@@ -7,7 +7,6 @@ import 'screens/registro.dart';
 import 'screens/login.dart';
 import 'screens/menu.dart';
 import 'screens/home.dart';
-import 'screens/auth.dart';
 
 import 'screens/places_screen.dart';
 
@@ -27,7 +26,7 @@ void main() async {
   );
   
   if (kIsWeb) {
-    // Usa URLs sin hash para que se vea como https://app.recorrido.org/
+    // Usa URLs sin hash para que se vea como https://app.recorrido.com/
     usePathUrlStrategy();
   }
   runApp(const MainApp());
@@ -46,8 +45,6 @@ class MainApp extends StatelessWidget {
         '/': (_) => const HomeScreen(),
         '/login': (_) => const LoginScreen(),
         '/registro': (_) => const RegistroScreen(),
-        '/auth': (_) => const AuthScreen(),
-        '/auth/login': (_) => const AuthScreen(isLogin: true),
         '/menu': (_) => Mapita(),
         '/places': (_) => const PlacesScreen(), // NUEVA
       },
