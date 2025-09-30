@@ -50,10 +50,10 @@ class EstacionVisitada {
     };
 
     if (latitudVisita != null) {
-      map['latitudVisita'] = latitudVisita;
+      map['latitudVisita'] = latitudVisita!;
     }
     if (longitudVisita != null) {
-      map['longitudVisita'] = longitudVisita;
+      map['longitudVisita'] = longitudVisita!;
     }
 
     return map;

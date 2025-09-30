@@ -14,13 +14,13 @@
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
   CloudFirestorePluginCApiRegisterWithRegistrar(
-    registry->GetRegistrarForPlugin("CloudFirestorePluginCApi"));
+      registry->GetRegistrarForPlugin("CloudFirestorePluginCApi"));
   FirebaseAuthPluginCApiRegisterWithRegistrar(
-    registry->GetRegistrarForPlugin("FirebaseAuthPluginCApi"));
+      registry->GetRegistrarForPlugin("FirebaseAuthPluginCApi"));
   FirebaseCorePluginCApiRegisterWithRegistrar(
-    registry->GetRegistrarForPlugin("FirebaseCorePluginCApi"));
+      registry->GetRegistrarForPlugin("FirebaseCorePluginCApi"));
   FirebaseStoragePluginCApiRegisterWithRegistrar(
-    registry->GetRegistrarForPlugin("FirebaseStoragePluginCApi"));
+      registry->GetRegistrarForPlugin("FirebaseStoragePluginCApi"));
   GeolocatorWindowsRegisterWithRegistrar(
-    registry->GetRegistrarForPlugin("GeolocatorWindows"));
+      registry->GetRegistrarForPlugin("GeolocatorWindows"));
 }
