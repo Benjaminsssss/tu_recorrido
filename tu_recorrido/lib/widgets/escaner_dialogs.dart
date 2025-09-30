@@ -220,7 +220,7 @@ class EscanerHelper {
         posicion = await Geolocator.getCurrentPosition();
       } catch (e) {
         // No importa si no se puede obtener la ubicación
-        print('No se pudo obtener ubicación: $e');
+        debugPrint('No se pudo obtener ubicación: $e');
       }
 
       // Marcar como visitada en Firestore

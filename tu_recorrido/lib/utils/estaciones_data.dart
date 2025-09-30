@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../models/estacion.dart';
 import '../services/estacion_service.dart';
 
@@ -60,7 +61,7 @@ class EstacionesData {
   /// Crear todas las estaciones Firestore
   static Future<void> crearEstacionesEjemplo() async {
     try {
-      print('Creando estaciones de ejemplo...');
+      debugPrint('Creando estaciones de ejemplo...');
       
       for (final data in estacionesEjemplo) {
         final codigo = EstacionService.generarCodigo(data['nombre']);
@@ -75,17 +76,17 @@ class EstacionesData {
           fechaCreacion: DateTime.now(),
         );
 
-        final id = await EstacionService.crearEstacion(estacion);
-        print('Creada: ${estacion.nombre} (${codigo})');
+        await EstacionService.crearEstacion(estacion);
+        debugPrint('Creada: ${estacion.nombre} ($codigo)');
         
         // Pequeña pausa para no saturar Firestore
         await Future.delayed(const Duration(milliseconds: 500));
       }
       
-      print('Todas las estaciones de ejemplo fueron creadas exitosamente');
+      debugPrint('Todas las estaciones de ejemplo fueron creadas exitosamente');
       
     } catch (e) {
-      print('Error creando estaciones: $e');
+      debugPrint('Error creando estaciones: $e');
       rethrow;
     }
   }
@@ -112,7 +113,7 @@ class EstacionesData {
   /// Crear solo UNA estación de prueba (Plaza de Armas)
   static Future<void> crearEstacionPrueba() async {
     try {
-      print('Creando estación de prueba...');
+      debugPrint('Creando estación de prueba...');
       
       final codigo = EstacionService.generarCodigo('Plaza de Armas');
       
@@ -126,12 +127,12 @@ class EstacionesData {
         fechaCreacion: DateTime.now(),
       );
 
-      final id = await EstacionService.crearEstacion(estacion);
-      print('Estación creada: Plaza de Armas (Código: $codigo)');
-      print('¡Usa este código en el escáner QR: $codigo');
+      await EstacionService.crearEstacion(estacion);
+      debugPrint('Estación creada: Plaza de Armas (Código: $codigo)');
+      debugPrint('¡Usa este código en el escáner QR: $codigo');
       
     } catch (e) {
-      print('Error creando estación: $e');
+      debugPrint('Error creando estación: $e');
       rethrow;
     }
   }

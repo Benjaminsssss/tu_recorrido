@@ -46,6 +46,7 @@ class AdminScreen extends StatelessWidget {
     );
 
     if (confirmar != true) return;
+    if (!context.mounted) return;
 
     // Mostrar diálogo de progreso
     showDialog(
@@ -72,30 +73,28 @@ class AdminScreen extends StatelessWidget {
     try {
       await EstacionesData.crearEstacionPrueba();
       
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Cerrar diálogo de progreso
-        
-        // Mostrar éxito con el código QR
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Plaza de Armas creada!\nUsa código: PLAZA_ARMAS_001'),
-            backgroundColor: Coloressito.adventureGreen,
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Cerrar diálogo de progreso
+      
+      // Mostrar éxito con el código QR
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Plaza de Armas creada!\nUsa código: PLAZA_ARMAS_001'),
+          backgroundColor: Coloressito.adventureGreen,
+          duration: Duration(seconds: 5),
+        ),
+      );
     } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Cerrar diálogo de progreso
-        
-        // Mostrar error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Coloressito.badgeRed,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Cerrar diálogo de progreso
+      
+      // Mostrar error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Coloressito.badgeRed,
+        ),
+      );
     }
   }
 
@@ -137,6 +136,7 @@ class AdminScreen extends StatelessWidget {
     );
 
     if (confirmar != true) return;
+    if (!context.mounted) return;
 
     // Muestra diálogo de progreso
     showDialog(
@@ -163,29 +163,27 @@ class AdminScreen extends StatelessWidget {
     try {
       await EstacionesData.crearEstacionesEjemplo();
       
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Cerrar diálogo de progreso
-        
-        // Mostrar éxito
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡8 estaciones patrimoniales creadas exitosamente!'),
-            backgroundColor: Coloressito.adventureGreen,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Cerrar diálogo de progreso
+      
+      // Mostrar éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡8 estaciones patrimoniales creadas exitosamente!'),
+          backgroundColor: Coloressito.adventureGreen,
+        ),
+      );
     } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Cerrar diálogo de progreso
-        
-        // Mostrar error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Coloressito.badgeRed,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Cerrar diálogo de progreso
+      
+      // Mostrar error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Coloressito.badgeRed,
+        ),
+      );
     }
   }
 
@@ -415,9 +413,9 @@ class AdminScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [

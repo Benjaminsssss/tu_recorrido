@@ -53,7 +53,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         });
       }
     } catch (e) {
-      print('Error obteniendo ubicación: $e');
+      debugPrint('Error obteniendo ubicación: $e');
     }
   }
 
@@ -80,7 +80,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         fechaCreacion: DateTime.now(),
       );
 
-      final id = await EstacionService.crearEstacion(estacion);
+      await EstacionService.crearEstacion(estacion);
       
       if (mounted) {
         _mostrarExito('Estación creada con código: $codigo');

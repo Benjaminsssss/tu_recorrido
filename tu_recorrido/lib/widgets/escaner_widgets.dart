@@ -166,7 +166,7 @@ class BotonEscaneo extends StatelessWidget {
         ),
         elevation: 0,
       ).copyWith(
-        backgroundColor: MaterialStateProperty.all(Colors.transparent),
+        backgroundColor: WidgetStateProperty.all(Colors.transparent),
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
