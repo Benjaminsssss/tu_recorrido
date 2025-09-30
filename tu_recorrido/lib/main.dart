@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tu_recorrido/screens/menu.dart'; 
 import 'package:tu_recorrido/screens/login.dart';
 import 'package:tu_recorrido/screens/registro.dart';
-import 'package:tu_recorrido/screens/home.dart';
+
 import 'package:tu_recorrido/screens/places_screen.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -43,9 +43,8 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'Recorrido',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
-        '/': (_) => const HomeScreen(),
         '/login': (_) => const LoginScreen(),
         '/registro': (_) => const RegistroScreen(),
         '/menu': (_) => Mapita(),
