@@ -2,6 +2,7 @@ name: flutter-ci
 
 on:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   analyze:
@@ -15,4 +16,4 @@ jobs:
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
-      # - run: flutter test --no-pub   # Descomenta si tienes tests
+      # - run: flutter test --no-pub
