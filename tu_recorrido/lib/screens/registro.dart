@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
-import '../models/regioycomu.dart'; 
+import '../models/regioycomu.dart';
 import '../utils/colores.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/firestore_service.dart';
 
 class RegistroScreen extends StatefulWidget {
-  const RegistroScreen({super.key});// esta linea sirva para que no de error al crear la clase
+  const RegistroScreen({super.key});
 
   @override
   State<RegistroScreen> createState() => RegistroScreenState();
 }
 
 class RegistroScreenState extends State<RegistroScreen> {
-
-  // este final es para manejar el estado del formulario
+  // Form
   final formKey = GlobalKey<FormState>();
-  // Este es para manejar los controladores de los TextFormField
+
+  // Controllers
   final TextEditingController nombre = TextEditingController();
   final TextEditingController apodo = TextEditingController();
   final TextEditingController fecha = TextEditingController();
   final TextEditingController correo = TextEditingController();
   final TextEditingController contra = TextEditingController();
-  //esto maneja la lista de regiones y comunas provenientes del regioycomu.dart
-  // y las variables para la selección
-  //la logica es que se crea una lista de comunas vacia y cuando se selecciona una region
-  // se llena la lista de comunas con las comunas de esa region
+
+  // Región / Comuna
   String? regionSeleccionada;
   String? comunaSeleccionada;
   List<String> comunas = [];
 
-// creamos las expresiones regulares para validar los campos
+  bool isLoading = false;
 
-  // nombre: letras y espacios, acentos permitidos, 3-20
+  // Regex
   final RegExp nombreReg = RegExp(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,20}$");
-  // apodo: 3-15, letras, numeros, guion bajo o espacio
   final RegExp apodoReg = RegExp(r"^[A-Za-z0-9_ -]{3,15}$");
-  // contra: min 8, al menos minuscula, mayuscula, numero y caracter especial
-  final RegExp contrasReg = RegExp(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%\^&\*\(\)\[\]\-_=+\{\}\|;:',<\.>\/\?\\~`]).{8,}$");
+  final RegExp contrasReg = RegExp(
+      r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%\^&\*\(\)\[\]\-_=+\{\}\|;:',<\.>\/\?\\~`]).{8,}$");
 
-  // aqui se define la llave del formulario
-  // ya que dispose sirve para eliminar el formulario cuando ya no se usa
   @override
   void dispose() {
     nombre.dispose();
@@ -48,15 +46,11 @@ class RegistroScreenState extends State<RegistroScreen> {
     super.dispose();
   }
 
-//future es un metodo asincrono, lo que significa que puede tardar un tiempo en completarse
-// y no bloquea la interfaz de usuario mientras espera, su funcion es mostrar el datepicker
-//el cual es un widget que permite al usuario seleccionar una fecha de un calendario
-//es nativo de flutter
   Future<void> showCustomDateRangePicker(BuildContext context) async {
     final DateTime now = DateTime.now();
     final DateTime initial = DateTime(now.year - 18, now.month, now.day);
     final DateTime first = DateTime(now.year - 100);
-    final DateTime last = initial; // evita seleccionar una fecha futura 
+    final DateTime last = initial; // evita seleccionar una fecha futura
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -72,7 +66,6 @@ class RegistroScreenState extends State<RegistroScreen> {
     }
   }
 
-//este metodo rellena la lista de comunas segun la region seleccionada
   void onRegionChanged(String? region) {
     setState(() {
       regionSeleccionada = region;
@@ -81,60 +74,155 @@ class RegistroScreenState extends State<RegistroScreen> {
     });
   }
 
-// este metodo sube los datos del formulario(añadir logica con la base de datos)
-  void submit() {
-    if (formKey.currentState?.validate() ?? false) {
-      // éxito
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Registro'),
-          content: const Text('Registro exitoso.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),// aqui se cierra el dialogo y se vuelve a la pantalla anterior
-              child: const Text('Aceptar'),
-            )
-          ],
+  // ====== MÉTODO 1: SUBMIT (Auth -> Firestore -> limpiar -> redirigir) ======
+  Future<void> submit() async {
+    if (!(formKey.currentState?.validate() ?? false)) {
+      setState(() {}); // fuerza mostrar errores
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      print('🔄 Iniciando registro con email: ${correo.text.trim()}');
+      print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
+
+      // 1) Crear usuario en Auth
+      final userCredential = await AuthService.registerWithEmail(
+        email: correo.text.trim(),
+        password: contra.text,
+        displayName: nombre.text.trim(),
+      );
+
+      if (userCredential == null) {
+        throw Exception('No se pudo crear el usuario.');
+      }
+
+      // 2) Guardar perfil completo en Firestore
+      await _guardarDatosCompletos(userCredential.user!.uid);
+
+      // 3) Limpiar formulario
+      _limpiarFormulario();
+
+      // 4) Feedback + redirección
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Registro exitoso. Ahora puedes iniciar sesión.'),
+          backgroundColor: Colors.green,
         ),
       );
-    } else {
-      // esto hace que se muestren los errores de validación
-      setState(() {});
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/auth/login');
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
+      switch (e.code) {
+        case 'weak-password':
+          errorMessage = 'La contraseña es muy débil.'; break;
+        case 'email-already-in-use':
+          errorMessage = 'Ya existe una cuenta con este correo.'; break;
+        case 'invalid-email':
+          errorMessage = 'El correo no es válido.'; break;
+        case 'operation-not-allowed':
+          errorMessage = 'El registro con email/contraseña no está habilitado.'; break;
+        case 'invalid-api-key':
+          errorMessage = 'Error de configuración: API key inválida.'; break;
+        case 'app-not-authorized':
+          errorMessage = 'La app no está autorizada para usar Firebase Auth.'; break;
+        default:
+          errorMessage = 'Error al registrar: ${e.code} - ${e.message}';
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ $errorMessage'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      print('🔥 Error general: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Error inesperado: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
-//esto construye la interfaz de usuario
+  // ====== MÉTODO AUXILIAR: Convertir fecha DD/MM/YYYY a ISO YYYY-MM-DD ======
+  String? _toIsoFromDdMMyyyy(String ddmmyyyy) {
+    try {
+      final parts = ddmmyyyy.split('/');
+      if (parts.length != 3) return null;
+      final d = parts[0].padLeft(2, '0');
+      final m = parts[1].padLeft(2, '0');
+      final y = parts[2];
+      return '$y-$m-$d'; // YYYY-MM-DD
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ====== MÉTODO 2: Guardar datos completos del formulario en Firestore ======
+  Future<void> _guardarDatosCompletos(String uid) async {
+    final iso = _toIsoFromDdMMyyyy(fecha.text.trim());
+
+    final userData = {
+      'uid': uid,
+      'nombre': nombre.text.trim(),
+      'apodo': apodo.text.trim(),
+      'email': correo.text.trim(),
+      'fechaNacimiento': fecha.text.trim(),     // DD/MM/YYYY (lo que muestras)
+      'fechaNacimientoISO': iso,                // YYYY-MM-DD (para queries)
+      'region': regionSeleccionada ?? '',
+      'comuna': comunaSeleccionada ?? '',
+      'activo': true,
+      // createdAt/updatedAt los maneja FirestoreService.upsertUser()
+    };
+
+    print('📁 Guardando datos completos del usuario en Firestore...');
+    await FirestoreService.instance.upsertUser(uid: uid, data: userData);
+    print('✅ Datos guardados exitosamente en Firestore: $userData');
+  }
+
+  void _limpiarFormulario() {
+    nombre.clear();
+    apodo.clear();
+    fecha.clear();
+    correo.clear();
+    contra.clear();
+    setState(() {
+      regionSeleccionada = null;
+      comunaSeleccionada = null;
+      comunas = [];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Pantalla que muestra el card centrado
-      backgroundColor: Coloressito.background ,
+      backgroundColor: Coloressito.background,
       body: Center(
         child: Card(
-          elevation: 6,// linea para dar sombra
-          margin: const EdgeInsets.symmetric(horizontal: 18),// margen horizontal
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),// bordes redondeados
+          elevation: 6,
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
-            padding: const EdgeInsets.all(14),// padding interno del card
+            padding: const EdgeInsets.all(14),
             child: Stack(
               children: [
-                // formulario
                 SingleChildScrollView(
                   child: Form(
                     key: formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,// esta hace que
-                  // se validen los campos al interactuar con ellos
-      
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(height: 8),
-                        Text(
-                          'Registro',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
+                        Text('Registro', style: Theme.of(context).textTheme.titleLarge),
                         const SizedBox(height: 12),
 
                         // Nombre
@@ -143,7 +231,7 @@ class RegistroScreenState extends State<RegistroScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Nombre completo',
                             hintText: 'Ej: Juan Pérez',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            errorStyle: TextStyle(height: 0.8),
                           ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
@@ -166,9 +254,9 @@ class RegistroScreenState extends State<RegistroScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Apodo',
                             hintText: 'Ej: juanito123',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            errorStyle: TextStyle(height: 0.8),
                           ),
-                          validator: (v) {// validacion de que si la variable es nula o esta vacia
+                          validator: (v) {
                             if (v == null || v.trim().isEmpty) {
                               return 'El apodo no puede quedar vacío';
                             }
@@ -183,7 +271,7 @@ class RegistroScreenState extends State<RegistroScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Fecha de nacimiento 
+                        // Fecha de nacimiento
                         TextFormField(
                           controller: fecha,
                           readOnly: true,
@@ -191,7 +279,7 @@ class RegistroScreenState extends State<RegistroScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Fecha de nacimiento',
                             hintText: 'Seleccione su fecha',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            errorStyle: TextStyle(height: 0.8),
                           ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
@@ -202,15 +290,13 @@ class RegistroScreenState extends State<RegistroScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Region en donde se selecciona la comuna
-                        // la logica es que al seleccionar una region se llena la lista de comunas
-                        // y se selecciona la comuna
+                        // Región
                         DropdownButtonFormField<String>(
                           initialValue: regionSeleccionada,
                           decoration: const InputDecoration(
                             labelText: 'Región',
                             hintText: 'Seleccione región',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            errorStyle: TextStyle(height: 0.8),
                           ),
                           items: regionesYComunas.keys
                               .map((r) => DropdownMenuItem(
@@ -228,13 +314,13 @@ class RegistroScreenState extends State<RegistroScreen> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Comuna 
+                        // Comuna
                         DropdownButtonFormField<String>(
                           initialValue: comunaSeleccionada,
                           decoration: const InputDecoration(
                             labelText: 'Comuna',
                             hintText: 'Seleccione comuna según región',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            errorStyle: TextStyle(height: 0.8),
                           ),
                           items: comunas
                               .map((c) => DropdownMenuItem(
@@ -242,9 +328,7 @@ class RegistroScreenState extends State<RegistroScreen> {
                                     child: Text(c),
                                   ))
                               .toList(),
-                          onChanged: (v) {
-                            setState(() => comunaSeleccionada = v);
-                          },
+                          onChanged: (v) => setState(() => comunaSeleccionada = v),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
                               return 'Debe seleccionar una comuna';
@@ -258,19 +342,17 @@ class RegistroScreenState extends State<RegistroScreen> {
                         TextFormField(
                           controller: correo,
                           keyboardType: TextInputType.emailAddress,
-                          
                           decoration: const InputDecoration(
                             labelText: 'Correo electrónico',
                             hintText: 'Ej: usuario@ejemplo.com',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            errorStyle: TextStyle(height: 0.8),
                           ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
                               return 'El correo no puede quedar vacío';
                             }
-                            if (!v.contains('@') ||
-                                !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                    .hasMatch(v.trim())) {
+                            if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                .hasMatch(v.trim())) {
                               return 'Ingrese un correo válido';
                             }
                             return null;
@@ -284,8 +366,9 @@ class RegistroScreenState extends State<RegistroScreen> {
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: 'Contraseña',
-                            hintText: 'Al menos 8 caracteres, mayúsculas, minúsculas, números y especial',
-                            errorStyle: TextStyle(height: 0.8),// ajusta la altura del error
+                            hintText:
+                                'Al menos 8 caracteres, mayúsculas, minúsculas, números y especial',
+                            errorStyle: TextStyle(height: 0.8),
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
@@ -299,12 +382,26 @@ class RegistroScreenState extends State<RegistroScreen> {
                         ),
                         const SizedBox(height: 18),
 
-                        // Botón registrar
+                        // ====== EL BOTÓN QUE LLAMA A submit() ======
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: submit,
-                            child: const Text('Registrarse'),
+                            onPressed: isLoading ? null : submit,
+                            child: isLoading
+                                ? const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text('Registrando...'),
+                                    ],
+                                  )
+                                : const Text('Registrarse'),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -313,13 +410,16 @@ class RegistroScreenState extends State<RegistroScreen> {
                   ),
                 ),
 
-                // Botón X , aqui deberia volver al menu principal o al login respectivamente
+                // Botón cerrar
                 Positioned(
                   right: 0,
                   top: 0,
                   child: IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).maybePop(),
+                    onPressed: () {
+                      // Navegar de vuelta al login
+                      Navigator.of(context).pushReplacementNamed('/auth/login');
+                    },
                   ),
                 ),
               ],

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/colores.dart';
 import '../services/auth_service.dart';
 
@@ -42,44 +44,106 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _submit() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
 
-      try {
-        if (_isLogin) {
-          // Iniciar sesión con email y contraseña
-          await AuthService.signInWithEmail(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-        } else {
-          // Registrarse con email y contraseña
-          await AuthService.registerWithEmail(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            displayName: _nameController.text.trim(),
-          );
-        }
+    setState(() {
+      _isLoading = true;
+    });
 
-        // Navegar al menú principal si es exitoso
+    try {
+      print('🔄 Iniciando ${_isLogin ? "login" : "registro"} con email: ${_emailController.text.trim()}');
+      print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
+      
+      UserCredential? userCredential;
+      
+      if (_isLogin) {
+        // Iniciar sesión con email y contraseña
+        userCredential = await AuthService.signInWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        print('✅ Login exitoso para: ${userCredential?.user?.email}');
+      } else {
+        // Registrarse con email y contraseña
+        userCredential = await AuthService.registerWithEmail(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          displayName: _nameController.text.trim(),
+        );
+        print('✅ Registro exitoso para: ${userCredential?.user?.email}');
+        
+        // Limpiar formulario tras registro exitoso
+        _clearForm();
+      }
+
+      // Mostrar mensaje de éxito
+      if (mounted && userCredential != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isLogin ? '✅ Inicio de sesión exitoso' : '✅ Registro exitoso. ¡Bienvenido!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navegar al menú principal
+        await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/menu');
         }
-      } catch (e) {
-        // Mostrar error
-        if (mounted) {
-          _showErrorDialog(e.toString());
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      }
+    } on FirebaseAuthException catch (e) {
+      print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
+      
+      String errorMessage;
+      switch (e.code) {
+        case 'weak-password':
+          errorMessage = 'La contraseña es muy débil.';
+          break;
+        case 'email-already-in-use':
+          errorMessage = 'Ya existe una cuenta con este correo.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'El correo no es válido.';
+          break;
+        case 'user-not-found':
+          errorMessage = 'No existe una cuenta con este correo.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Contraseña incorrecta.';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'El registro con email/contraseña no está habilitado.';
+          break;
+        case 'invalid-api-key':
+          errorMessage = 'Error de configuración: API key inválida.';
+          break;
+        default:
+          errorMessage = 'Error: ${e.message}';
+      }
+      
+      if (mounted) {
+        _showErrorDialog(errorMessage);
+      }
+    } catch (e) {
+      print('🔥 Error general: $e');
+      if (mounted) {
+        _showErrorDialog('Error inesperado: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  void _clearForm() {
+    _emailController.clear();
+    _passwordController.clear();
+    _nameController.clear();
   }
 
   void _signInWithGoogle() async {

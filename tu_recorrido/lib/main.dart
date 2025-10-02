@@ -1,59 +1,31 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'screens/registro.dart';
-import 'screens/login.dart';
-import 'screens/menu.dart';
-import 'screens/home.dart';
-import 'screens/auth.dart';
+import 'app.dart';
+import 'firebase_options_dev.dart'; // 👈 tu archivo de opciones (DEV)
 
-import 'screens/places_screen.dart';
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Inicializar Firebase
+
+  // Inicializa Firebase con tus opciones DEV
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "tu-api-key-aqui", // Reemplazar con tu API key
-      authDomain: "tu-proyecto.firebaseapp.com",
-      projectId: "tu-proyecto-id",
-      storageBucket: "tu-proyecto.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdef123456",
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
-  
-  if (kIsWeb) {
-    // Usa URLs sin hash para que se vea como https://app.recorrido.org/
-    usePathUrlStrategy();
-  }
-  runApp(const MainApp());
+
+  // Manejo global de errores (útil en desarrollo)
+  runZonedGuarded(() {
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.dumpErrorToConsole(details);
+    };
+    runApp(const MyApp());
+  }, (error, stack) {
+    // ignore: avoid_print
+    print('❌ Uncaught error: $error\n$stack');
+  });
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Recorrido',
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (_) => const HomeScreen(),
-        '/login': (_) => const LoginScreen(),
-        '/registro': (_) => const RegistroScreen(),
-        '/auth': (_) => const AuthScreen(),
-        '/auth/login': (_) => const AuthScreen(isLogin: true),
-        '/menu': (_) => Mapita(),
-        '/places': (_) => const PlacesScreen(), // NUEVA
-      },
-    );
-  }
-}
 
 
 
