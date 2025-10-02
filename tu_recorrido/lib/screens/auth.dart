@@ -425,7 +425,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             elevation: 0,
                           ).copyWith(
-                            backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                            backgroundColor: WidgetStateProperty.all(Colors.transparent),
                           ),
                           child: Container(
                             width: double.infinity,
