@@ -14,6 +14,10 @@ jobs:
           channel: 'stable'
       - run: flutter --version
       - run: flutter pub get
+        working-directory: tu_recorrido
       - run: dart format --output=none --set-exit-if-changed .
+        working-directory: tu_recorrido
       - run: flutter analyze
+        working-directory: tu_recorrido
       # - run: flutter test --no-pub
+      #   working-directory: tu_recorrido
