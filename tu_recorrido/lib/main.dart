@@ -11,26 +11,22 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializa Firebase con tus opciones DEV
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   if (kIsWeb) {
     usePathUrlStrategy();
   }
 
   // Manejo global de errores
-  runZonedGuarded(() {
-    FlutterError.onError = (FlutterErrorDetails details) {
-      FlutterError.dumpErrorToConsole(details);
-    };
-    runApp(const MyApp());
-  }, (error, stack) {
-    debugPrint('Error: $error\n$stack');
-  });
+  runZonedGuarded(
+    () {
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.dumpErrorToConsole(details);
+      };
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      debugPrint('Error: $error\n$stack');
+    },
+  );
 }
-
-
-
-
-

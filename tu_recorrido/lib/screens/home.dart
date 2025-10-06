@@ -10,9 +10,9 @@ class HomeScreen extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     await AuthService.signOut();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('👋 Sesión cerrada')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('👋 Sesión cerrada')));
   }
 
   @override
@@ -70,8 +70,8 @@ class HomeScreen extends StatelessWidget {
                       final User? user = snapshot.data;
                       final String saludo = signedIn
                           ? ((user?.displayName?.trim().isNotEmpty ?? false)
-                              ? user!.displayName!.trim()
-                              : (user?.email ?? 'Explorador'))
+                                ? user!.displayName!.trim()
+                                : (user?.email ?? 'Explorador'))
                           : 'Explorador';
 
                       return Row(
@@ -83,7 +83,9 @@ class HomeScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Coloressito.surfaceLight,
                               borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Coloressito.borderLight),
+                              border: Border.all(
+                                color: Coloressito.borderLight,
+                              ),
                             ),
                             child: const Icon(
                               Icons.map,
@@ -109,17 +111,26 @@ class HomeScreen extends StatelessWidget {
                               GestureDetector(
                                 onTap: () => signedIn
                                     ? _logout(context)
-                                    : Navigator.pushNamed(context, '/auth/login'),
+                                    : Navigator.pushNamed(
+                                        context,
+                                        '/auth/login',
+                                      ),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Coloressito.surfaceLight,
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Coloressito.borderLight),
+                                    border: Border.all(
+                                      color: Coloressito.borderLight,
+                                    ),
                                   ),
                                   child: Text(
-                                    signedIn ? 'Cerrar sesión' : 'Iniciar sesión',
+                                    signedIn
+                                        ? 'Cerrar sesión'
+                                        : 'Iniciar sesión',
                                     style: const TextStyle(
                                       color: Coloressito.textPrimary,
                                       fontSize: 14,
@@ -154,7 +165,10 @@ class HomeScreen extends StatelessWidget {
                               Coloressito.surfaceDark,
                             ],
                           ),
-                          border: Border.all(color: Coloressito.borderLight, width: 3),
+                          border: Border.all(
+                            color: Coloressito.borderLight,
+                            width: 3,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Coloressito.shadowColor,
@@ -241,12 +255,18 @@ class HomeScreen extends StatelessWidget {
                           GestureDetector(
                             onTap: () {
                               // 👉 Si ya tienes /places registrada, cámbialo por '/places'
-                              final String target = signedIn ? '/home' : '/auth/registro';
+                              final String target = signedIn
+                                  ? '/home'
+                                  : '/auth/registro';
                               try {
                                 Navigator.pushNamed(context, target);
                               } catch (_) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Ruta no encontrada: $target')),
+                                  SnackBar(
+                                    content: Text(
+                                      'Ruta no encontrada: $target',
+                                    ),
+                                  ),
                                 );
                               }
                             },
@@ -275,7 +295,9 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    signedIn ? 'CONTINUAR AVENTURA' : 'COMENZAR AVENTURA',
+                                    signedIn
+                                        ? 'CONTINUAR AVENTURA'
+                                        : 'COMENZAR AVENTURA',
                                     style: const TextStyle(
                                       color: Coloressito.textPrimary,
                                       fontSize: 18,
@@ -292,7 +314,8 @@ class HomeScreen extends StatelessWidget {
                           // Acceso directo a /places en debug
                           if (kDebugMode)
                             TextButton(
-                              onPressed: () => Navigator.pushNamed(context, '/places'),
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/places'),
                               child: const Text('Ver / administrar lugares'),
                             ),
 
@@ -339,11 +362,7 @@ class _FloatingElement extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
-      child: Icon(
-        icon,
-        color: color,
-        size: size * 0.6,
-      ),
+      child: Icon(icon, color: color, size: size * 0.6),
     );
   }
 }
@@ -378,11 +397,7 @@ class _StatCard extends StatelessWidget {
               color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 8),
           Text(

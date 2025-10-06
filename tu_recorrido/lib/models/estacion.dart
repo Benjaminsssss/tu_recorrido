@@ -3,14 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Modelo para las estaciones patrimoniales (como Poképaradas)
 /// Cada estación representa un lugar histórico de Santiago
 class Estacion {
-  final String id;           // ID único en Firestore
-  final String codigo;       // Código para QR (ej: "PLAZA_ARMAS_001")
-  final String nombre;       // Nombre descriptivo (ej: "Plaza de Armas")
-  final String descripcion;  // Info histórica del lugar
-  final double latitud;      // Coordenadas GPS
-  final double longitud;     // Coordenadas GPS
+  final String id; // ID único en Firestore
+  final String codigo; // Código para QR (ej: "PLAZA_ARMAS_001")
+  final String nombre; // Nombre descriptivo (ej: "Plaza de Armas")
+  final String descripcion; // Info histórica del lugar
+  final double latitud; // Coordenadas GPS
+  final double longitud; // Coordenadas GPS
   final DateTime fechaCreacion;
-  final bool activa;         // Si está disponible para visitar
+  final bool activa; // Si está disponible para visitar
 
   const Estacion({
     required this.id,
@@ -26,7 +26,7 @@ class Estacion {
   /// Crear Estacion desde documento de Firestore
   factory Estacion.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     return Estacion(
       id: doc.id,
       codigo: data['codigo'] ?? '',
@@ -34,7 +34,8 @@ class Estacion {
       descripcion: data['descripcion'] ?? '',
       latitud: (data['latitud'] ?? 0.0).toDouble(),
       longitud: (data['longitud'] ?? 0.0).toDouble(),
-      fechaCreacion: (data['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fechaCreacion:
+          (data['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime.now(),
       activa: data['activa'] ?? true,
     );
   }

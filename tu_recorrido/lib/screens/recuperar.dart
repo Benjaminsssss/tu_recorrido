@@ -32,15 +32,17 @@ class _RecuperarScreenState extends State<RecuperarScreen> {
 
     try {
       await AuthService.resetPassword(correo.text.trim());
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Correo de recuperación enviado. Revisa tu bandeja de entrada.'),
+            content: Text(
+              '✅ Correo de recuperación enviado. Revisa tu bandeja de entrada.',
+            ),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Volver al login después del éxito
         Navigator.of(context).pop();
       }
@@ -56,7 +58,7 @@ class _RecuperarScreenState extends State<RecuperarScreen> {
         default:
           errorMessage = 'Error al enviar correo: ${e.message}';
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -91,7 +93,9 @@ class _RecuperarScreenState extends State<RecuperarScreen> {
         child: Card(
           elevation: 6,
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Stack(
@@ -135,8 +139,9 @@ class _RecuperarScreenState extends State<RecuperarScreen> {
                               return 'El correo no puede quedar vacío';
                             }
                             if (!v.contains('@') ||
-                                !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                    .hasMatch(v.trim())) {
+                                !RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                ).hasMatch(v.trim())) {
                               return 'Ingrese un correo válido';
                             }
                             return null;
@@ -147,20 +152,22 @@ class _RecuperarScreenState extends State<RecuperarScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: isLoading ? null : enviarRecuperacion,
-                            child: isLoading 
-                              ? const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    ),
-                                    SizedBox(width: 12),
-                                    Text('Enviando...'),
-                                  ],
-                                )
-                              : const Text('Enviar correo de recuperación'),
+                            child: isLoading
+                                ? const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text('Enviando...'),
+                                    ],
+                                  )
+                                : const Text('Enviar correo de recuperación'),
                           ),
                         ),
                         const SizedBox(height: 16),

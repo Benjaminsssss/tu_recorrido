@@ -17,11 +17,7 @@ class EncabezadoEstacion extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.location_on,
-            size: 48,
-            color: Coloressito.adventureGreen,
-          ),
+          Icon(Icons.location_on, size: 48, color: Coloressito.adventureGreen),
           const SizedBox(height: 8),
           const Text(
             'Nueva Estación Patrimonial',
@@ -35,10 +31,7 @@ class EncabezadoEstacion extends StatelessWidget {
           const Text(
             'Crea puntos de interés histórico para que los usuarios puedan visitar',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
           ),
         ],
       ),
@@ -50,10 +43,7 @@ class EncabezadoEstacion extends StatelessWidget {
 class InfoUbicacion extends StatelessWidget {
   final Position? ubicacion;
 
-  const InfoUbicacion({
-    super.key,
-    required this.ubicacion,
-  });
+  const InfoUbicacion({super.key, required this.ubicacion});
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +58,8 @@ class InfoUbicacion extends StatelessWidget {
         children: [
           Icon(
             ubicacion != null ? Icons.gps_fixed : Icons.gps_off,
-            color: ubicacion != null 
-                ? Coloressito.adventureGreen 
+            color: ubicacion != null
+                ? Coloressito.adventureGreen
                 : Coloressito.badgeRed,
           ),
           const SizedBox(width: 8),
@@ -79,8 +69,8 @@ class InfoUbicacion extends StatelessWidget {
                   ? 'Ubicación: ${ubicacion!.latitude.toStringAsFixed(6)}, ${ubicacion!.longitude.toStringAsFixed(6)}'
                   : 'Obteniendo ubicación GPS...',
               style: TextStyle(
-                color: ubicacion != null 
-                    ? Coloressito.textPrimary 
+                color: ubicacion != null
+                    ? Coloressito.textPrimary
                     : Coloressito.textSecondary,
                 fontSize: 12,
               ),
@@ -132,7 +122,10 @@ class CampoFormulario extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Coloressito.adventureGreen, width: 2),
+          borderSide: const BorderSide(
+            color: Coloressito.adventureGreen,
+            width: 2,
+          ),
         ),
       ),
       validator: validator,
@@ -161,13 +154,9 @@ class BotonAccion extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: Coloressito.textPrimary,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
-      ).copyWith(
-        backgroundColor: WidgetStateProperty.all(Colors.transparent),
-      ),
+      ).copyWith(backgroundColor: WidgetStateProperty.all(Colors.transparent)),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -175,21 +164,25 @@ class BotonAccion extends StatelessWidget {
           gradient: cargando ? null : Coloressito.buttonGradient,
           color: cargando ? Coloressito.textMuted : null,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: cargando ? [] : [
-            BoxShadow(
-              color: Coloressito.glowColor,
-              blurRadius: 8,
-              spreadRadius: 1,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: cargando
+              ? []
+              : [
+                  BoxShadow(
+                    color: Coloressito.glowColor,
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: cargando
             ? const SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Coloressito.textPrimary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Coloressito.textPrimary,
+                  ),
                   strokeWidth: 2,
                 ),
               )

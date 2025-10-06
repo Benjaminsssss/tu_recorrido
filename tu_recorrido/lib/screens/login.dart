@@ -45,13 +45,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     await AuthService.resendEmailVerification();
                     // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('📧 Enviamos un nuevo correo de verificación')),
+                      const SnackBar(
+                        content: Text(
+                          '📧 Enviamos un nuevo correo de verificación',
+                        ),
+                      ),
                     );
                   } catch (e) {
                     // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('❌ $e')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('❌ $e')));
                   }
                 },
               ),
@@ -63,18 +67,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // ok, pasa a home
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Bienvenido')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('✅ Bienvenido')));
         Navigator.of(context).pushReplacementNamed('/home');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -94,7 +95,9 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthService.resetPassword(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('📧 Te enviamos un correo de recuperación')),
+          const SnackBar(
+            content: Text('📧 Te enviamos un correo de recuperación'),
+          ),
         );
       }
     } catch (e) {
@@ -109,8 +112,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     // Validación para el botón "Olvidé mi contraseña"
-    final emailValido = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-        .hasMatch(emailCtrl.text.trim());
+    final emailValido = RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    ).hasMatch(emailCtrl.text.trim());
 
     return Scaffold(
       body: Center(
@@ -125,7 +129,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Iniciar sesión', style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Iniciar sesión',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: emailCtrl,
@@ -134,10 +141,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: 'usuario@ejemplo.com',
                       ),
                       keyboardType: TextInputType.emailAddress,
-                      onChanged: (_) => setState(() {}), // Refresca para actualizar emailValido
+                      onChanged: (_) => setState(
+                        () {},
+                      ), // Refresca para actualizar emailValido
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Requerido';
-                        final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim());
+                        final ok = RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(v.trim());
                         return ok ? null : 'Correo inválido';
                       },
                     ),
@@ -149,11 +160,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Contraseña',
                         hintText: 'Tu clave',
                         suffixIcon: IconButton(
-                          icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
+                          icon: Icon(
+                            obscure ? Icons.visibility : Icons.visibility_off,
+                          ),
                           onPressed: () => setState(() => obscure = !obscure),
                         ),
                       ),
-                      validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -168,7 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('Olvidé mi contraseña'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pushReplacementNamed('/auth/registro'),
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushReplacementNamed('/auth/registro'),
                       child: const Text('Crear cuenta'),
                     ),
                   ],

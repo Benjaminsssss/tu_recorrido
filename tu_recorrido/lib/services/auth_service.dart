@@ -34,13 +34,10 @@ class AuthService {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    await _db.collection('users').doc(user.uid).set(
-      {
-        'createdAt': FieldValue.serverTimestamp(),
-        ...data,
-      },
-      SetOptions(merge: true),
-    );
+    await _db.collection('users').doc(user.uid).set({
+      'createdAt': FieldValue.serverTimestamp(),
+      ...data,
+    }, SetOptions(merge: true));
   }
 
   // ---------------------------------------------------------------------------
@@ -59,8 +56,9 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
 
       // upsert de perfil mínimo en Firestore
       await _upsertUserProfile(userCredential.user!);
@@ -153,17 +151,16 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final UserCredential userCredential =
-          await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email, password: password);
 
       // mantener perfil fresco (no afecta tus campos extra)
       await _upsertUserProfile(userCredential.user!);
 
       if (kDebugMode) {
-        debugPrint('Usuario inició sesión: ${userCredential.user?.displayName}');
+        debugPrint(
+          'Usuario inició sesión: ${userCredential.user?.displayName}',
+        );
       }
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -179,10 +176,7 @@ class AuthService {
   // ---------------------------------------------------------------------------
   static Future<void> signOut() async {
     try {
-      await Future.wait([
-        _auth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
+      await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
       if (kDebugMode) {
         debugPrint('Usuario cerró sesión');
       }
@@ -203,19 +197,21 @@ class AuthService {
       if (email.trim().isEmpty || !email.contains('@')) {
         throw 'Ingrese un correo válido';
       }
-      
+
       // Intentar enviar el email de restablecimiento
       // Firebase automáticamente maneja si el email existe o no
       await _auth.sendPasswordResetEmail(email: email.trim());
-      
+
       if (kDebugMode) {
         debugPrint('Email de restablecimiento enviado a: ${email.trim()}');
       }
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        debugPrint('Error al enviar email de restablecimiento: ${e.code} - ${e.message}');
+        debugPrint(
+          'Error al enviar email de restablecimiento: ${e.code} - ${e.message}',
+        );
       }
-      
+
       // Manejar errores específicos de Firebase Auth
       switch (e.code) {
         case 'user-not-found':

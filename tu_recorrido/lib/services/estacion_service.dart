@@ -13,14 +13,16 @@ class EstacionService {
       // Verifica que el código no exista
       final existe = await _existeCodigo(estacion.codigo);
       if (existe) {
-        throw Exception('Ya existe una estación con el código: ${estacion.codigo}');
+        throw Exception(
+          'Ya existe una estación con el código: ${estacion.codigo}',
+        );
       }
 
       // Guardar en Firestore
       final docRef = await _firestore
           .collection(_collection)
           .add(estacion.toFirestore());
-      
+
       return docRef.id;
     } catch (e) {
       throw Exception('Error al crear estación: $e');
@@ -56,9 +58,7 @@ class EstacionService {
           .orderBy('fechaCreacion', descending: true)
           .get();
 
-      return query.docs
-          .map((doc) => Estacion.fromFirestore(doc))
-          .toList();
+      return query.docs.map((doc) => Estacion.fromFirestore(doc)).toList();
     } catch (e) {
       throw Exception('Error al obtener estaciones: $e');
     }
@@ -79,10 +79,9 @@ class EstacionService {
   /// Desactiva una estación (no la elimina, solo la oculta)
   static Future<void> desactivarEstacion(String id) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(id)
-          .update({'activa': false});
+      await _firestore.collection(_collection).doc(id).update({
+        'activa': false,
+      });
     } catch (e) {
       throw Exception('Error al desactivar estación: $e');
     }
@@ -95,7 +94,7 @@ class EstacionService {
         .where('codigo', isEqualTo: codigo)
         .limit(1)
         .get();
-    
+
     return query.docs.isNotEmpty;
   }
 
@@ -106,9 +105,11 @@ class EstacionService {
         .replaceAll(RegExp(r'[^A-Z0-9]'), '_')
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
-    
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString().substring(8);
-    
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch
+        .toString()
+        .substring(8);
+
     return '${codigoBase}_$timestamp';
   }
 }

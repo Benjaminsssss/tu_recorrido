@@ -37,23 +37,25 @@ class PantallaBase extends StatelessWidget {
       body: mostrarCargando
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Coloressito.adventureGreen,
+                ),
               ),
             )
           : onRefresh != null
-              ? RefreshIndicator(
-                  color: Coloressito.adventureGreen,
-                  onRefresh: onRefresh!,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    child: body,
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: body,
-                ),
+          ? RefreshIndicator(
+              color: Coloressito.adventureGreen,
+              onRefresh: onRefresh!,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: body,
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: body,
+            ),
       floatingActionButton: floatingActionButton,
     );
   }

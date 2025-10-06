@@ -25,10 +25,8 @@ class MyApp extends StatelessWidget {
       // Usamos AuthGate en la raíz: decide Home o Login según sesión
       initialRoute: '/',
       routes: {
-        '/': (_) => const AuthGate(
-              signedIn: HomeScreen(),
-              signedOut: LoginScreen(),
-            ),
+        '/': (_) =>
+            const AuthGate(signedIn: HomeScreen(), signedOut: LoginScreen()),
         '/home': (_) => const HomeScreen(),
         '/auth/login': (_) => const LoginScreen(),
         '/auth/registro': (_) => const RegistroScreen(),

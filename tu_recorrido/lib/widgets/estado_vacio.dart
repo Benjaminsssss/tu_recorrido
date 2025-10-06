@@ -27,11 +27,12 @@ class EstadoVacio extends StatelessWidget {
     this.rutaBoton = '/menu',
     this.onBotonPresionado,
   }) : icono = Icons.explore_off,
-        titulo = 'Aún no has visitado ninguna estación',
-        descripcion = 'Ve al mapa y busca estaciones patrimoniales cerca de ti. ¡Escanea los códigos QR para agregarlas a tu colección!',
-        textoBoton = 'Ir al Mapa';
+       titulo = 'Aún no has visitado ninguna estación',
+       descripcion =
+           'Ve al mapa y busca estaciones patrimoniales cerca de ti. ¡Escanea los códigos QR para agregarlas a tu colección!',
+       textoBoton = 'Ir al Mapa';
 
-  /// Constructor para lista vacía 
+  /// Constructor para lista vacía
   const EstadoVacio.listaVacia({
     super.key,
     required this.titulo,
@@ -65,11 +66,7 @@ class EstadoVacio extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            icono,
-            size: 64,
-            color: Coloressito.textMuted,
-          ),
+          Icon(icono, size: 64, color: Coloressito.textMuted),
           const SizedBox(height: 16),
           Text(
             titulo,
@@ -92,9 +89,13 @@ class EstadoVacio extends StatelessWidget {
           if (textoBoton != null) ...[
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: onBotonPresionado ?? (rutaBoton != null 
-                  ? () => Navigator.of(context).pushReplacementNamed(rutaBoton!)
-                  : null),
+              onPressed:
+                  onBotonPresionado ??
+                  (rutaBoton != null
+                      ? () => Navigator.of(
+                          context,
+                        ).pushReplacementNamed(rutaBoton!)
+                      : null),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Coloressito.adventureGreen,
                 foregroundColor: Coloressito.textPrimary,

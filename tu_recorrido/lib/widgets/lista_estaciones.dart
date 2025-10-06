@@ -70,8 +70,7 @@ class ListaEstaciones extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                if (mostrarCodigo && mostrarFecha)
-                  const SizedBox(height: 2),
+                if (mostrarCodigo && mostrarFecha) const SizedBox(height: 2),
                 if (mostrarFecha)
                   Text(
                     'Visitada: ${_formatearFecha(estacion.fechaVisita)}',
@@ -98,7 +97,7 @@ class ListaEstaciones extends StatelessWidget {
   String _formatearFecha(DateTime fecha) {
     final now = DateTime.now();
     final difference = now.difference(fecha);
-    
+
     if (difference.inDays == 0) {
       return 'Hoy ${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays == 1) {

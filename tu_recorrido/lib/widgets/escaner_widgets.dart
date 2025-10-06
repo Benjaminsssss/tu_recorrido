@@ -20,7 +20,9 @@ class MarcoEscaneo extends StatelessWidget {
       height: 250,
       decoration: BoxDecoration(
         border: Border.all(
-          color: escaneando ? Coloressito.adventureGreen : Coloressito.borderLight,
+          color: escaneando
+              ? Coloressito.adventureGreen
+              : Coloressito.borderLight,
           width: 3,
         ),
         borderRadius: BorderRadius.circular(20),
@@ -30,7 +32,7 @@ class MarcoEscaneo extends StatelessWidget {
         children: [
           // Esquinas del marco
           ..._buildEsquinas(),
-          
+
           // Icono central con animación
           if (escaneando)
             AnimatedBuilder(
@@ -47,11 +49,7 @@ class MarcoEscaneo extends StatelessWidget {
               },
             )
           else
-            Icon(
-              Icons.qr_code_2,
-              size: 80,
-              color: Coloressito.textMuted,
-            ),
+            Icon(Icons.qr_code_2, size: 80, color: Coloressito.textMuted),
         ],
       ),
     );
@@ -76,8 +74,11 @@ class MarcoEscaneo extends StatelessWidget {
     bool isBottomLeft = false,
     bool isBottomRight = false,
   }) {
-    BorderSide borderSide = BorderSide(color: Coloressito.adventureGreen, width: 3);
-    
+    BorderSide borderSide = BorderSide(
+      color: Coloressito.adventureGreen,
+      width: 3,
+    );
+
     return Positioned(
       top: top,
       left: left,
@@ -90,7 +91,9 @@ class MarcoEscaneo extends StatelessWidget {
           border: Border(
             top: (isTopLeft || isTopRight) ? borderSide : BorderSide.none,
             left: (isTopLeft || isBottomLeft) ? borderSide : BorderSide.none,
-            bottom: (isBottomLeft || isBottomRight) ? borderSide : BorderSide.none,
+            bottom: (isBottomLeft || isBottomRight)
+                ? borderSide
+                : BorderSide.none,
             right: (isTopRight || isBottomRight) ? borderSide : BorderSide.none,
           ),
         ),
@@ -129,11 +132,7 @@ class TextoInstructivo extends StatelessWidget {
     return Text(
       texto,
       textAlign: TextAlign.center,
-      style: TextStyle(
-        color: color,
-        fontSize: 16,
-        height: 1.4,
-      ),
+      style: TextStyle(color: color, fontSize: 16, height: 1.4),
     );
   }
 }
@@ -154,34 +153,32 @@ class BotonEscaneo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool deshabilitado = escaneando || validando;
-    
+
     return ElevatedButton(
       onPressed: deshabilitado ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.transparent,
         foregroundColor: Coloressito.textPrimary,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         elevation: 0,
-      ).copyWith(
-        backgroundColor: WidgetStateProperty.all(Colors.transparent),
-      ),
+      ).copyWith(backgroundColor: WidgetStateProperty.all(Colors.transparent)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         decoration: BoxDecoration(
           gradient: deshabilitado ? null : Coloressito.buttonGradient,
           color: deshabilitado ? Coloressito.textMuted : null,
           borderRadius: BorderRadius.circular(30),
-          boxShadow: deshabilitado ? [] : [
-            BoxShadow(
-              color: Coloressito.glowColor,
-              blurRadius: 12,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: deshabilitado
+              ? []
+              : [
+                  BoxShadow(
+                    color: Coloressito.glowColor,
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -191,7 +188,9 @@ class BotonEscaneo extends StatelessWidget {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Coloressito.textPrimary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Coloressito.textPrimary,
+                  ),
                   strokeWidth: 2,
                 ),
               )
@@ -227,10 +226,7 @@ class BotonEscaneo extends StatelessWidget {
 class UltimaEstacionVisitada extends StatelessWidget {
   final Estacion estacion;
 
-  const UltimaEstacionVisitada({
-    super.key,
-    required this.estacion,
-  });
+  const UltimaEstacionVisitada({super.key, required this.estacion});
 
   @override
   Widget build(BuildContext context) {
@@ -244,18 +240,11 @@ class UltimaEstacionVisitada extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Coloressito.adventureGreen,
-            size: 32,
-          ),
+          Icon(Icons.check_circle, color: Coloressito.adventureGreen, size: 32),
           const SizedBox(height: 8),
           const Text(
             'Última estación visitada:',
-            style: TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Coloressito.textSecondary, fontSize: 12),
           ),
           Text(
             estacion.nombre,
