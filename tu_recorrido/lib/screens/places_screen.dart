@@ -57,8 +57,9 @@ class PlacesScreen extends StatelessWidget {
                         ],
                       ),
                     );
-                    if (ok == true)
+                    if (ok == true) {
                       await FirestoreService.instance.deletePlace(id);
+                    }
                   },
                 ),
               );

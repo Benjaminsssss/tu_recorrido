@@ -52,10 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     );
                   } catch (e) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('❌ $e')));
+                    if (mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('❌ $e')));
+                    }
                   }
                 },
               ),
