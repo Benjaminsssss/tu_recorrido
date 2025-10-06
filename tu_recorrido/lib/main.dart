@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'app.dart';
-import 'firebase_options_dev.dart'; // 👈 tu archivo de opciones (DEV)
+import 'firebase_options_dev.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +13,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Manejo global de errores (útil en desarrollo)
+  // Manejo global de errores
   runZonedGuarded(() {
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.dumpErrorToConsole(details);
@@ -22,7 +21,7 @@ Future<void> main() async {
     runApp(const MyApp());
   }, (error, stack) {
     // ignore: avoid_print
-    print('❌ Uncaught error: $error\n$stack');
+    debugPrint('error: $error\n$stack');
   });
 }
 

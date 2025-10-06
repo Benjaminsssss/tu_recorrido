@@ -84,8 +84,8 @@ class RegistroScreenState extends State<RegistroScreen> {
     setState(() => isLoading = true);
 
     try {
-      print('🔄 Iniciando registro con email: ${correo.text.trim()}');
-      print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
+      debugPrint('Iniciando registro con email: ${correo.text.trim()}');
+      debugPrint('Firebase App: ${FirebaseAuth.instance.app.name}');
 
       // 1) Crear usuario en Auth
       final userCredential = await AuthService.registerWithEmail(
@@ -118,7 +118,7 @@ class RegistroScreenState extends State<RegistroScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
-      print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
+      debugPrint('FirebaseAuthException: ${e.code} - ${e.message}');
       switch (e.code) {
         case 'weak-password':
           errorMessage = 'La contraseña es muy débil.'; break;
@@ -137,14 +137,14 @@ class RegistroScreenState extends State<RegistroScreen> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ $errorMessage'), backgroundColor: Colors.red),
+          SnackBar(content: Text(' $errorMessage'), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
-      print('🔥 Error general: $e');
+      debugPrint('Error general: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error inesperado: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error inesperado: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -183,9 +183,9 @@ class RegistroScreenState extends State<RegistroScreen> {
       // createdAt/updatedAt los maneja FirestoreService.upsertUser()
     };
 
-    print('📁 Guardando datos completos del usuario en Firestore...');
+    debugPrint('Guardando datos completos del usuario en Firestore...');
     await FirestoreService.instance.upsertUser(uid: uid, data: userData);
-    print('✅ Datos guardados exitosamente en Firestore: $userData');
+    debugPrint('Datos guardados exitosamente en Firestore: $userData');
   }
 
   void _limpiarFormulario() {

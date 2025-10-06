@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/colores.dart';
 import '../services/auth_service.dart';
@@ -53,8 +52,8 @@ class _AuthScreenState extends State<AuthScreen> {
     });
 
     try {
-      print('🔄 Iniciando ${_isLogin ? "login" : "registro"} con email: ${_emailController.text.trim()}');
-      print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
+      debugPrint('🔄 Iniciando ${_isLogin ? "login" : "registro"} con email: ${_emailController.text.trim()}');
+      debugPrint('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
       
       UserCredential? userCredential;
       
@@ -64,7 +63,7 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        print('✅ Login exitoso para: ${userCredential?.user?.email}');
+        debugPrint('✅ Login exitoso para: ${userCredential?.user?.email}');
       } else {
         // Registrarse con email y contraseña
         userCredential = await AuthService.registerWithEmail(
@@ -72,7 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
           password: _passwordController.text,
           displayName: _nameController.text.trim(),
         );
-        print('✅ Registro exitoso para: ${userCredential?.user?.email}');
+        debugPrint('✅ Registro exitoso para: ${userCredential?.user?.email}');
         
         // Limpiar formulario tras registro exitoso
         _clearForm();
@@ -94,7 +93,7 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       }
     } on FirebaseAuthException catch (e) {
-      print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
+      debugPrint('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
       
       String errorMessage;
       switch (e.code) {
@@ -127,7 +126,7 @@ class _AuthScreenState extends State<AuthScreen> {
         _showErrorDialog(errorMessage);
       }
     } catch (e) {
-      print('🔥 Error general: $e');
+      debugPrint('🔥 Error general: $e');
       if (mounted) {
         _showErrorDialog('Error inesperado: $e');
       }
@@ -234,11 +233,11 @@ class _AuthScreenState extends State<AuthScreen> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.8),
+        color: color.withValues(alpha: 0.8),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.4),
+            color: color.withValues(alpha: 0.4),
             blurRadius: 8,
             spreadRadius: 2,
           ),
@@ -489,7 +488,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             elevation: 0,
                           ).copyWith(
-                            backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                            backgroundColor: WidgetStateProperty.all(Colors.transparent),
                           ),
                           child: Container(
                             width: double.infinity,
