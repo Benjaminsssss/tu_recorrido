@@ -45,7 +45,6 @@ class MyApp extends StatelessWidget {
         '/auth/registro': (_) => const RegistroScreen(),
         '/perfil': (_) => const Perfil(),
         '/places': (_) => const PlacesScreen(),
-        '/recuperar': (_) => const RecuperarScreen(),
         '/escanear': (_) => const EscanerQRScreen(),
         '/coleccion': (_) => const ColeccionScreen(),
         '/admin': (_) => const AdminScreen(),
