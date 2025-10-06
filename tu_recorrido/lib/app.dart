@@ -4,6 +4,17 @@ import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
 import 'screens/registro.dart';
+import 'screens/auth.dart';
+import 'screens/menu.dart';
+import 'screens/perfil.dart';
+import 'screens/places_screen.dart';
+import 'screens/recuperar.dart';
+import 'screens/escanerqr.dart';
+import 'screens/coleccion.dart';
+
+// Admin Screens
+import 'admin/screens/admin_screen.dart';
+import 'admin/screens/crear_estacion.dart';
 
 // AuthGate
 import 'widgets/auth_gate.dart';
@@ -28,11 +39,17 @@ class MyApp extends StatelessWidget {
         '/': (_) =>
             const AuthGate(signedIn: HomeScreen(), signedOut: LoginScreen()),
         '/home': (_) => const HomeScreen(),
+        '/menu': (_) => const Mapita(),
+        '/auth': (_) => const AuthScreen(),
         '/auth/login': (_) => const LoginScreen(),
         '/auth/registro': (_) => const RegistroScreen(),
-
-        // Si ya tienes una pantalla de lugares, descomenta:
-        // '/places': (_) => const PlacesScreen(),
+        '/perfil': (_) => const Perfil(),
+        '/places': (_) => const PlacesScreen(),
+        '/recuperar': (_) => const RecuperarScreen(),
+        '/escanear': (_) => const EscanerQRScreen(),
+        '/coleccion': (_) => const ColeccionScreen(),
+        '/admin': (_) => const AdminScreen(),
+        '/admin/crear-estacion': (_) => const CrearEstacionScreen(),
       },
     );
   }
