@@ -46,12 +46,20 @@ class PlacesScreen extends StatelessWidget {
                         title: const Text('Eliminar lugar'),
                         content: Text('¿Eliminar "$name"?'),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancelar')),
-                          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Eliminar')),
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('Eliminar'),
+                          ),
                         ],
                       ),
                     );
-                    if (ok == true) await FirestoreService.instance.deletePlace(id);
+                    if (ok == true) {
+                      await FirestoreService.instance.deletePlace(id);
+                    }
                   },
                 ),
               );
@@ -68,10 +76,10 @@ class PlacesScreen extends StatelessWidget {
 
   Future<void> _showAddPlaceDialog(BuildContext context) async {
     final nameCtrl = TextEditingController();
-    final catCtrl  = TextEditingController(text: 'general');
-    final latCtrl  = TextEditingController();
-    final lngCtrl  = TextEditingController();
-    final formKey  = GlobalKey<FormState>();
+    final catCtrl = TextEditingController(text: 'general');
+    final latCtrl = TextEditingController();
+    final lngCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
     await showDialog(
       context: context,
@@ -87,7 +95,8 @@ class PlacesScreen extends StatelessWidget {
                 TextFormField(
                   controller: nameCtrl,
                   decoration: const InputDecoration(labelText: 'Nombre'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                 ),
                 TextFormField(
                   controller: catCtrl,
@@ -97,20 +106,25 @@ class PlacesScreen extends StatelessWidget {
                   controller: latCtrl,
                   decoration: const InputDecoration(labelText: 'Latitud'),
                   keyboardType: TextInputType.number,
-                  validator: (v) => double.tryParse(v ?? '') == null ? 'Número válido' : null,
+                  validator: (v) =>
+                      double.tryParse(v ?? '') == null ? 'Número válido' : null,
                 ),
                 TextFormField(
                   controller: lngCtrl,
                   decoration: const InputDecoration(labelText: 'Longitud'),
                   keyboardType: TextInputType.number,
-                  validator: (v) => double.tryParse(v ?? '') == null ? 'Número válido' : null,
+                  validator: (v) =>
+                      double.tryParse(v ?? '') == null ? 'Número válido' : null,
                 ),
               ],
             ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;

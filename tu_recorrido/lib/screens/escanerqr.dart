@@ -31,13 +31,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    _pulseAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
     _animationController.repeat(reverse: true);
   }
 
@@ -48,7 +44,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
     super.dispose();
   }
 
-  /// Simula los qr 
+  /// Simula los qr
   Future<void> _simularEscaneo() async {
     setState(() {
       _escaneando = true;
@@ -60,7 +56,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
 
     if (mounted) {
       setState(() => _escaneando = false);
-      
+
       // Para demo, mostrar dialog para ingresar código manualmente
       _mostrarDialogCodigo();
     }
@@ -81,12 +77,16 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
   /// Valida el código de estación en Firestore
   Future<void> _validarCodigo(String codigo) async {
     if (codigo.isEmpty) {
-      EscanerHelper.mostrarMensaje(context, 'Código vacío', Coloressito.badgeRed);
+      EscanerHelper.mostrarMensaje(
+        context,
+        'Código vacío',
+        Coloressito.badgeRed,
+      );
       return;
     }
 
     setState(() => _validando = true);
-    
+
     try {
       final estacion = await EstacionService.obtenerPorCodigo(codigo);
       if (mounted) {
@@ -94,12 +94,20 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
         if (estacion != null) {
           _mostrarEstacionEncontrada(estacion);
         } else {
-          EscanerHelper.mostrarMensaje(context, 'Código no válido o estación inactiva', Coloressito.badgeRed);
+          EscanerHelper.mostrarMensaje(
+            context,
+            'Código no válido o estación inactiva',
+            Coloressito.badgeRed,
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        EscanerHelper.mostrarMensaje(context, 'Error al validar: $e', Coloressito.badgeRed);
+        EscanerHelper.mostrarMensaje(
+          context,
+          'Error al validar: $e',
+          Coloressito.badgeRed,
+        );
       }
     } finally {
       if (mounted) setState(() => _validando = false);
@@ -137,22 +145,14 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
               escaneando: _escaneando,
               pulseAnimation: _pulseAnimation,
             ),
-            
             const SizedBox(height: 32),
-            
-            TextoInstructivo(
-              escaneando: _escaneando,
-              validando: _validando,
-            ),
-            
+            TextoInstructivo(escaneando: _escaneando, validando: _validando),
             const SizedBox(height: 48),
-            
             BotonEscaneo(
               escaneando: _escaneando,
               validando: _validando,
               onPressed: _simularEscaneo,
             ),
-            
             if (_estacionEncontrada != null) ...[
               const SizedBox(height: 24),
               UltimaEstacionVisitada(estacion: _estacionEncontrada!),

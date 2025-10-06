@@ -94,11 +94,7 @@ class DialogEstacionEncontrada extends StatelessWidget {
       backgroundColor: Coloressito.surfaceDark,
       title: Row(
         children: [
-          Icon(
-            Icons.celebration,
-            color: Coloressito.badgeYellow,
-            size: 28,
-          ),
+          Icon(Icons.celebration, color: Coloressito.badgeYellow, size: 28),
           const SizedBox(width: 8),
           const Text(
             '¡Estación Encontrada!',
@@ -188,18 +184,11 @@ class DialogEstacionEncontrada extends StatelessWidget {
   Widget _buildUbicacion() {
     return Row(
       children: [
-        Icon(
-          Icons.location_on,
-          color: Coloressito.adventureGreen,
-          size: 16,
-        ),
+        Icon(Icons.location_on, color: Coloressito.adventureGreen, size: 16),
         const SizedBox(width: 4),
         Text(
           '${estacion.latitud.toStringAsFixed(4)}, ${estacion.longitud.toStringAsFixed(4)}',
-          style: const TextStyle(
-            color: Coloressito.textMuted,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Coloressito.textMuted, fontSize: 12),
         ),
       ],
     );
@@ -230,23 +219,26 @@ class EscanerHelper {
         longitudUsuario: posicion?.longitude,
       );
 
-      mostrarMensaje('¡${estacion.nombre} agregada a tu colección!', Coloressito.adventureGreen);
-      
+      mostrarMensaje(
+        '¡${estacion.nombre} agregada a tu colección!',
+        Coloressito.adventureGreen,
+      );
+
       // Vibración de éxito
       HapticFeedback.mediumImpact();
-
     } catch (e) {
       mostrarMensaje('Error: $e', Coloressito.badgeRed);
     }
   }
 
   /// Mostrar mensaje en SnackBar
-  static void mostrarMensaje(BuildContext context, String mensaje, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: color,
-      ),
-    );
+  static void mostrarMensaje(
+    BuildContext context,
+    String mensaje,
+    Color color,
+  ) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje), backgroundColor: color));
   }
 }

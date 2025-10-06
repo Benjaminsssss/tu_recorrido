@@ -39,10 +39,7 @@ class ColeccionService {
         longitudVisita: longitudUsuario,
       );
 
-      await _firestore
-          .collection(_collection)
-          .add(visita.toFirestore());
-
+      await _firestore.collection(_collection).add(visita.toFirestore());
     } catch (e) {
       throw Exception('Error al marcar estación como visitada: $e');
     }
@@ -94,11 +91,7 @@ class ColeccionService {
       final total = totalQuery.docs.length;
       final porcentaje = total > 0 ? ((visitadas / total) * 100).round() : 0;
 
-      return {
-        'visitadas': visitadas,
-        'total': total,
-        'porcentaje': porcentaje,
-      };
+      return {'visitadas': visitadas, 'total': total, 'porcentaje': porcentaje};
     } catch (e) {
       throw Exception('Error al obtener estadísticas: $e');
     }
@@ -139,16 +132,20 @@ class ColeccionService {
           .where('userId', isEqualTo: user.uid);
 
       if (desde != null) {
-        query = query.where('fechaVisita', isGreaterThanOrEqualTo: Timestamp.fromDate(desde));
+        query = query.where(
+          'fechaVisita',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(desde),
+        );
       }
 
       if (hasta != null) {
-        query = query.where('fechaVisita', isLessThanOrEqualTo: Timestamp.fromDate(hasta));
+        query = query.where(
+          'fechaVisita',
+          isLessThanOrEqualTo: Timestamp.fromDate(hasta),
+        );
       }
 
-      final result = await query
-          .orderBy('fechaVisita', descending: true)
-          .get();
+      final result = await query.orderBy('fechaVisita', descending: true).get();
 
       return result.docs
           .map((doc) => EstacionVisitada.fromFirestore(doc))

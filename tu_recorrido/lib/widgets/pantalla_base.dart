@@ -37,7 +37,9 @@ class PantallaBase extends StatelessWidget {
       body: mostrarCargando
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Coloressito.adventureGreen,
+                ),
               ),
             )
           : onRefresh != null

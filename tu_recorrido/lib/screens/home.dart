@@ -1,0 +1,422 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // 👈 importante
+import '../utils/colores.dart';
+import '../services/auth_service.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    await AuthService.signOut();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('👋 Sesión cerrada')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Fondo con gradiente
+          Container(
+            decoration: const BoxDecoration(
+              gradient: Coloressito.backgroundGradient,
+            ),
+          ),
+
+          // Elementos decorativos flotantes
+          const Positioned(
+            top: 100,
+            right: 30,
+            child: _FloatingElement(
+              icon: Icons.location_on,
+              color: Coloressito.badgeRed,
+              size: 40,
+            ),
+          ),
+          const Positioned(
+            top: 180,
+            left: 50,
+            child: _FloatingElement(
+              icon: Icons.stars,
+              color: Coloressito.badgeYellow,
+              size: 35,
+            ),
+          ),
+          const Positioned(
+            top: 280,
+            right: 80,
+            child: _FloatingElement(
+              icon: Icons.camera_alt,
+              color: Coloressito.badgeGreen,
+              size: 30,
+            ),
+          ),
+
+          // Contenido principal
+          SafeArea(
+            child: Column(
+              children: [
+                // Header con logo + sesión
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: StreamBuilder<User?>(
+                    stream: AuthService.authStateChanges,
+                    builder: (context, snapshot) {
+                      final bool signedIn = snapshot.hasData;
+                      final User? user = snapshot.data;
+                      final String saludo = signedIn
+                          ? ((user?.displayName?.trim().isNotEmpty ?? false)
+                              ? user!.displayName!.trim()
+                              : (user?.email ?? 'Explorador'))
+                          : 'Explorador';
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Logo
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Coloressito.surfaceLight,
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(
+                                color: Coloressito.borderLight,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.map,
+                              color: Coloressito.textPrimary,
+                              size: 24,
+                            ),
+                          ),
+
+                          // Sesión
+                          Row(
+                            children: [
+                              if (signedIn)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Text(
+                                    'Hola, $saludo',
+                                    style: const TextStyle(
+                                      color: Coloressito.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              GestureDetector(
+                                onTap: () => signedIn
+                                    ? _logout(context)
+                                    : Navigator.pushNamed(
+                                        context,
+                                        '/auth/login',
+                                      ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Coloressito.surfaceLight,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Coloressito.borderLight,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    signedIn
+                                        ? 'Cerrar sesión'
+                                        : 'Iniciar sesión',
+                                    style: const TextStyle(
+                                      color: Coloressito.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+                // Centro
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Avatar / icono central
+                      Container(
+                        width: 150,
+                        height: 150,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              Coloressito.surfaceLight,
+                              Coloressito.surfaceDark,
+                            ],
+                          ),
+                          border: Border.all(
+                            color: Coloressito.borderLight,
+                            width: 3,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Coloressito.shadowColor,
+                              blurRadius: 20,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.explore,
+                          size: 80,
+                          color: Coloressito.textPrimary,
+                        ),
+                      ),
+
+                      // Título
+                      const Text(
+                        'RECORRIDO',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          color: Coloressito.textPrimary,
+                          letterSpacing: 2,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 4,
+                              color: Coloressito.shadowColor,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Subtítulo
+                      const Text(
+                        'Colecciona el mundo',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Coloressito.textSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Stats
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _StatCard(
+                            icon: Icons.location_on,
+                            title: 'Lugares',
+                            subtitle: '500+',
+                            color: Coloressito.badgeRed,
+                          ),
+                          _StatCard(
+                            icon: Icons.emoji_events,
+                            title: 'Insignias',
+                            subtitle: '200+',
+                            color: Coloressito.badgeYellow,
+                          ),
+                          _StatCard(
+                            icon: Icons.people,
+                            title: 'Exploradores',
+                            subtitle: '10K+',
+                            color: Coloressito.badgeGreen,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // CTA principal
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: StreamBuilder<User?>(
+                    stream: AuthService.authStateChanges,
+                    builder: (context, snapshot) {
+                      final bool signedIn = snapshot.hasData;
+
+                      return Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              // 👉 Si ya tienes /places registrada, cámbialo por '/places'
+                              final String target =
+                                  signedIn ? '/home' : '/auth/registro';
+                              try {
+                                Navigator.pushNamed(context, target);
+                              } catch (_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Ruta no encontrada: $target',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              decoration: BoxDecoration(
+                                gradient: Coloressito.buttonGradient,
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Coloressito.glowColor,
+                                    blurRadius: 15,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.rocket_launch,
+                                    color: Coloressito.textPrimary,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    signedIn
+                                        ? 'CONTINUAR AVENTURA'
+                                        : 'COMENZAR AVENTURA',
+                                    style: const TextStyle(
+                                      color: Coloressito.textPrimary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Acceso directo a /places en debug
+                          if (kDebugMode)
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/places'),
+                              child: const Text('Ver / administrar lugares'),
+                            ),
+
+                          const Text(
+                            'Crea tu pasaporte digital y descubre\nlugares increíbles cerca de ti',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Coloressito.textSecondary,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FloatingElement extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  const _FloatingElement({
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(size * 0.2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        shape: BoxShape.circle,
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Icon(icon, color: color, size: size * 0.6),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+
+  const _StatCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Coloressito.surfaceDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Coloressito.borderLight),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: Coloressito.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Coloressito.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

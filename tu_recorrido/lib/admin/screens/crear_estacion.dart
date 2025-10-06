@@ -19,7 +19,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
-  
+
   bool _cargando = false;
   Position? _ubicacionActual;
 
@@ -45,7 +45,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.whileInUse || 
+      if (permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always) {
         final position = await Geolocator.getCurrentPosition();
         setState(() {
@@ -69,7 +69,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
     try {
       final codigo = EstacionService.generarCodigo(_nombreController.text);
-      
+
       final estacion = Estacion(
         id: '', // Se genera automáticamente
         codigo: codigo,
@@ -81,7 +81,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       );
 
       await EstacionService.crearEstacion(estacion);
-      
+
       if (mounted) {
         _mostrarExito('Estación creada con código: $codigo');
         _limpiarFormulario();
@@ -105,10 +105,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
   void _mostrarError(String mensaje) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: Coloressito.badgeRed,
-      ),
+      SnackBar(content: Text(mensaje), backgroundColor: Coloressito.badgeRed),
     );
   }
 
@@ -132,7 +129,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
           children: [
             const EncabezadoEstacion(),
             const SizedBox(height: 24),
-            
             CampoFormulario(
               controller: _nombreController,
               label: 'Nombre de la estación',
@@ -147,9 +143,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 return null;
               },
             ),
-            
             const SizedBox(height: 16),
-            
             CampoFormulario(
               controller: _descripcionController,
               label: 'Descripción histórica',
@@ -162,11 +156,9 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 return null;
               },
             ),
-            
             const SizedBox(height: 16),
             InfoUbicacion(ubicacion: _ubicacionActual),
             const SizedBox(height: 32),
-            
             BotonAccion(
               texto: 'Crear Estación',
               onPressed: _crearEstacion,

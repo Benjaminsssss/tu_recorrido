@@ -58,7 +58,9 @@ class AdminScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Coloressito.adventureGreen,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -72,10 +74,10 @@ class AdminScreen extends StatelessWidget {
 
     try {
       await EstacionesData.crearEstacionPrueba();
-      
+
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
-      
+
       // Mostrar éxito con el código QR
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -87,7 +89,7 @@ class AdminScreen extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
-      
+
       // Mostrar error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -148,7 +150,9 @@ class AdminScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Coloressito.adventureGreen,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -162,10 +166,10 @@ class AdminScreen extends StatelessWidget {
 
     try {
       await EstacionesData.crearEstacionesEjemplo();
-      
+
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
-      
+
       // Mostrar éxito
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -176,7 +180,7 @@ class AdminScreen extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
-      
+
       // Mostrar error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -195,14 +199,14 @@ class AdminScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeaderInfo(),
-          
+
           const SizedBox(height: 32),
-          
+
           // Sección de gestión de estaciones
           _buildSeccionEstaciones(context),
-          
+
           const SizedBox(height: 24),
-          
+
           // Sección de estadísticas generales
           _buildSeccionEstadisticas(),
         ],
@@ -245,10 +249,7 @@ class AdminScreen extends StatelessWidget {
           const Text(
             'Gestiona las estaciones patrimoniales y el contenido de la aplicación',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
           ),
         ],
       ),
@@ -287,10 +288,7 @@ class AdminScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const Text(
             'Crear, editar y administrar las estaciones patrimoniales de Santiago',
-            style: TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 16),
           Row(
@@ -327,9 +325,9 @@ class AdminScreen extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Botones para crear estaciones
           Row(
             children: [
@@ -372,11 +370,7 @@ class AdminScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.analytics,
-                color: Coloressito.badgeBlue,
-                size: 24,
-              ),
+              Icon(Icons.analytics, color: Coloressito.badgeBlue, size: 24),
               const SizedBox(width: 8),
               const Text(
                 'Estadísticas Generales',
@@ -391,10 +385,7 @@ class AdminScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const Text(
             'Próximamente: estadísticas de uso, estaciones más visitadas, etc.',
-            style: TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
           ),
         ],
       ),
@@ -419,11 +410,7 @@ class AdminScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              icono,
-              color: color,
-              size: 32,
-            ),
+            Icon(icono, color: color, size: 32),
             const SizedBox(height: 8),
             Text(
               texto,

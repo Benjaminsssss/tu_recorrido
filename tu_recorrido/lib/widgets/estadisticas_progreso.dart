@@ -40,11 +40,7 @@ class EstadisticasProgreso extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icono,
-                color: Coloressito.badgeYellow,
-                size: 32,
-              ),
+              Icon(icono, color: Coloressito.badgeYellow, size: 32),
               const SizedBox(width: 8),
               Text(
                 titulo,
@@ -56,25 +52,39 @@ class EstadisticasProgreso extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatItem('Visitadas', visitadas.toString(), Coloressito.adventureGreen),
-              _buildStatItem('Total', total.toString(), Coloressito.textSecondary),
-              _buildStatItem('Completado', '$porcentaje%', Coloressito.badgeYellow),
+              _buildStatItem(
+                'Visitadas',
+                visitadas.toString(),
+                Coloressito.adventureGreen,
+              ),
+              _buildStatItem(
+                'Total',
+                total.toString(),
+                Coloressito.textSecondary,
+              ),
+              _buildStatItem(
+                'Completado',
+                '$porcentaje%',
+                Coloressito.badgeYellow,
+              ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Barra de progreso
           LinearProgressIndicator(
             value: total > 0 ? visitadas / total : 0,
             backgroundColor: Coloressito.surfaceDark,
-            valueColor: const AlwaysStoppedAnimation<Color>(Coloressito.adventureGreen),
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              Coloressito.adventureGreen,
+            ),
             minHeight: 8,
           ),
         ],

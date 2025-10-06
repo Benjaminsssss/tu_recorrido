@@ -32,7 +32,7 @@ class _ColeccionScreenState extends State<ColeccionScreen> {
     try {
       final estaciones = await ColeccionService.obtenerEstacionesVisitadas();
       final stats = await ColeccionService.obtenerEstadisticas();
-      
+
       if (mounted) {
         setState(() {
           _estacionesVisitadas = estaciones;
@@ -50,10 +50,7 @@ class _ColeccionScreenState extends State<ColeccionScreen> {
 
   void _mostrarError(String mensaje) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: Coloressito.badgeRed,
-      ),
+      SnackBar(content: Text(mensaje), backgroundColor: Coloressito.badgeRed),
     );
   }
 
@@ -76,9 +73,9 @@ class _ColeccionScreenState extends State<ColeccionScreen> {
             total: total,
             porcentaje: porcentaje,
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Lista de estaciones visitadas
           const Text(
             'Estaciones Visitadas',
@@ -88,9 +85,9 @@ class _ColeccionScreenState extends State<ColeccionScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           if (_estacionesVisitadas.isEmpty)
             const EstadoVacio.coleccionVacia()
           else
@@ -99,6 +96,4 @@ class _ColeccionScreenState extends State<ColeccionScreen> {
       ),
     );
   }
-
-
 }
