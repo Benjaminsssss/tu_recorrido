@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app.dart';
 import 'firebase_options_dev.dart';
@@ -13,6 +15,10 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
+
   // Manejo global de errores
   runZonedGuarded(() {
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -20,10 +26,10 @@ Future<void> main() async {
     };
     runApp(const MyApp());
   }, (error, stack) {
-    // ignore: avoid_print
-    debugPrint('error: $error\n$stack');
+    debugPrint('Error: $error\n$stack');
   });
 }
+
 
 
 

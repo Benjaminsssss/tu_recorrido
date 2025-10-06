@@ -19,6 +19,7 @@ class Coloressito {
   static const Color badgeBlue = Color(0xFF64b5f6);      // Azul insignia (extra)
   
   // Colores de superficie y fondos
+  static const Color backgroundDark = Color(0xFF0D1421);  // Fondo oscuro principal
   static const Color surfaceLight = Color(0x33FFFFFF);   // Blanco transparente para cards
   static const Color surfaceDark = Color(0x1AFFFFFF);    // Blanco muy transparente
   static const Color borderLight = Color(0x4DFFFFFF);    // Bordes blancos suaves
