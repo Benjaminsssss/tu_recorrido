@@ -70,8 +70,8 @@ class HomeScreen extends StatelessWidget {
                       final User? user = snapshot.data;
                       final String saludo = signedIn
                           ? ((user?.displayName?.trim().isNotEmpty ?? false)
-                                ? user!.displayName!.trim()
-                                : (user?.email ?? 'Explorador'))
+                              ? user!.displayName!.trim()
+                              : (user?.email ?? 'Explorador'))
                           : 'Explorador';
 
                       return Row(
@@ -255,9 +255,8 @@ class HomeScreen extends StatelessWidget {
                           GestureDetector(
                             onTap: () {
                               // 👉 Si ya tienes /places registrada, cámbialo por '/places'
-                              final String target = signedIn
-                                  ? '/home'
-                                  : '/auth/registro';
+                              final String target =
+                                  signedIn ? '/home' : '/auth/registro';
                               try {
                                 Navigator.pushNamed(context, target);
                               } catch (_) {

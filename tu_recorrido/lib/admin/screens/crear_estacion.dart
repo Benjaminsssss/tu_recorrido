@@ -129,7 +129,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
           children: [
             const EncabezadoEstacion(),
             const SizedBox(height: 24),
-
             CampoFormulario(
               controller: _nombreController,
               label: 'Nombre de la estación',
@@ -144,9 +143,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 return null;
               },
             ),
-
             const SizedBox(height: 16),
-
             CampoFormulario(
               controller: _descripcionController,
               label: 'Descripción histórica',
@@ -159,11 +156,9 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 return null;
               },
             ),
-
             const SizedBox(height: 16),
             InfoUbicacion(ubicacion: _ubicacionActual),
             const SizedBox(height: 32),
-
             BotonAccion(
               texto: 'Crear Estación',
               onPressed: _crearEstacion,

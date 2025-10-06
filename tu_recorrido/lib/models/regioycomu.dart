@@ -8,7 +8,6 @@
 
 final Map<String, List<String>> regionesYComunas = {
   "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
-
   "Tarapacá": [
     "Iquique",
     "Alto Hospicio",
@@ -18,7 +17,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Huara",
     "Pica",
   ],
-
   "Antofagasta": [
     "Antofagasta",
     "Mejillones",
@@ -30,7 +28,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Tocopilla",
     "María Elena",
   ],
-
   "Atacama": [
     "Copiapó",
     "Caldera",
@@ -42,7 +39,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Freirina",
     "Huasco",
   ],
-
   "Coquimbo": [
     "La Serena",
     "Coquimbo",
@@ -60,7 +56,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Los Vilos",
     "Salamanca",
   ],
-
   "Valparaíso": [
     "Valparaíso",
     "Casablanca",
@@ -101,7 +96,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Olmué",
     "Villa Alemana",
   ],
-
   "Metropolitana": [
     "Santiago",
     "Cerrillos",
@@ -156,7 +150,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Padre Hurtado",
     "Peñaflor",
   ],
-
   "O'Higgins": [
     "Rancagua",
     "Codegua",
@@ -192,7 +185,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Pumanque",
     "Santa Cruz",
   ],
-
   "Maule": [
     "Talca",
     "Constitución",
@@ -225,7 +217,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Villa Alegre",
     "Yerbas Buenas",
   ],
-
   "Ñuble": [
     "Cobquecura",
     "Coelemu",
@@ -249,7 +240,6 @@ final Map<String, List<String>> regionesYComunas = {
     "San Fabián",
     "San Nicolás",
   ],
-
   "Biobío": [
     "Concepción",
     "Coronel",
@@ -285,7 +275,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Yumbel",
     "Alto Biobío",
   ],
-
   "Araucanía": [
     "Temuco",
     "Carahue",
@@ -320,7 +309,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Traiguén",
     "Victoria",
   ],
-
   "Los Ríos": [
     "Valdivia",
     "Corral",
@@ -335,7 +323,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Lago Ranco",
     "Río Bueno",
   ],
-
   "Los Lagos": [
     "Puerto Montt",
     "Calbuco",
@@ -368,7 +355,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Quemchi",
     "Quinchao",
   ],
-
   "Aysén": [
     "Coyhaique",
     "Lago Verde",
@@ -381,7 +367,6 @@ final Map<String, List<String>> regionesYComunas = {
     "Chile Chico",
     "Río Ibáñez",
   ],
-
   "Magallanes": [
     "Punta Arenas",
     "Laguna Blanca",

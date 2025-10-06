@@ -524,22 +524,21 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Botón principal
                         ElevatedButton(
                           onPressed: _isLoading ? null : _submit,
-                          style:
-                              ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Coloressito.textPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                elevation: 0,
-                              ).copyWith(
-                                backgroundColor: WidgetStateProperty.all(
-                                  Colors.transparent,
-                                ),
-                              ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Coloressito.textPrimary,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 18,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                          ).copyWith(
+                            backgroundColor: WidgetStateProperty.all(
+                              Colors.transparent,
+                            ),
+                          ),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 18),

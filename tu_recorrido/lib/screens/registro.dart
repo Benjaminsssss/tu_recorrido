@@ -60,8 +60,7 @@ class RegistroScreenState extends State<RegistroScreen> {
     );
     if (picked != null) {
       setState(() {
-        fecha.text =
-            "${picked.day.toString().padLeft(2, '0')}/"
+        fecha.text = "${picked.day.toString().padLeft(2, '0')}/"
             "${picked.month.toString().padLeft(2, '0')}/"
             "${picked.year}";
       });

@@ -20,9 +20,8 @@ class MarcoEscaneo extends StatelessWidget {
       height: 250,
       decoration: BoxDecoration(
         border: Border.all(
-          color: escaneando
-              ? Coloressito.adventureGreen
-              : Coloressito.borderLight,
+          color:
+              escaneando ? Coloressito.adventureGreen : Coloressito.borderLight,
           width: 3,
         ),
         borderRadius: BorderRadius.circular(20),
@@ -91,9 +90,8 @@ class MarcoEscaneo extends StatelessWidget {
           border: Border(
             top: (isTopLeft || isTopRight) ? borderSide : BorderSide.none,
             left: (isTopLeft || isBottomLeft) ? borderSide : BorderSide.none,
-            bottom: (isBottomLeft || isBottomRight)
-                ? borderSide
-                : BorderSide.none,
+            bottom:
+                (isBottomLeft || isBottomRight) ? borderSide : BorderSide.none,
             right: (isTopRight || isBottomRight) ? borderSide : BorderSide.none,
           ),
         ),

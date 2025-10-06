@@ -19,9 +19,8 @@ class EstacionService {
       }
 
       // Guardar en Firestore
-      final docRef = await _firestore
-          .collection(_collection)
-          .add(estacion.toFirestore());
+      final docRef =
+          await _firestore.collection(_collection).add(estacion.toFirestore());
 
       return docRef.id;
     } catch (e) {
@@ -106,9 +105,8 @@ class EstacionService {
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_|_$'), '');
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch
-        .toString()
-        .substring(8);
+    final timestamp =
+        DateTime.now().millisecondsSinceEpoch.toString().substring(8);
 
     return '${codigoBase}_$timestamp';
   }

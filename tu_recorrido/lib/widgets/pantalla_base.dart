@@ -43,19 +43,19 @@ class PantallaBase extends StatelessWidget {
               ),
             )
           : onRefresh != null
-          ? RefreshIndicator(
-              color: Coloressito.adventureGreen,
-              onRefresh: onRefresh!,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: body,
-              ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: body,
-            ),
+              ? RefreshIndicator(
+                  color: Coloressito.adventureGreen,
+                  onRefresh: onRefresh!,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    child: body,
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: body,
+                ),
       floatingActionButton: floatingActionButton,
     );
   }

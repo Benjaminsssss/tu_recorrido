@@ -104,18 +104,17 @@ class _Mapita extends State<Mapita> {
     //este comando es el que escucha los cambios en la ubicacion del usuario
     //es decir, cada vez que el usuario se mueva, este metodo se va a ejecutar
     //para actualizar la ubicacion del "punto azul" y centrar la camara en la nueva ubicacion
-    _positionStreamSubscription =
-        Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 10,
-          ),
-        ).listen(
-          (Position position) async {},
-          onError: (e) {
-            debugPrint("Error en el stream de ubicación: $e");
-          },
-        );
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen(
+      (Position position) async {},
+      onError: (e) {
+        debugPrint("Error en el stream de ubicación: $e");
+      },
+    );
   }
 
   //creacion basica del widget

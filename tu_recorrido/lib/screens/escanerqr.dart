@@ -145,19 +145,14 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
               escaneando: _escaneando,
               pulseAnimation: _pulseAnimation,
             ),
-
             const SizedBox(height: 32),
-
             TextoInstructivo(escaneando: _escaneando, validando: _validando),
-
             const SizedBox(height: 48),
-
             BotonEscaneo(
               escaneando: _escaneando,
               validando: _validando,
               onPressed: _simularEscaneo,
             ),
-
             if (_estacionEncontrada != null) ...[
               const SizedBox(height: 24),
               UltimaEstacionVisitada(estacion: _estacionEncontrada!),

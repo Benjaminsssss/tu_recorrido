@@ -18,9 +18,8 @@ class FirestoreService {
     required String uid,
     required Map<String, dynamic> data,
   }) async {
-    final DocumentReference<Map<String, dynamic>> docRef = _db
-        .collection('users')
-        .doc(uid);
+    final DocumentReference<Map<String, dynamic>> docRef =
+        _db.collection('users').doc(uid);
 
     await _db.runTransaction((tx) async {
       final DocumentSnapshot<Map<String, dynamic>> snap = await tx.get(docRef);
