@@ -8,7 +8,6 @@ import 'screens/auth.dart';
 import 'screens/menu.dart';
 import 'screens/perfil.dart';
 import 'screens/places_screen.dart';
-import 'screens/recuperar.dart';
 import 'screens/escanerqr.dart';
 import 'screens/coleccion.dart';
 

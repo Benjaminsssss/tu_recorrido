@@ -23,7 +23,7 @@ class Mapita extends StatefulWidget {
 class _MapitaState extends State<Mapita> {
   
   // 🚨 REEMPLAZA ESTA CLAVE CON TU CLAVE REAL DE GOOGLE CLOUD/DIRECTIONS API 🚨
-  static const String GOOGLE_API_KEY_INLINE = "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
+  static const String googleApiKeyInline = "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
 
   final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
@@ -50,7 +50,7 @@ class _MapitaState extends State<Mapita> {
   bool _isRouteActive = false; 
   
   // Inicializamos PolylinePoints SOLO para la función decodePolyline
-  PolylinePoints polylinePoints = PolylinePoints(apiKey: GOOGLE_API_KEY_INLINE);
+  PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
   
   // Configuración de Geolocator
   final LocationSettings _locationSettings = const LocationSettings(
@@ -297,7 +297,7 @@ class _MapitaState extends State<Mapita> {
   Future<void> _getRoute(LatLng origin, LatLng destination) async {
     _showSnackBar('Trazando ruta con la API directa...');
     
-    final String apiKey = GOOGLE_API_KEY_INLINE;
+    final String apiKey = googleApiKeyInline;
     
     String url = 
         'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey';

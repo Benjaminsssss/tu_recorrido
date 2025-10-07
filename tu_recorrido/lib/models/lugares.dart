@@ -61,7 +61,7 @@ class PlaceResult {
 
 /// Utilidades de lugares
 class LugaresUtils {
-  static const double _R = 6371.0;
+  static const double _earthRadiusKm = 6371.0;
 
   static double _deg2rad(double d) => d * pi / 180;
 
@@ -76,7 +76,7 @@ class LugaresUtils {
     final a = sin(dLat / 2) * sin(dLat / 2) +
         cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return _R * c;
+    return _earthRadiusKm * c;
   }
 
   static double distanceMeters(
