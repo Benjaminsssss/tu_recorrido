@@ -1,26 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // 👈 importante
 import '../utils/colores.dart';
-import '../services/auth_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  Future<void> _logout(BuildContext context) async {
-    await AuthService.signOut();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('👋 Sesión cerrada')));
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo con gradiente
+          // Fondo con gradiente y patrones
           Container(
             decoration: const BoxDecoration(
               gradient: Coloressito.backgroundGradient,
@@ -28,7 +17,7 @@ class HomeScreen extends StatelessWidget {
           ),
 
           // Elementos decorativos flotantes
-          const Positioned(
+          Positioned(
             top: 100,
             right: 30,
             child: _FloatingElement(
@@ -37,7 +26,7 @@ class HomeScreen extends StatelessWidget {
               size: 40,
             ),
           ),
-          const Positioned(
+          Positioned(
             top: 180,
             left: 50,
             child: _FloatingElement(
@@ -46,7 +35,7 @@ class HomeScreen extends StatelessWidget {
               size: 35,
             ),
           ),
-          const Positioned(
+          Positioned(
             top: 280,
             right: 80,
             child: _FloatingElement(
@@ -60,99 +49,59 @@ class HomeScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // Header con logo + sesión
+                // Header con logo y botones
                 Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: StreamBuilder<User?>(
-                    stream: AuthService.authStateChanges,
-                    builder: (context, snapshot) {
-                      final bool signedIn = snapshot.hasData;
-                      final User? user = snapshot.data;
-                      final String saludo = signedIn
-                          ? ((user?.displayName?.trim().isNotEmpty ?? false)
-                              ? user!.displayName!.trim()
-                              : (user?.email ?? 'Explorador'))
-                          : 'Explorador';
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Logo
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Coloressito.surfaceLight,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Coloressito.borderLight),
+                        ),
+                        child: const Icon(
+                          Icons.map,
+                          color: Coloressito.textPrimary,
+                          size: 24,
+                        ),
+                      ),
 
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Logo
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Coloressito.surfaceLight,
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(
-                                color: Coloressito.borderLight,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.map,
+                      // Botón login
+                      GestureDetector(
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/auth/login'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Coloressito.surfaceLight,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Coloressito.borderLight),
+                          ),
+                          child: const Text(
+                            'Iniciar sesión',
+                            style: TextStyle(
                               color: Coloressito.textPrimary,
-                              size: 24,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-
-                          // Sesión
-                          Row(
-                            children: [
-                              if (signedIn)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Text(
-                                    'Hola, $saludo',
-                                    style: const TextStyle(
-                                      color: Coloressito.textSecondary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              GestureDetector(
-                                onTap: () => signedIn
-                                    ? _logout(context)
-                                    : Navigator.pushNamed(
-                                        context,
-                                        '/auth/login',
-                                      ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Coloressito.surfaceLight,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Coloressito.borderLight,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    signedIn
-                                        ? 'Cerrar sesión'
-                                        : 'Iniciar sesión',
-                                    style: const TextStyle(
-                                      color: Coloressito.textPrimary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
-                // Centro
+                // contindo principala
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Avatar / icono central
+                      // parte del avatare
                       Container(
                         width: 150,
                         height: 150,
@@ -166,9 +115,7 @@ class HomeScreen extends StatelessWidget {
                             ],
                           ),
                           border: Border.all(
-                            color: Coloressito.borderLight,
-                            width: 3,
-                          ),
+                              color: Coloressito.borderLight, width: 3),
                           boxShadow: [
                             BoxShadow(
                               color: Coloressito.shadowColor,
@@ -201,6 +148,7 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+
                       const SizedBox(height: 8),
 
                       // Subtítulo
@@ -212,10 +160,11 @@ class HomeScreen extends StatelessWidget {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
+
                       const SizedBox(height: 40),
 
-                      // Stats
-                      const Row(
+                      // Stats o preview de funcionalidades
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _StatCard(
@@ -242,94 +191,65 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // CTA principal
+                // Botón principal de inicio
                 Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: StreamBuilder<User?>(
-                    stream: AuthService.authStateChanges,
-                    builder: (context, snapshot) {
-                      final bool signedIn = snapshot.hasData;
-
-                      return Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              // 👉 Si ya tienes /places registrada, cámbialo por '/places'
-                              final String target =
-                                  signedIn ? '/home' : '/auth/registro';
-                              try {
-                                Navigator.pushNamed(context, target);
-                              } catch (_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Ruta no encontrada: $target',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              decoration: BoxDecoration(
-                                gradient: Coloressito.buttonGradient,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Coloressito.glowColor,
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
+                  child: Column(
+                    children: [
+                      // Botón principal
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/auth'),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          decoration: BoxDecoration(
+                            gradient: Coloressito.buttonGradient,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Coloressito.glowColor,
+                                blurRadius: 15,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 5),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.rocket_launch,
-                                    color: Coloressito.textPrimary,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    signedIn
-                                        ? 'CONTINUAR AVENTURA'
-                                        : 'COMENZAR AVENTURA',
-                                    style: const TextStyle(
-                                      color: Coloressito.textPrimary,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ],
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.rocket_launch,
+                                color: Coloressito.textPrimary,
+                                size: 24,
                               ),
-                            ),
+                              SizedBox(width: 12),
+                              Text(
+                                'COMENZAR AVENTURA',
+                                style: TextStyle(
+                                  color: Coloressito.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
+                        ),
+                      ),
 
-                          // Acceso directo a /places en debug
-                          if (kDebugMode)
-                            TextButton(
-                              onPressed: () =>
-                                  Navigator.pushNamed(context, '/places'),
-                              child: const Text('Ver / administrar lugares'),
-                            ),
+                      const SizedBox(height: 16),
 
-                          const Text(
-                            'Crea tu pasaporte digital y descubre\nlugares increíbles cerca de ti',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Coloressito.textSecondary,
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                      // Texto adicional
+                      const Text(
+                        'Crea tu pasaporte digital y descubre\nlugares increíbles cerca de ti',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Coloressito.textSecondary,
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -361,7 +281,11 @@ class _FloatingElement extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
-      child: Icon(icon, color: color, size: size * 0.6),
+      child: Icon(
+        icon,
+        color: color,
+        size: size * 0.6,
+      ),
     );
   }
 }
@@ -396,7 +320,11 @@ class _StatCard extends StatelessWidget {
               color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
           ),
           const SizedBox(height: 8),
           Text(

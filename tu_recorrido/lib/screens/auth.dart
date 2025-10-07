@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/colores.dart';
 import '../services/auth_service.dart';
 
@@ -43,112 +42,44 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
 
-    setState(() {
-      _isLoading = true;
-    });
+      try {
+        if (_isLogin) {
+          // Iniciar sesión con email y contraseña
+          await AuthService.signInWithEmail(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+        } else {
+          // Registrarse con email y contraseña
+          await AuthService.registerWithEmail(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            displayName: _nameController.text.trim(),
+          );
+        }
 
-    try {
-      debugPrint(
-        '🔄 Iniciando ${_isLogin ? "login" : "registro"} con email: ${_emailController.text.trim()}',
-      );
-      debugPrint('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
-
-      UserCredential? userCredential;
-
-      if (_isLogin) {
-        // Iniciar sesión con email y contraseña
-        userCredential = await AuthService.signInWithEmail(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-        debugPrint('✅ Login exitoso para: ${userCredential?.user?.email}');
-      } else {
-        // Registrarse con email y contraseña
-        userCredential = await AuthService.registerWithEmail(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          displayName: _nameController.text.trim(),
-        );
-        debugPrint('✅ Registro exitoso para: ${userCredential?.user?.email}');
-
-        // Limpiar formulario tras registro exitoso
-        _clearForm();
-      }
-
-      // Mostrar mensaje de éxito
-      if (mounted && userCredential != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isLogin
-                  ? '✅ Inicio de sesión exitoso'
-                  : '✅ Registro exitoso. ¡Bienvenido!',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Navegar al menú principal
-        await Future.delayed(const Duration(seconds: 1));
+        // Navegar al menú principal si es exitoso
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/menu');
         }
-      }
-    } on FirebaseAuthException catch (e) {
-      debugPrint('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
-
-      String errorMessage;
-      switch (e.code) {
-        case 'weak-password':
-          errorMessage = 'La contraseña es muy débil.';
-          break;
-        case 'email-already-in-use':
-          errorMessage = 'Ya existe una cuenta con este correo.';
-          break;
-        case 'invalid-email':
-          errorMessage = 'El correo no es válido.';
-          break;
-        case 'user-not-found':
-          errorMessage = 'No existe una cuenta con este correo.';
-          break;
-        case 'wrong-password':
-          errorMessage = 'Contraseña incorrecta.';
-          break;
-        case 'operation-not-allowed':
-          errorMessage = 'El registro con email/contraseña no está habilitado.';
-          break;
-        case 'invalid-api-key':
-          errorMessage = 'Error de configuración: API key inválida.';
-          break;
-        default:
-          errorMessage = 'Error: ${e.message}';
-      }
-
-      if (mounted) {
-        _showErrorDialog(errorMessage);
-      }
-    } catch (e) {
-      debugPrint('🔥 Error general: $e');
-      if (mounted) {
-        _showErrorDialog('Error inesperado: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      } catch (e) {
+        // Mostrar error
+        if (mounted) {
+          _showErrorDialog(e.toString());
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
-  }
-
-  void _clearForm() {
-    _emailController.clear();
-    _passwordController.clear();
-    _nameController.clear();
   }
 
   void _signInWithGoogle() async {
@@ -249,7 +180,11 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ],
       ),
-      child: Icon(icon, color: Colors.white, size: size),
+      child: Icon(
+        icon,
+        color: Colors.white,
+        size: size,
+      ),
     );
   }
 
@@ -289,9 +224,7 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 32.0,
-                  vertical: 24.0,
-                ),
+                    horizontal: 32.0, vertical: 24.0),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
                   child: Form(
@@ -321,9 +254,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ],
                             border: Border.all(
-                              color: Coloressito.borderLight,
-                              width: 2,
-                            ),
+                                color: Coloressito.borderLight, width: 2),
                           ),
                           child: const Icon(
                             Icons.map,
@@ -352,18 +283,15 @@ class _AuthScreenState extends State<AuthScreen> {
                         if (!_isLogin) ...[
                           TextFormField(
                             controller: _nameController,
-                            style: const TextStyle(
-                              color: Coloressito.textPrimary,
-                            ),
+                            style:
+                                const TextStyle(color: Coloressito.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Nombre completo',
                               labelStyle: const TextStyle(
-                                color: Coloressito.textSecondary,
-                              ),
+                                  color: Coloressito.textSecondary),
                               hintText: 'Ej: Juan Pérez',
-                              hintStyle: const TextStyle(
-                                color: Coloressito.textMuted,
-                              ),
+                              hintStyle:
+                                  const TextStyle(color: Coloressito.textMuted),
                               filled: true,
                               fillColor: Coloressito.surfaceDark,
                               border: OutlineInputBorder(
@@ -373,15 +301,13 @@ class _AuthScreenState extends State<AuthScreen> {
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: const BorderSide(
-                                  color: Coloressito.borderLight,
-                                ),
+                                    color: Coloressito.borderLight),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: const BorderSide(
-                                  color: Coloressito.adventureGreen,
-                                  width: 2,
-                                ),
+                                    color: Coloressito.adventureGreen,
+                                    width: 2),
                               ),
                             ),
                             validator: (value) {
@@ -398,18 +324,15 @@ class _AuthScreenState extends State<AuthScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(
-                            color: Coloressito.textPrimary,
-                          ),
+                          style:
+                              const TextStyle(color: Coloressito.textPrimary),
                           decoration: InputDecoration(
                             labelText: 'Dirección de email',
                             labelStyle: const TextStyle(
-                              color: Coloressito.textSecondary,
-                            ),
+                                color: Coloressito.textSecondary),
                             hintText: 'nombre@dominio.com',
-                            hintStyle: const TextStyle(
-                              color: Coloressito.textMuted,
-                            ),
+                            hintStyle:
+                                const TextStyle(color: Coloressito.textMuted),
                             filled: true,
                             fillColor: Coloressito.surfaceDark,
                             border: OutlineInputBorder(
@@ -419,24 +342,20 @@ class _AuthScreenState extends State<AuthScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
-                                color: Coloressito.borderLight,
-                              ),
+                                  color: Coloressito.borderLight),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
-                                color: Coloressito.adventureGreen,
-                                width: 2,
-                              ),
+                                  color: Coloressito.adventureGreen, width: 2),
                             ),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Ingresa tu email';
                             }
-                            if (!RegExp(
-                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                            ).hasMatch(value.trim())) {
+                            if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                .hasMatch(value.trim())) {
                               return 'Ingresa un email válido';
                             }
                             return null;
@@ -449,14 +368,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
-                          style: const TextStyle(
-                            color: Coloressito.textPrimary,
-                          ),
+                          style:
+                              const TextStyle(color: Coloressito.textPrimary),
                           decoration: InputDecoration(
                             labelText: 'Contraseña',
                             labelStyle: const TextStyle(
-                              color: Coloressito.textSecondary,
-                            ),
+                                color: Coloressito.textSecondary),
                             filled: true,
                             fillColor: Coloressito.surfaceDark,
                             border: OutlineInputBorder(
@@ -466,15 +383,12 @@ class _AuthScreenState extends State<AuthScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
-                                color: Coloressito.borderLight,
-                              ),
+                                  color: Coloressito.borderLight),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
-                                color: Coloressito.adventureGreen,
-                                width: 2,
-                              ),
+                                  color: Coloressito.adventureGreen, width: 2),
                             ),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -512,8 +426,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: const Text(
                                 'Usar el número de teléfono',
                                 style: TextStyle(
-                                  color: Coloressito.adventureGreen,
-                                ),
+                                    color: Coloressito.adventureGreen),
                               ),
                             ),
                           ),
@@ -527,17 +440,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             foregroundColor: Coloressito.textPrimary,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 18,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 18),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
                             elevation: 0,
                           ).copyWith(
-                            backgroundColor: WidgetStateProperty.all(
-                              Colors.transparent,
-                            ),
+                            backgroundColor:
+                                WidgetStateProperty.all(Colors.transparent),
                           ),
                           child: Container(
                             width: double.infinity,
@@ -565,8 +475,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                       valueColor: AlwaysStoppedAnimation<Color>(
-                                        Coloressito.textPrimary,
-                                      ),
+                                          Coloressito.textPrimary),
                                       strokeWidth: 2,
                                     ),
                                   )
@@ -588,22 +497,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         Row(
                           children: [
                             const Expanded(
-                              child: Divider(color: Coloressito.borderLight),
-                            ),
+                                child: Divider(color: Coloressito.borderLight)),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 'o',
                                 style: const TextStyle(
-                                  color: Coloressito.textMuted,
-                                ),
+                                    color: Coloressito.textMuted),
                               ),
                             ),
                             const Expanded(
-                              child: Divider(color: Coloressito.borderLight),
-                            ),
+                                child: Divider(color: Coloressito.borderLight)),
                           ],
                         ),
 
@@ -619,8 +524,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Coloressito.textPrimary,
-                                    ),
+                                        Coloressito.textPrimary),
                                   ),
                                 )
                               : Container(
@@ -629,8 +533,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   decoration: const BoxDecoration(
                                     image: DecorationImage(
                                       image: NetworkImage(
-                                        'https://developers.google.com/identity/images/g-logo.png',
-                                      ),
+                                          'https://developers.google.com/identity/images/g-logo.png'),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -639,15 +542,13 @@ class _AuthScreenState extends State<AuthScreen> {
                             _isLoading
                                 ? 'Conectando con Google...'
                                 : '${_isLogin ? 'Iniciar sesión' : 'Registrarte'} con Google',
-                            style: const TextStyle(
-                              color: Coloressito.textPrimary,
-                            ),
+                            style:
+                                const TextStyle(color: Coloressito.textPrimary),
                           ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             side: const BorderSide(
-                              color: Coloressito.borderLight,
-                            ),
+                                color: Coloressito.borderLight),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -662,22 +563,17 @@ class _AuthScreenState extends State<AuthScreen> {
                           onPressed: () {
                             // Implementar auth con Apple
                           },
-                          icon: const Icon(
-                            Icons.apple,
-                            color: Coloressito.textPrimary,
-                            size: 20,
-                          ),
+                          icon: const Icon(Icons.apple,
+                              color: Coloressito.textPrimary, size: 20),
                           label: Text(
                             '${_isLogin ? 'Iniciar sesión' : 'Registrarte'} con Apple',
-                            style: const TextStyle(
-                              color: Coloressito.textPrimary,
-                            ),
+                            style:
+                                const TextStyle(color: Coloressito.textPrimary),
                           ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             side: const BorderSide(
-                              color: Coloressito.borderLight,
-                            ),
+                                color: Coloressito.borderLight),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -696,8 +592,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? '¿No tienes una cuenta?'
                                   : '¿Ya tienes una cuenta?',
                               style: const TextStyle(
-                                color: Coloressito.textSecondary,
-                              ),
+                                  color: Coloressito.textSecondary),
                             ),
                             TextButton(
                               onPressed: _toggleMode,

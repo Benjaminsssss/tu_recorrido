@@ -26,7 +26,7 @@ Future<void> main() async {
       runApp(const MyApp());
     },
     (error, stack) {
-      debugPrint('Error: $error\n$stack');
+      debugPrint('❌ Uncaught error: $error\n$stack');
     },
   );
 }
