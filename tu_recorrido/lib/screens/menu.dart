@@ -504,7 +504,7 @@ class _MapitaState extends State<Mapita> {
                           height: _cardHeight,
                           margin: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Center(
@@ -548,7 +548,7 @@ class _MapitaState extends State<Mapita> {
                             shape: BoxShape.circle,
                             color: _currentPage == index 
                               ? theme.colorScheme.primary
-                              : Colors.grey.withOpacity(0.5),
+                              : Colors.grey.withValues(alpha: 0.5),
                           ),
                         ),
                       ),

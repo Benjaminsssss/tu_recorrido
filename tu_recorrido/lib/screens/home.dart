@@ -274,9 +274,9 @@ class _FloatingElement extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(size * 0.2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         shape: BoxShape.circle,
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Icon(
         icon,
@@ -314,7 +314,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
