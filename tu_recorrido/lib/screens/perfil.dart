@@ -11,12 +11,8 @@ class _PerfilState extends State<Perfil> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Perfil'),
-      ),
-      body: const Center(
-        child: Text('AQUI AÑADIR PERFIL'),
-      ),
+      appBar: AppBar(title: const Text('Perfil')),
+      body: const Center(child: Text('AQUI AÑADIR PERFIL')),
     );
   }
 }
