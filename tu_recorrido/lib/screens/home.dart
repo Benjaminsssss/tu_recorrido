@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
               gradient: Coloressito.backgroundGradient,
             ),
           ),
-          
+
           // Elementos decorativos flotantes
           Positioned(
             top: 100,
@@ -69,12 +69,14 @@ class HomeScreen extends StatelessWidget {
                           size: 24,
                         ),
                       ),
-                      
+
                       // Botón login
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth/login'),
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/auth/login'),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: Coloressito.surfaceLight,
                             borderRadius: BorderRadius.circular(20),
@@ -112,7 +114,8 @@ class HomeScreen extends StatelessWidget {
                               Coloressito.surfaceDark,
                             ],
                           ),
-                          border: Border.all(color: Coloressito.borderLight, width: 3),
+                          border: Border.all(
+                              color: Coloressito.borderLight, width: 3),
                           boxShadow: [
                             BoxShadow(
                               color: Coloressito.shadowColor,
@@ -145,9 +148,9 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Subtítulo
                       const Text(
                         'Colecciona el mundo',
@@ -345,4 +348,3 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-

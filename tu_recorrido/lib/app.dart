@@ -39,15 +39,17 @@ class MyApp extends StatelessWidget {
             const AuthGate(signedIn: HomeScreen(), signedOut: LoginScreen()),
         '/home': (_) => const HomeScreen(),
         '/menu': (_) => const Mapita(),
-        '/auth': (_) => const AuthScreen(), // Ver si eliminarla o tomar el diseño para auth registro
+        '/auth': (_) =>
+            const AuthScreen(), // Ver si eliminarla o tomar el diseño para auth registro
         '/auth/login': (_) => const LoginScreen(),
         '/auth/registro': (_) => const RegistroScreen(),
-        '/perfil': (_) => const Perfil(), 
-        '/places': (_) => const PlacesScreen(), // eliminar vista 
+        '/perfil': (_) => const Perfil(),
+        '/places': (_) => const PlacesScreen(), // eliminar vista
         '/escanear': (_) => const EscanerQRScreen(),
         '/coleccion': (_) => const ColeccionScreen(),
-        '/admin': (_) => const AdminScreen(), // eliminar vista 
-        '/admin/crear-estacion': (_) => const CrearEstacionScreen(), // eliminar vista 
+        '/admin': (_) => const AdminScreen(), // eliminar vista
+        '/admin/crear-estacion': (_) =>
+            const CrearEstacionScreen(), // eliminar vista
       },
     );
   }

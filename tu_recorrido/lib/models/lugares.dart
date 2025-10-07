@@ -28,7 +28,8 @@ class PlaceResult {
         (geo?['lat'] ?? 0).toDouble(),
         (geo?['lng'] ?? 0).toDouble(),
       ),
-      rating: json['rating'] == null ? null : (json['rating'] as num).toDouble(),
+      rating:
+          json['rating'] == null ? null : (json['rating'] as num).toDouble(),
       esGenerado: false,
     );
   }
@@ -74,7 +75,10 @@ class LugaresUtils {
     final dLat = _deg2rad(lat2 - lat1);
     final dLon = _deg2rad(lon2 - lon1);
     final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+        cos(_deg2rad(lat1)) *
+            cos(_deg2rad(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return _earthRadiusKm * c;
   }
@@ -162,7 +166,8 @@ class LugaresUtils {
       final deltaLat = (r * cos(theta)) / 111320.0;
       final deltaLng =
           (r * sin(theta)) / (111320.0 * cos(center.latitude * pi / 180));
-      final pos = LatLng(center.latitude + deltaLat, center.longitude + deltaLng);
+      final pos =
+          LatLng(center.latitude + deltaLat, center.longitude + deltaLng);
       gen.add(
         PlaceResult(
           placeId: 'synthetic_$i',
