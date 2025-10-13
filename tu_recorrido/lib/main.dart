@@ -1,25 +1,32 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:tu_recorrido/screens/menu.dart'; 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_web_plugins/url_strategy.dart';
 
+import 'app.dart';
+import 'firebase_options_dev.dart';
 
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  runApp(const MainApp());
-}
+  // Inicializa Firebase con tus opciones DEV
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Tu Recorrido',
-      home: Scaffold(
-        body: Mapita(),
-      ),
-    );
+  if (kIsWeb) {
+    usePathUrlStrategy();
   }
+
+  // Manejo global de errores
+  runZonedGuarded(
+    () {
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.dumpErrorToConsole(details);
+      };
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      debugPrint('❌ Uncaught error: $error\n$stack');
+    },
+  );
 }
-
-
-

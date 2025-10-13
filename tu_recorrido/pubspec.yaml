@@ -11,16 +11,22 @@ dependencies:
   # Flutter SDK
   flutter:
     sdk: flutter
-  
-  # DEPENDENCIAS FIREBASE (Sincronizadas a las últimas series para máxima compatibilidad con Dart 3.x)
-  firebase_auth: ^6.0.0 
+  flutter_web_plugins:
+    sdk: flutter
+  # Firebase packages
   firebase_core: ^4.1.1
-  
-  # OTRAS DEPENDENCIAS (Actualizadas)
-  geolocator: ^14.0.0
-  google_sign_in: ^6.2.1
+  firebase_auth: ^6.1.0
+  cloud_firestore: ^6.0.2
+  firebase_storage: ^13.0.2
+  package_info_plus: ^8.0.0
+
+  # Location / maps / auth
   google_maps_flutter: ^2.6.1
-  provider: ^6.1.2
+  geolocator: ^14.0.0
+  google_sign_in: ^6.3.0
+
+  # UI / utilities
+  provider: ^6.1.5+1
   cupertino_icons: ^1.0.8
   flutter_polyline_points: ^3.1.0
   geolocator_web: ^4.1.3
