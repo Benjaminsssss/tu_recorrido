@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
 import 'screens/registro.dart';
-import 'screens/auth.dart';
 import 'screens/menu.dart';
 import 'screens/perfil.dart';
 import 'screens/places_screen.dart';
@@ -39,8 +38,6 @@ class MyApp extends StatelessWidget {
             const AuthGate(signedIn: HomeScreen(), signedOut: LoginScreen()),
         '/home': (_) => const HomeScreen(),
         '/menu': (_) => const Mapita(),
-        '/auth': (_) =>
-            const AuthScreen(), // Ver si eliminarla o tomar el diseño para auth registro
         '/auth/login': (_) => const LoginScreen(),
         '/auth/registro': (_) => const RegistroScreen(),
         '/perfil': (_) => const Perfil(),
