@@ -113,44 +113,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 16),
 
-          // Progreso / pasaporte
-          WhiteCard(
-            child: Row(
-              children: [
-        Icon(Icons.card_travel,
-                    color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Tu pasaporte',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 6),
-                      LinearProgressIndicator(
-                        value: 0.35,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      const SizedBox(height: 6),
-                      Text('7/20 sellos conseguidos',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Ver pasaporte'),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
           // Cerca de ti
           Text('Cerca de ti',
               style: theme.textTheme.titleMedium
@@ -177,36 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 16),
 
-          // Desafíos
-          Text('Desafíos semanales',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          WhiteCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.flag_rounded, color: theme.colorScheme.tertiary),
-                    const SizedBox(width: 8),
-                    const Text('Visita 3 plazas históricas'),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.camera_alt_rounded,
-                        color: theme.colorScheme.secondary),
-                    const SizedBox(width: 8),
-                    const Text('Toma una foto en un sitio declarado'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
 
           // Últimas insignias
           Text('Últimas insignias',
