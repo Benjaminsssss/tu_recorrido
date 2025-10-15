@@ -65,49 +65,68 @@ class _HomeScreenState extends State<HomeScreen> {
           // Héroe / copy
           WhiteCard(
             padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Colecciona el mundo',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Crea tu pasaporte digital y descubre lugares increíbles cerca de ti.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          Chip(label: Text('Descubre')), 
-                          Chip(label: Text('Explora')), 
-                          Chip(label: Text('Colecciona')),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 90,
-                  height: 90,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 360;
+                final imgSize = isNarrow ? 72.0 : 90.0;
+                final iconSize = isNarrow ? 36.0 : 44.0;
+                final image = Container(
+                  width: imgSize,
+                  height: imgSize,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(Icons.explore_rounded,
-                      size: 44, color: theme.colorScheme.primary),
-                ),
-              ],
+                      size: iconSize, color: theme.colorScheme.primary),
+                );
+
+                final text = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Colecciona el mundo',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Crea tu pasaporte digital y descubre lugares increíbles cerca de ti.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      children: const [
+                        Chip(label: Text('Descubre')),
+                        Chip(label: Text('Explora')),
+                        Chip(label: Text('Colecciona')),
+                      ],
+                    ),
+                  ],
+                );
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      text,
+                      const SizedBox(height: 12),
+                      Align(alignment: Alignment.centerLeft, child: image),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: text),
+                    const SizedBox(width: 12),
+                    image,
+                  ],
+                );
+              },
             ),
           ),
 
@@ -120,21 +139,27 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           SizedBox(
             height: 96,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (_, i) => SizedBox(
-                width: 320,
-                child: CollectionCard(
+            child: Builder(builder: (context) {
+              final w = MediaQuery.sizeOf(context).width;
+              double cardW = w * 0.8;
+              if (cardW < 260) cardW = 260;
+              if (cardW > 340) cardW = 340;
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (_, i) => SizedBox(
+                  width: cardW,
+                  child: CollectionCard(
                   title: 'Lugar destacado ${i + 1}',
                   subtitle: 'A ${200 * (i + 1)} m • Abierto hasta 18:00',
                   imageAsset: 'assets/img/insiginia.png',
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () {},
+                  ),
                 ),
-              ),
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemCount: 5,
-            ),
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemCount: 5,
+              );
+            }),
           ),
 
           const SizedBox(height: 16),
