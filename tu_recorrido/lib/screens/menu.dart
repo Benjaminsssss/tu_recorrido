@@ -604,7 +604,7 @@ class _MapitaState extends State<Mapita> {
               onTap: isDisabled
                   ? () => _showSnackBar(
                       'Cancela la ruta actual (botón X) antes de iniciar una nueva.')
-                  // Llama al modal de confirmación si no hay ruta activa
+                  // Llama al modal de confirmación si no hay ruta activas
                   : () => _showStartTripConfirmation(place),
               borderRadius: BorderRadius.circular(12.0),
               splashColor: Colors.amber.withAlpha((255 * 0.3).round()),
