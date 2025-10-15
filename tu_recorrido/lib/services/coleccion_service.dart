@@ -4,10 +4,13 @@ import '../models/estacion.dart';
 import '../models/estacion_visitada.dart';
 
 /// Servicio para manejar la colección de estaciones visitadas por el usuario
-/// Además permite marcar estaciones como visitadas y obtener el progreso del usuario
+/// Ahora usa subcolecciones: users/{userId}/estaciones_visitadas/{estacionId}
+/// Esto hace más eficiente el acceso a los datos por usuario
 class ColeccionService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _collection = 'estaciones_visitadas';
+  static const String _usersCollection = 'users';
+  static const String _estacionesVisitadasSubcollection =
+      'estaciones_visitadas';
 
   /// Marca una estación como visitada por el usuario actual
   static Future<void> marcarComoVisitada(
@@ -29,8 +32,7 @@ class ColeccionService {
 
       // Crea un registro de visita
       final visita = EstacionVisitada(
-        id: '', // Se genera automáticamente
-        userId: user.uid,
+        id: estacion.id, // Usamos el ID de la estación como ID del documento
         estacionId: estacion.id,
         estacionCodigo: estacion.codigo,
         estacionNombre: estacion.nombre,
@@ -39,7 +41,13 @@ class ColeccionService {
         longitudVisita: longitudUsuario,
       );
 
-      await _firestore.collection(_collection).add(visita.toFirestore());
+      // Guarda en la subcolección del usuario
+      await _firestore
+          .collection(_usersCollection)
+          .doc(user.uid)
+          .collection(_estacionesVisitadasSubcollection)
+          .doc(estacion.id) // Usar el ID de la estación como ID del documento
+          .set(visita.toFirestore());
     } catch (e) {
       throw Exception('Error al marcar estación como visitada: $e');
     }
@@ -54,8 +62,9 @@ class ColeccionService {
 
     try {
       final query = await _firestore
-          .collection(_collection)
-          .where('userId', isEqualTo: user.uid)
+          .collection(_usersCollection)
+          .doc(user.uid)
+          .collection(_estacionesVisitadasSubcollection)
           .orderBy('fechaVisita', descending: true)
           .get();
 
@@ -75,10 +84,11 @@ class ColeccionService {
     }
 
     try {
-      // Cuenta las estaciones visitadas
+      // Cuenta las estaciones visitadas en la subcolección del usuario
       final visitadasQuery = await _firestore
-          .collection(_collection)
-          .where('userId', isEqualTo: user.uid)
+          .collection(_usersCollection)
+          .doc(user.uid)
+          .collection(_estacionesVisitadasSubcollection)
           .get();
 
       // Cuenta el total de estaciones activas
@@ -105,16 +115,16 @@ class ColeccionService {
     return await _yaFueVisitada(user.uid, estacionId);
   }
 
-  /// Método para verificar visita
+  /// Método para verificar visita - ahora más eficiente con subcolección
   static Future<bool> _yaFueVisitada(String userId, String estacionId) async {
-    final query = await _firestore
-        .collection(_collection)
-        .where('userId', isEqualTo: userId)
-        .where('estacionId', isEqualTo: estacionId)
-        .limit(1)
+    final doc = await _firestore
+        .collection(_usersCollection)
+        .doc(userId)
+        .collection(_estacionesVisitadasSubcollection)
+        .doc(estacionId) // Acceso directo al documento
         .get();
 
-    return query.docs.isNotEmpty;
+    return doc.exists;
   }
 
   /// Obtiene estaciones visitadas en un periodo especifico
@@ -128,8 +138,9 @@ class ColeccionService {
 
     try {
       Query query = _firestore
-          .collection(_collection)
-          .where('userId', isEqualTo: user.uid);
+          .collection(_usersCollection)
+          .doc(user.uid)
+          .collection(_estacionesVisitadasSubcollection);
 
       if (desde != null) {
         query = query.where(
@@ -152,6 +163,33 @@ class ColeccionService {
           .toList();
     } catch (e) {
       throw Exception('Error al obtener visitas por período: $e');
+    }
+  }
+
+  /// Método auxiliar para obtener estadísticas de un usuario específico (útil para admin)
+  static Future<Map<String, int>> obtenerEstadisticasDeUsuario(
+      String userId) async {
+    try {
+      // Cuenta las estaciones visitadas en la subcolección del usuario
+      final visitadasQuery = await _firestore
+          .collection(_usersCollection)
+          .doc(userId)
+          .collection(_estacionesVisitadasSubcollection)
+          .get();
+
+      // Cuenta el total de estaciones activas
+      final totalQuery = await _firestore
+          .collection('estaciones')
+          .where('activa', isEqualTo: true)
+          .get();
+
+      final visitadas = visitadasQuery.docs.length;
+      final total = totalQuery.docs.length;
+      final porcentaje = total > 0 ? ((visitadas / total) * 100).round() : 0;
+
+      return {'visitadas': visitadas, 'total': total, 'porcentaje': porcentaje};
+    } catch (e) {
+      throw Exception('Error al obtener estadísticas del usuario: $e');
     }
   }
 }

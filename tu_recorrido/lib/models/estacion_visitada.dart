@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Modelo para las estaciones patri visitadas
-// simplemente es la coleccion de las estaciones visitadas
+/// Modelo para las estaciones patrimoniales visitadas
+/// Ahora se almacena como subcolección en users/{userId}/estaciones_visitadas/{estacionId}
 class EstacionVisitada {
-  final String id; // ID del documento en Firestore
-  final String userId; // ID del usuario que visitó
+  final String
+      id; // ID del documento en Firestore (generalmente será el estacionId)
   final String estacionId; // ID de la estación visitada
   final String estacionCodigo; // Código de la estación
   final String estacionNombre; // Nombre de la estación
@@ -14,7 +14,6 @@ class EstacionVisitada {
 
   const EstacionVisitada({
     required this.id,
-    required this.userId,
     required this.estacionId,
     required this.estacionCodigo,
     required this.estacionNombre,
@@ -29,8 +28,7 @@ class EstacionVisitada {
 
     return EstacionVisitada(
       id: doc.id,
-      userId: data['userId'] ?? '',
-      estacionId: data['estacionId'] ?? '',
+      estacionId: data['estacionId'] ?? doc.id, // Usar doc.id como fallback
       estacionCodigo: data['estacionCodigo'] ?? '',
       estacionNombre: data['estacionNombre'] ?? '',
       fechaVisita:
@@ -43,7 +41,6 @@ class EstacionVisitada {
   /// Convertir a Map para Firestore
   Map<String, dynamic> toFirestore() {
     final map = {
-      'userId': userId,
       'estacionId': estacionId,
       'estacionCodigo': estacionCodigo,
       'estacionNombre': estacionNombre,
@@ -63,7 +60,6 @@ class EstacionVisitada {
   /// Crear copia con cambios
   EstacionVisitada copyWith({
     String? id,
-    String? userId,
     String? estacionId,
     String? estacionCodigo,
     String? estacionNombre,
@@ -73,7 +69,6 @@ class EstacionVisitada {
   }) {
     return EstacionVisitada(
       id: id ?? this.id,
-      userId: userId ?? this.userId,
       estacionId: estacionId ?? this.estacionId,
       estacionCodigo: estacionCodigo ?? this.estacionCodigo,
       estacionNombre: estacionNombre ?? this.estacionNombre,
