@@ -6,8 +6,6 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as dev;
-
-// Suposiciones de tus modelos (asegúrate de que existan)
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
 import 'package:tu_recorrido/screens/perfil.dart';
@@ -45,6 +43,12 @@ class _MapitaState extends State<Mapita> {
   // Variables para la Ruta
   final Set<Polyline> _polylines = {};
   LatLng? _currentPosition;
+  // Destino actual (si hay ruta activa)
+  LatLng? _currentDestination;
+  // Contador para lecturas consecutivas dentro del radio (anti-ruido GPS)
+  int _arrivalCounter = 0;
+  // Número de lecturas consecutivas requeridas para confirmar llegada
+  static const int _arrivalThreshold = 2;
   // ⭐️ NUEVO: Estado de la ruta
   bool _isRouteActive = false;
 
@@ -54,7 +58,7 @@ class _MapitaState extends State<Mapita> {
   // Configuración de Geolocator
   final LocationSettings _locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.high,
-    distanceFilter: 10,
+    distanceFilter: 5,
   );
 
   final LocationSettings _oneTimeLocationSettings = const LocationSettings(
@@ -109,7 +113,7 @@ class _MapitaState extends State<Mapita> {
       return;
     }
 
-    const double maxDistanceMeters = 5000;
+  const double maxDistanceMeters = 5; // 5 metros de tolerancia
     final List<PlaceResult> allPlaces = MarcadoresData.lugaresMarcados;
 
     final List<PlaceResult> nearbyPlaces = allPlaces.where((place) {
@@ -160,8 +164,8 @@ class _MapitaState extends State<Mapita> {
       }
     });
 
-    _showSnackBar(
-        'Lugares cercanos actualizados: ${_lugares.length} encontrados en 5 km.');
+  _showSnackBar(
+    'Lugares cercanos actualizados: ${_lugares.length} encontrados en 5 m.');
   }
 
   Future<void> _determinePositionAndStartListening() async {
@@ -241,6 +245,30 @@ class _MapitaState extends State<Mapita> {
           });
 
           _filterPlacesByDistance();
+
+          // Si hay una ruta activa y un destino, comprobar llegada
+          if (_isRouteActive && _currentDestination != null) {
+            double distToDest = Geolocator.distanceBetween(
+              position.latitude,
+              position.longitude,
+              _currentDestination!.latitude,
+              _currentDestination!.longitude,
+            );
+
+            // Umbral de llegada (mismo que usamos para filtrar)
+            const double arrivalTolerance = 5.0;
+
+            if (distToDest <= arrivalTolerance) {
+              _arrivalCounter++;
+            } else {
+              _arrivalCounter = 0;
+            }
+
+            if (_arrivalCounter >= _arrivalThreshold) {
+              // Confirmada la llegada
+              _onArrivedAtDestination();
+            }
+          }
         }
       },
       onError: (e) {
@@ -259,6 +287,39 @@ class _MapitaState extends State<Mapita> {
       _isRouteActive = false;
       _showSnackBar('Ruta cancelada.');
     });
+  }
+
+  // Manejo de llegada: limpia la ruta y muestra un modal de felicitación
+  void _onArrivedAtDestination() {
+    if (!mounted) return;
+
+    setState(() {
+      _polylines.clear();
+      _isRouteActive = false;
+      _currentDestination = null;
+      _arrivalCounter = 0;
+    });
+
+    // Mostrar modal de llegada
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('¡Felicidades!'),
+          content: const Text('Has llegado a tu lugar de destino.'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              tooltip: 'Cerrar',
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // ⭐️ FUNCIÓN: Muestra el modal de confirmación antes de trazar la ruta
@@ -328,8 +389,10 @@ class _MapitaState extends State<Mapita> {
 
           setState(() {
             _polylines.clear();
-            // ⭐️ CAMBIO: Activar el estado de ruta
+            // ⭐️ Activar el estado de ruta y guardar destino
             _isRouteActive = true;
+            _currentDestination = destination;
+            _arrivalCounter = 0;
 
             Polyline polyline = Polyline(
               polylineId: const PolylineId('http_route_to_poi'),
@@ -524,7 +587,7 @@ class _MapitaState extends State<Mapita> {
                             ),
                             child: const Center(
                               child: Text(
-                                "No hay lugares en un radio de 5 km",
+                                "No hay lugares en un radio de 5 m",
                                 style: TextStyle(
                                     color: Colors.black54,
                                     fontWeight: FontWeight.bold),
