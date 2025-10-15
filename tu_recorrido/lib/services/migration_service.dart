@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 /// Script de migración para convertir la estructura de estaciones visitadas
 /// De: estaciones_visitadas/{id} -> { userId, estacionId, ... }
@@ -9,7 +10,7 @@ class MigrationService {
   /// Migra todos los documentos de la colección antigua a la nueva estructura
   static Future<void> migrarEstacionesVisitadas() async {
     try {
-      print('Iniciando migración de estaciones visitadas...');
+      debugPrint('Iniciando migración de estaciones visitadas...');
       
       // 1. Obtener todos los documentos de la colección antigua
       final querySnapshot = await _firestore
@@ -17,11 +18,11 @@ class MigrationService {
           .get();
       
       if (querySnapshot.docs.isEmpty) {
-        print('No hay documentos para migrar');
+        debugPrint('No hay documentos para migrar');
         return;
       }
       
-      print('Encontrados ${querySnapshot.docs.length} documentos para migrar');
+      debugPrint('Encontrados ${querySnapshot.docs.length} documentos para migrar');
       
       // 2. Batch para operaciones eficientes
       WriteBatch batch = _firestore.batch();
@@ -34,7 +35,7 @@ class MigrationService {
         final estacionId = data['estacionId'] as String?;
         
         if (userId == null || estacionId == null) {
-          print('Documento inválido: ${doc.id} - userId: $userId, estacionId: $estacionId');
+          debugPrint('Documento inválido: ${doc.id} - userId: $userId, estacionId: $estacionId');
           continue;
         }
         
@@ -56,7 +57,7 @@ class MigrationService {
         if (batchCount >= 500) {
           await batch.commit();
           totalMigrated += batchCount;
-          print('Migrados $totalMigrated documentos...');
+          debugPrint('Migrados $totalMigrated documentos...');
           batch = _firestore.batch();
           batchCount = 0;
         }
@@ -68,11 +69,11 @@ class MigrationService {
         totalMigrated += batchCount;
       }
       
-      print('Migración completada: $totalMigrated documentos migrados');
-      print('Revisa que todo funcione correctamente antes de eliminar la colección antigua');
+      debugPrint('Migración completada: $totalMigrated documentos migrados');
+      debugPrint('eliminar la colección antigua');
       
     } catch (e) {
-      print('Error durante la migración: $e');
+      debugPrint('Error durante la migración: $e');
       rethrow;
     }
   }
@@ -80,7 +81,7 @@ class MigrationService {
   /// Verifica que la migración fue exitosa comparando counts
   static Future<void> verificarMigracion() async {
     try {
-      print('Verificando migración...');
+      debugPrint('Verificando migración...');
       
       // Contar documentos en la colección antigua
       final antiguaSnapshot = await _firestore
@@ -100,17 +101,17 @@ class MigrationService {
         documentosNuevos += estacionesVisitadas.docs.length;
       }
       
-      print('Documentos en colección antigua: $documentosAntiguos');
-      print('Documentos en nuevas subcolecciones: $documentosNuevos');
+      debugPrint('Documentos en colección antigua: $documentosAntiguos');
+      debugPrint('Documentos en nuevas subcolecciones: $documentosNuevos');
       
       if (documentosAntiguos == documentosNuevos) {
-        print('Migración verificada correctamente');
+        debugPrint('Migración verificada correctamente');
       } else {
-        print('ADVERTENCIA: Los números no coinciden. Revisa la migración.');
+        debugPrint('ADVERTENCIA: Los números no coinciden. Revisa la migración.');
       }
       
     } catch (e) {
-      print('Error durante la verificación: $e');
+      debugPrint('Error durante la verificación: $e');
       rethrow;
     }
   }
@@ -119,7 +120,7 @@ class MigrationService {
   /// SOLO ejecutar después de verificar que todo funciona correctamente
   static Future<void> eliminarColeccionAntigua() async {
     try {
-      print('ELIMINANDO colección antigua...');
+      debugPrint('ELIMINANDO colección antigua...');
       
       final batch = _firestore.batch();
       final querySnapshot = await _firestore
@@ -131,10 +132,10 @@ class MigrationService {
       }
       
       await batch.commit();
-      print('Colección antigua eliminada');
+      debugPrint('Colección antigua eliminada');
       
     } catch (e) {
-      print('Error al eliminar colección antigua: $e');
+      debugPrint('Error al eliminar colección antigua: $e');
       rethrow;
     }
   }
