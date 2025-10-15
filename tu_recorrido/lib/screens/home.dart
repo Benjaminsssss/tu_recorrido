@@ -1,349 +1,246 @@
 import 'package:flutter/material.dart';
-import '../utils/colores.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart';
+import '../components/white_card.dart';
+import '../components/collection_card.dart';
+import '../components/bottom_pill_nav.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _tab = 0;
+
+  Future<void> _logout() async {
+    await AuthService.signOut();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sesión cerrada')),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      body: Stack(
-        children: [
-          // Fondo con gradiente y patrones
-          Container(
-            decoration: const BoxDecoration(
-              gradient: Coloressito.backgroundGradient,
-            ),
-          ),
-
-          // Elementos decorativos flotantes
-          Positioned(
-            top: 100,
-            right: 30,
-            child: _FloatingElement(
-              icon: Icons.location_on,
-              color: Coloressito.badgeRed,
-              size: 40,
-            ),
-          ),
-          Positioned(
-            top: 180,
-            left: 50,
-            child: _FloatingElement(
-              icon: Icons.stars,
-              color: Coloressito.badgeYellow,
-              size: 35,
-            ),
-          ),
-          Positioned(
-            top: 280,
-            right: 80,
-            child: _FloatingElement(
-              icon: Icons.camera_alt,
-              color: Coloressito.badgeGreen,
-              size: 30,
-            ),
-          ),
-
-          // Contenido principal
-          SafeArea(
-            child: Column(
-              children: [
-                // Header con logo y botones
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Logo
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Coloressito.surfaceLight,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Coloressito.borderLight),
-                        ),
-                        child: const Icon(
-                          Icons.map,
-                          color: Coloressito.textPrimary,
-                          size: 24,
-                        ),
-                      ),
-
-                      // Botón login
-                      GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/auth/login'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Coloressito.surfaceLight,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Coloressito.borderLight),
-                          ),
-                          child: const Text(
-                            'Iniciar sesión',
-                            style: TextStyle(
-                              color: Coloressito.textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+      appBar: AppBar(
+        title: const Text('Recorrido'),
+        actions: [
+          StreamBuilder<User?>(
+            stream: AuthService.authStateChanges,
+            builder: (context, snap) {
+              final signedIn = snap.hasData;
+              final user = snap.data;
+              final saludo = signedIn
+                  ? ((user?.displayName?.trim().isNotEmpty ?? false)
+                      ? user!.displayName!.trim()
+                      : (user?.email ?? 'Explorador'))
+                  : 'Explorador';
+              return Row(children: [
+                if (signedIn)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Text('Hola, $saludo'),
                   ),
+                IconButton(
+                  tooltip: signedIn ? 'Cerrar sesión' : 'Iniciar sesión',
+                  icon: Icon(signedIn ? Icons.logout : Icons.login),
+                  onPressed: () => signedIn
+                      ? _logout()
+                      : Navigator.pushNamed(context, '/auth/login'),
                 ),
-
-                // contindo principala
+              ]);
+            },
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        children: [
+          // Héroe / copy
+          WhiteCard(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
                 Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // parte del avatare
-                      Container(
-                        width: 150,
-                        height: 150,
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              Coloressito.surfaceLight,
-                              Coloressito.surfaceDark,
-                            ],
-                          ),
-                          border: Border.all(
-                              color: Coloressito.borderLight, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Coloressito.shadowColor,
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.explore,
-                          size: 80,
-                          color: Coloressito.textPrimary,
-                        ),
-                      ),
-
-                      // Título
-                      const Text(
-                        'RECORRIDO',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: Coloressito.textPrimary,
-                          letterSpacing: 2,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                              color: Coloressito.shadowColor,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Subtítulo
-                      const Text(
+                      Text(
                         'Colecciona el mundo',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Coloressito.textSecondary,
-                          fontWeight: FontWeight.w400,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-
-                      const SizedBox(height: 40),
-
-                      // Stats o preview de funcionalidades
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      const SizedBox(height: 6),
+                      Text(
+                        'Crea tu pasaporte digital y descubre lugares increíbles cerca de ti.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
                         children: [
-                          _StatCard(
-                            icon: Icons.location_on,
-                            title: 'Lugares',
-                            subtitle: '500+',
-                            color: Coloressito.badgeRed,
-                          ),
-                          _StatCard(
-                            icon: Icons.emoji_events,
-                            title: 'Insignias',
-                            subtitle: '200+',
-                            color: Coloressito.badgeYellow,
-                          ),
-                          _StatCard(
-                            icon: Icons.people,
-                            title: 'Exploradores',
-                            subtitle: '10K+',
-                            color: Coloressito.badgeGreen,
-                          ),
+                          Chip(label: Text('Descubre')), 
+                          Chip(label: Text('Explora')), 
+                          Chip(label: Text('Colecciona')),
                         ],
                       ),
                     ],
                   ),
                 ),
-
-                // Botón principal de inicio
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      // Botón principal
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth'),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          decoration: BoxDecoration(
-                            gradient: Coloressito.buttonGradient,
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Coloressito.glowColor,
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.rocket_launch,
-                                color: Coloressito.textPrimary,
-                                size: 24,
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'COMENZAR AVENTURA',
-                                style: TextStyle(
-                                  color: Coloressito.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Texto adicional
-                      const Text(
-                        'Crea tu pasaporte digital y descubre\nlugares increíbles cerca de ti',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Coloressito.textSecondary,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 12),
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  child: Icon(Icons.explore_rounded,
+                      size: 44, color: theme.colorScheme.primary),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
 
-class _FloatingElement extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final double size;
+          const SizedBox(height: 16),
 
-  const _FloatingElement({
-    required this.icon,
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(size * 0.2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Icon(
-        icon,
-        color: color,
-        size: size * 0.6,
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Coloressito.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Coloressito.borderLight),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
+          // Progreso / pasaporte
+          WhiteCard(
+            child: Row(
+              children: [
+        Icon(Icons.card_travel,
+                    color: theme.colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Tu pasaporte',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 6),
+                      LinearProgressIndicator(
+                        value: 0.35,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      const SizedBox(height: 6),
+                      Text('7/20 sellos conseguidos',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: () {},
+                  child: const Text('Ver pasaporte'),
+                ),
+              ],
             ),
           ),
+
+          const SizedBox(height: 16),
+
+          // Cerca de ti
+          Text('Cerca de ti',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: Coloressito.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+          SizedBox(
+            height: 96,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (_, i) => SizedBox(
+                width: 320,
+                child: CollectionCard(
+                  title: 'Lugar destacado ${i + 1}',
+                  subtitle: 'A ${200 * (i + 1)} m • Abierto hasta 18:00',
+                  imageAsset: 'assets/img/insiginia.png',
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {},
+                ),
+              ),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemCount: 5,
             ),
           ),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+
+          const SizedBox(height: 16),
+
+          // Desafíos
+          Text('Desafíos semanales',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          WhiteCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.flag_rounded, color: theme.colorScheme.tertiary),
+                    const SizedBox(width: 8),
+                    const Text('Visita 3 plazas históricas'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.camera_alt_rounded,
+                        color: theme.colorScheme.secondary),
+                    const SizedBox(width: 8),
+                    const Text('Toma una foto en un sitio declarado'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Últimas insignias
+          Text('Últimas insignias',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: List.generate(
+              6,
+              (i) => Chip(
+                avatar: const CircleAvatar(child: Icon(Icons.emoji_events)),
+                label: Text('Insignia ${i + 1}'),
+              ),
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, '/escaner'),
+        icon: const Icon(Icons.qr_code_scanner_rounded),
+        label: const Text('Escanear'),
+      ),
+      bottomNavigationBar: BottomPillNav(
+        currentIndex: _tab,
+        onTap: (i) {
+          setState(() => _tab = i);
+          if (i == 1) {
+            Navigator.pushNamed(context, '/mapa');
+          } else if (i == 2) {
+            Navigator.pushNamed(context, '/perfil');
+          }
+        },
       ),
     );
   }
