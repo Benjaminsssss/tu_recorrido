@@ -9,7 +9,8 @@ import '../models/estacion_visitada.dart';
 class ColeccionService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _usersCollection = 'users';
-  static const String _estacionesVisitadasSubcollection = 'estaciones_visitadas';
+  static const String _estacionesVisitadasSubcollection =
+      'estaciones_visitadas';
 
   /// Marca una estación como visitada por el usuario actual
   static Future<void> marcarComoVisitada(
@@ -166,7 +167,8 @@ class ColeccionService {
   }
 
   /// Método auxiliar para obtener estadísticas de un usuario específico (útil para admin)
-  static Future<Map<String, int>> obtenerEstadisticasDeUsuario(String userId) async {
+  static Future<Map<String, int>> obtenerEstadisticasDeUsuario(
+      String userId) async {
     try {
       // Cuenta las estaciones visitadas en la subcolección del usuario
       final visitadasQuery = await _firestore

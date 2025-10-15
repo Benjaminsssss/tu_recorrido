@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Modelo para las estaciones patrimoniales visitadas
 /// Ahora se almacena como subcolección en users/{userId}/estaciones_visitadas/{estacionId}
 class EstacionVisitada {
-  final String id; // ID del documento en Firestore (generalmente será el estacionId)
+  final String
+      id; // ID del documento en Firestore (generalmente será el estacionId)
   final String estacionId; // ID de la estación visitada
   final String estacionCodigo; // Código de la estación
   final String estacionNombre; // Nombre de la estación
