@@ -4,6 +4,7 @@ import '../../models/estacion.dart';
 import '../../services/estacion_service.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
+import '../../widgets/role_protected_widget.dart';
 import '../widgets/formulario_estacion.dart';
 
 /// Pantalla para crear nuevas estaciones patrimoniales
@@ -120,9 +121,10 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PantallaBase(
-      titulo: 'Crear Estación Patrimonial',
-      body: Form(
+    return AdminProtectedWidget(
+      child: PantallaBase(
+        titulo: 'Crear Estación Patrimonial',
+        body: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -167,6 +169,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

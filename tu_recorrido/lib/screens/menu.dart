@@ -11,6 +11,7 @@ import 'dart:developer' as dev;
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
 import 'package:tu_recorrido/screens/perfil.dart';
+import 'package:tu_recorrido/widgets/role_protected_widget.dart';
 
 class Mapita extends StatefulWidget {
   const Mapita({super.key});
@@ -435,6 +436,17 @@ class _MapitaState extends State<Mapita> {
         title: const Text('Puntos de Interés'),
         backgroundColor: theme.colorScheme.primary,
         actions: [
+          // Botón de admin (solo visible para administradores)
+          ConditionalWidget(
+            condition: (permissions) => permissions.canAccessAdmin,
+            child: IconButton(
+              icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
+              onPressed: () {
+                Navigator.pushNamed(context, '/admin');
+              },
+              tooltip: 'Panel de Administración',
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             onPressed: () {

@@ -192,6 +192,7 @@ class RegistroScreenState extends State<RegistroScreen> {
       'fechaNacimientoISO': iso, // YYYY-MM-DD (para queries)
       'region': regionSeleccionada ?? '',
       'comuna': comunaSeleccionada ?? '',
+      'role': 'user', 
       'activo': true,
       // createdAt/updatedAt los maneja FirestoreService.upsertUser()
     };
