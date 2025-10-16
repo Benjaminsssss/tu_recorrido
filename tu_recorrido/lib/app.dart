@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: tr('app_title'),
+      title: 'Tu Recorrido',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       localizationsDelegates: context.localizationDelegates,
