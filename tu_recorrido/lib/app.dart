@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'utils/app_theme.dart';
 
 // Screens
@@ -7,7 +8,7 @@ import 'screens/login.dart';
 import 'screens/registro.dart';
 import 'screens/escanerqr.dart';
 import 'screens/menu.dart';
-import 'screens/perfil.dart';
+import 'screens/profile_screen.dart';
 
 // AuthGate
 import 'widgets/auth_gate.dart';
@@ -18,9 +19,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Recorrido',
+      title: tr('app_title'),
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
 
       // Usamos AuthGate en la raíz: decide Home o Login según sesión
       initialRoute: '/',
@@ -34,7 +38,7 @@ class MyApp extends StatelessWidget {
         '/auth/registro': (_) => const RegistroScreen(),
   '/escaner': (_) => const EscanerQRScreen(),
   '/mapa': (_) => const Mapita(),
-  '/perfil': (_) => const Perfil(),
+  '/perfil': (_) => const ProfileScreen(),
 
         // Si ya tienes una pantalla de lugares, descomenta:
         // '/places': (_) => const PlacesScreen(),

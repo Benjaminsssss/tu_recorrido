@@ -16,7 +16,6 @@ class BottomPillNav extends StatelessWidget {
     final items = const [
       _PillItem(Icons.home_rounded, 'Inicio'),
       _PillItem(Icons.map_rounded, 'Mapa'),
-      _PillItem(Icons.person_rounded, 'Perfil'),
     ];
 
     return SafeArea(

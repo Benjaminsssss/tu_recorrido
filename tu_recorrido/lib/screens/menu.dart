@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -10,7 +11,7 @@ import 'dart:developer' as dev;
 // Suposiciones de tus modelos (asegúrate de que existan)
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
-import 'package:tu_recorrido/screens/perfil.dart';
+// Navegación a perfil se hará por ruta '/perfil'
 
 class Mapita extends StatefulWidget {
   const Mapita({super.key});
@@ -257,7 +258,7 @@ class _MapitaState extends State<Mapita> {
     setState(() {
       _polylines.clear();
       _isRouteActive = false;
-      _showSnackBar('Ruta cancelada.');
+  _showSnackBar(tr('route_canceled'));
     });
   }
 
@@ -432,17 +433,12 @@ class _MapitaState extends State<Mapita> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Puntos de Interés'),
+  title: Text(tr('poi_title')),
         backgroundColor: theme.colorScheme.primary,
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Perfil()),
-              );
-            },
+            onPressed: () => Navigator.pushNamed(context, '/perfil'),
           ),
         ],
       ),
@@ -497,7 +493,7 @@ class _MapitaState extends State<Mapita> {
               onPressed: () => _showSnackBar('Escaneando QR...'),
               heroTag: 'qrBtn',
               backgroundColor: Colors.amber,
-              tooltip: 'Escanear QR',
+              tooltip: tr('scan_qr'),
               child: const Icon(Icons.qr_code_scanner),
             ),
           ),

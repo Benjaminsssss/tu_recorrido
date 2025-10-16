@@ -1,0 +1,16 @@
+{
+  "app_title": "Ton Parcours",
+  "home_hero_title": "Collectionne le monde",
+  "profile": "Profil",
+  "edit_profile": "Modifier le profil",
+  "display_name": "Nom d'utilisateur",
+  "email": "Email",
+  "language": "Langue",
+  "save": "Enregistrer",
+  "sign_out": "Se déconnecter",
+  "pick_photo": "Modifier la photo"
+  ,
+  "route_canceled": "Itinéraire annulé.",
+  "poi_title": "Points d'intérêt",
+  "scan_qr": "Scanner le QR"
+}

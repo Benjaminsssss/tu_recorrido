@@ -1,0 +1,16 @@
+{
+  "app_title": "Your Journey",
+  "home_hero_title": "Collect the world",
+  "profile": "Profile",
+  "edit_profile": "Edit profile",
+  "display_name": "Username",
+  "email": "Email",
+  "language": "Language",
+  "save": "Save",
+  "sign_out": "Sign out",
+  "pick_photo": "Edit photo"
+  ,
+  "route_canceled": "Route canceled.",
+  "poi_title": "Points of Interest",
+  "scan_qr": "Scan QR"
+}

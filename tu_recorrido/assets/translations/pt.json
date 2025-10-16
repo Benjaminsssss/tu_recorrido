@@ -1,0 +1,16 @@
+{
+  "app_title": "Seu Percurso",
+  "home_hero_title": "Colecione o mundo",
+  "profile": "Perfil",
+  "edit_profile": "Editar perfil",
+  "display_name": "Nome de usuário",
+  "email": "E-mail",
+  "language": "Idioma",
+  "save": "Salvar",
+  "sign_out": "Sair",
+  "pick_photo": "Editar foto"
+  ,
+  "route_canceled": "Rota cancelada.",
+  "poi_title": "Pontos de Interesse",
+  "scan_qr": "Escanear QR"
+}

@@ -1,0 +1,16 @@
+{
+  "app_title": "Твой Маршрут",
+  "home_hero_title": "Собирай мир",
+  "profile": "Профиль",
+  "edit_profile": "Редактировать профиль",
+  "display_name": "Имя пользователя",
+  "email": "Эл. почта",
+  "language": "Язык",
+  "save": "Сохранить",
+  "sign_out": "Выйти",
+  "pick_photo": "Изменить фото"
+  ,
+  "route_canceled": "Маршрут отменён.",
+  "poi_title": "Точки интереса",
+  "scan_qr": "Сканировать QR"
+}
