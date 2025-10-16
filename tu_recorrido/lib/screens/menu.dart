@@ -535,7 +535,7 @@ class _MapitaState extends State<Mapita> {
                               final place = entry.value;
 
                               return _buildCard(
-                                'assets/img/insignia.png',
+                                'assets/img/insiginia.png',
                                 place.nombre,
                                 'Rating: ${place.rating?.toStringAsFixed(1) ?? 'N/A'}',
                                 index + 1,

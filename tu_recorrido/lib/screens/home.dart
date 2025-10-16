@@ -59,27 +59,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     final text = Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                            Text(
-                              tr('collect_world'),
+                        Text(
+                          tr('collect_world'),
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
-                            Text(
-                              tr('home_hero_subtitle'),
+                        Text(
+                          tr('home_hero_subtitle'),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                              children: [
-                                Chip(label: Text(tr('discover'))),
-                                Chip(label: Text(tr('explore'))),
-                                Chip(label: Text(tr('collect'))),
-                              ],
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              Chip(label: Text(tr('discover'), overflow: TextOverflow.ellipsis)),
+                              const SizedBox(width: 8),
+                              Chip(label: Text(tr('explore'), overflow: TextOverflow.ellipsis)),
+                              const SizedBox(width: 8),
+                              Chip(label: Text(tr('collect'), overflow: TextOverflow.ellipsis)),
+                            ],
+                          ),
                         ),
                       ],
                     );
@@ -138,14 +146,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: Theme.of(context).textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: List.generate(
-                  6,
-                  (i) => Chip(
-                    avatar: const CircleAvatar(child: Icon(Icons.emoji_events)),
-                        label: Text(tr('badge', namedArgs: {'n': '${i + 1}'})),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(
+                    6,
+                    (i) => Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Chip(
+                        avatar: const CircleAvatar(child: Icon(Icons.emoji_events)),
+                        label: Text(tr('badge', namedArgs: {'n': '${i + 1}'}), overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
                   ),
                 ),
               ),
