@@ -13,4 +13,18 @@
   "route_canceled": "Route canceled.",
   "poi_title": "Points of Interest",
   "scan_qr": "Scan QR"
+  ,
+  "collect_world": "Collect the world",
+  "home_hero_subtitle": "Create your digital passport and discover amazing places near you.",
+  "discover": "Discover",
+  "explore": "Explore",
+  "collect": "Collect",
+  "nearby": "Nearby",
+  "featured_place": "Featured place {n}",
+  "distance_meters_abbrev": "{m} m away",
+  "open_until": "Open until {time}",
+  "latest_badges": "Latest badges",
+  "badge": "Badge {n}",
+  "hello_name": "Hi, {name} 👋",
+  "welcome_activate_location": "Welcome to Your Journey. Enable your location to see nearby places."
 }

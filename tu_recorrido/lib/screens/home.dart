@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../components/white_card.dart';
@@ -58,15 +59,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     final text = Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Colecciona el mundo',
+                            Text(
+                              tr('collect_world'),
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          'Crea tu pasaporte digital y descubre lugares increíbles cerca de ti.',
+                            Text(
+                              tr('home_hero_subtitle'),
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -74,11 +75,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 8,
-                          children: const [
-                            Chip(label: Text('Descubre')),
-                            Chip(label: Text('Explora')),
-                            Chip(label: Text('Colecciona')),
-                          ],
+                              children: [
+                                Chip(label: Text(tr('discover'))),
+                                Chip(label: Text(tr('explore'))),
+                                Chip(label: Text(tr('collect'))),
+                              ],
                         ),
                       ],
                     );
@@ -105,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               // Sección: Cerca de ti
-              Text('Cerca de ti',
+                  Text(tr('nearby'),
                   style: Theme.of(context).textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
@@ -120,8 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? 340
                             : MediaQuery.of(context).size.width * 0.8,
                     child: CollectionCard(
-                      title: 'Lugar destacado ${i + 1}',
-                      subtitle: 'A ${200 * (i + 1)} m • Abierto hasta 18:00',
+                          title: tr('featured_place', namedArgs: {'n': '${i + 1}'}),
+                          subtitle: '${tr('distance_meters_abbrev', namedArgs: {'m': '${200 * (i + 1)}'})} • ${tr('open_until', namedArgs: {'time': '18:00'})}',
                       imageAsset: 'assets/img/insiginia.png',
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () {},
@@ -133,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 16),
               // Sección: Últimas insignias
-              Text('Últimas insignias',
+                  Text(tr('latest_badges'),
                   style: Theme.of(context).textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
@@ -144,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   6,
                   (i) => Chip(
                     avatar: const CircleAvatar(child: Icon(Icons.emoji_events)),
-                    label: Text('Insignia ${i + 1}'),
+                        label: Text(tr('badge', namedArgs: {'n': '${i + 1}'})),
                   ),
                 ),
               ),
@@ -154,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => Navigator.pushNamed(context, '/escaner'),
             icon: const Icon(Icons.qr_code_scanner_rounded),
-            label: const Text('Escanear'),
+              label: Text(tr('scan_qr')),
           ),
           bottomNavigationBar: BottomPillNav(
             currentIndex: _tab,

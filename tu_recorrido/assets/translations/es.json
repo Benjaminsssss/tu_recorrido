@@ -13,4 +13,18 @@
   "route_canceled": "Ruta cancelada.",
   "poi_title": "Puntos de Interés",
   "scan_qr": "Escanear QR"
+  ,
+  "collect_world": "Colecciona el mundo",
+  "home_hero_subtitle": "Crea tu pasaporte digital y descubre lugares increíbles cerca de ti.",
+  "discover": "Descubre",
+  "explore": "Explora",
+  "collect": "Colecciona",
+  "nearby": "Cerca de ti",
+  "featured_place": "Lugar destacado {n}",
+  "distance_meters_abbrev": "A {m} m",
+  "open_until": "Abierto hasta {time}",
+  "latest_badges": "Últimas insignias",
+  "badge": "Insignia {n}",
+  "hello_name": "Hola, {name} 👋",
+  "welcome_activate_location": "Bienvenido a Tu Recorrido. Activa tu ubicación para ver lugares cercanos."
 }

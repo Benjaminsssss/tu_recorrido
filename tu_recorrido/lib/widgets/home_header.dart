@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeHeader extends StatefulWidget {
@@ -69,7 +70,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                 Expanded(
                   child: Center(
                     child: Text(
-                      'Tu Recorrido',
+                      tr('app_title'),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 20,
@@ -141,7 +142,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hola, ${widget.nombre} 👋',
+                        tr('hello_name', namedArgs: {'name': widget.nombre}),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
@@ -151,7 +152,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Bienvenido a Tu Recorrido. Activa tu ubicación para ver lugares cercanos.',
+                        tr('welcome_activate_location'),
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,

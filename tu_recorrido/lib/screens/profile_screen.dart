@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/profile_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -34,6 +35,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _selectedLocale = context.locale;
       // Nota: aquí podrías cargar Firestore para languageCode/photoUrl
     });
+    if (user != null) {
+      final doc = await ProfileService.getUserProfile(user.uid);
+      final data = doc?.data();
+      if (data != null && mounted) {
+        setState(() {
+          final lang = data['languageCode'] as String?;
+          final purl = data['photoURL'] as String?;
+          if (lang != null && lang.isNotEmpty) {
+            _selectedLocale = Locale(lang);
+            context.setLocale(_selectedLocale!);
+          }
+          if (purl != null && purl.isNotEmpty) {
+            _photoUrl = purl;
+          }
+          if ((data['displayName'] as String?)?.isNotEmpty ?? false) {
+            _nameCtrl.text = data['displayName'];
+          }
+        });
+      }
+    }
   }
 
   Future<void> _pickPhoto() async {
@@ -55,8 +76,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         await user.updateDisplayName(_nameCtrl.text.trim());
-        // TODO: si hay _localPhoto, subir a Storage y update photoURL
-        // TODO: persistir languageCode en Firestore
+        // Subir avatar a Storage si hay bytes en memoria
+        String? newPhotoUrl = _photoUrl;
+        if (_localBytes != null) {
+          newPhotoUrl = await ProfileService.uploadAvatar(user.uid, _localBytes!);
+          await user.updatePhotoURL(newPhotoUrl);
+        }
+        // Persistir en Firestore
+        await ProfileService.updateUserProfile(user.uid, {
+          'displayName': _nameCtrl.text.trim(),
+          'photoURL': newPhotoUrl,
+          'languageCode': context.locale.languageCode,
+        });
       }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('languageCode', context.locale.languageCode);
