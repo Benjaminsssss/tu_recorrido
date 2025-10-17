@@ -6,6 +6,8 @@ import '../components/white_card.dart';
 import '../components/collection_card.dart';
 import '../components/bottom_pill_nav.dart';
 import '../widgets/home_header.dart';
+import 'package:provider/provider.dart';
+import '../models/user_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,11 +25,10 @@ class _HomeScreenState extends State<HomeScreen> {
       stream: AuthService.authStateChanges,
       builder: (context, snap) {
         final user = snap.data;
-        final nombre = (user?.displayName?.trim().isNotEmpty ?? false)
-            ? user!.displayName!.trim()
-            : (user?.email ?? 'Explorador');
-        final avatarUrl = user?.photoURL ?? '';
-        final uid = user?.uid ?? '';
+    final userState = Provider.of<UserState>(context);
+    final nombre = userState.nombre;
+  final avatarUrl = userState.avatarUrl ?? '';
+    final uid = user?.uid ?? '';
         return Scaffold(
           body: SafeArea(
             child: ListView(
@@ -81,11 +82,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
-                              Chip(label: Text(tr('discover'), overflow: TextOverflow.ellipsis)),
+                              _buildChipWithShadow(tr('discover')),
                               const SizedBox(width: 8),
-                              Chip(label: Text(tr('explore'), overflow: TextOverflow.ellipsis)),
+                              _buildChipWithShadow(tr('explore')),
                               const SizedBox(width: 8),
-                              Chip(label: Text(tr('collect'), overflow: TextOverflow.ellipsis)),
+                              _buildChipWithShadow(tr('collect')),
                             ],
                           ),
                         ),
@@ -153,9 +154,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     6,
                     (i) => Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: Chip(
-                        avatar: const CircleAvatar(child: Icon(Icons.emoji_events)),
-                        label: Text(tr('badge', namedArgs: {'n': '${i + 1}'}), overflow: TextOverflow.ellipsis),
+                      child: Material(
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Chip(
+                            avatar: const CircleAvatar(child: Icon(Icons.emoji_events)),
+                            label: Text(tr('badge', namedArgs: {'n': '${i + 1}'}), overflow: TextOverflow.ellipsis),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -175,6 +193,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+  }
+
+  // Helper para crear chips con sombra consistente
+  Widget _buildChipWithShadow(String label) {
+    return Material(
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Chip(
+          label: Text(label, overflow: TextOverflow.ellipsis),
+        ),
+      ),
     );
   }
 }

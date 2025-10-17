@@ -22,9 +22,28 @@ class CollectionCard extends StatelessWidget {
     return Material(
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
         child: Row(
           children: [
             // Imagen
@@ -64,6 +83,7 @@ class CollectionCard extends StatelessWidget {
             if (trailing != null) trailing!,
             const SizedBox(width: 12),
           ],
+        ),
         ),
       ),
     );

@@ -8,6 +8,8 @@ import 'app.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'firebase_options_dev.dart';
 
+import 'user_state_provider.dart';
+
 Future<void> main() async {
   // Mantener todo en la misma zona evita 'Zone mismatch' en Web
   runZonedGuarded(() async {
@@ -37,7 +39,10 @@ Future<void> main() async {
         path: 'assets/translations',
         fallbackLocale: const Locale('es'),
         saveLocale: true,
-        child: const MyApp(),
+        child: UserStateProvider(
+          nombre: 'Explorador',
+          child: const MyApp(),
+        ),
       ),
     );
   }, (error, stack) {
