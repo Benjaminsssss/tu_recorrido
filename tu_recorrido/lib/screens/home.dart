@@ -164,11 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => Navigator.pushNamed(context, '/escaner'),
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-              label: Text(tr('scan_qr')),
-          ),
           bottomNavigationBar: BottomPillNav(
             currentIndex: _tab,
             onTap: (i) {
