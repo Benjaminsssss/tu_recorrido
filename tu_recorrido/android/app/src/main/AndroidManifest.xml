@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.turecorrido.app">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -36,7 +37,7 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <meta-data android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyC5jHSpY6D4d-VKOl31vi3XYW8cQJZ2in0"/>
+            android:value="AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk"/>
 
     </application>
 

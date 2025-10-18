@@ -1,4 +1,4 @@
-package com.example.tu_recorrido
+package com.turecorrido.app 
 
 import io.flutter.embedding.android.FlutterActivity
 
