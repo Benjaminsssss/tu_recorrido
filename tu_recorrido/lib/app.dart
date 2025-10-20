@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // Screens
 import 'screens/home.dart';
@@ -24,8 +26,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Recorrido',
+      useInheritedMediaQuery: true,
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
+      title: 'Tu Recorrido - Patrimonio Santiago',
       debugShowCheckedModeBanner: false,
+      
+      // Configuración de localización
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', ''), // Español
+        Locale('en', ''), // Inglés
+      ],
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF4CAF50), // opcional
