@@ -6,16 +6,16 @@ import '../utils/colores.dart';
 /// Protege rutas basado en roles de usuario
 class RoleProtectedWidget extends StatefulWidget {
   final Widget child;
-  
-  /// Tiene permisos? 
+
+  /// Tiene permisos?
   final bool Function(UserPermissions) hasPermission;
-  
+
   /// Widget alternativo si no tiene permisos
   final Widget? fallback;
-  
+
   /// Mensaje de error
   final String? errorMessage;
-  
+
   /// Redirigir al login si no está autenticado
   final bool redirectToLogin;
 
@@ -53,27 +53,27 @@ class _RoleProtectedWidgetState extends State<RoleProtectedWidget> {
             });
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           return widget.fallback ?? _buildNoPermissionWidget(
-            'Debes iniciar sesión para acceder a esta funcionalidad'
+            'Debes iniciar sesión para acceder a esta funcionalidad',
           );
         }
-        
+
         final user = snapshot.data!;
-        
+
         // checkear permisos
         if (widget.hasPermission(user.permissions)) {
           return widget.child;
         }
-        
+
         // no tiene permisos
         return widget.fallback ?? _buildNoPermissionWidget(
-          widget.errorMessage ?? 'No tienes permisos para acceder a esta funcionalidad'
+          widget.errorMessage ?? 'No tienes permisos para acceder a esta funcionalidad',
         );
       },
     );
   }
-  
+
   Widget _buildNoPermissionWidget(String message) {
     return Scaffold(
       backgroundColor: Coloressito.background,
@@ -177,13 +177,13 @@ class _ConditionalWidgetState extends State<ConditionalWidget> {
         if (!snapshot.hasData || snapshot.data == null) {
           return widget.fallback ?? const SizedBox.shrink();
         }
-        
+
         final user = snapshot.data!;
-        
+
         if (widget.condition(user.permissions)) {
           return widget.child;
         }
-        
+
         return widget.fallback ?? const SizedBox.shrink();
       },
     );

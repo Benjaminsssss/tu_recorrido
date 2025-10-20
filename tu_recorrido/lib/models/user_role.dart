@@ -2,7 +2,7 @@
 enum UserRole {
   /// Usuario normal con acceso básico
   user('user', 'Usuario'),
-  
+
   /// Administrador con acceso completo a todo
   admin('admin', 'Administrador');
 
@@ -10,7 +10,7 @@ enum UserRole {
 
   /// Valor del rol, como se almacenara en la base de datos
   final String value;
-  
+
   /// Nombre para mostrar al usuario
   final String displayName;
 
