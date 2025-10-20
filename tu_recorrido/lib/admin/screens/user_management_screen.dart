@@ -37,13 +37,13 @@ class _UserManagementContentState extends State<_UserManagementContent> {
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
-    
+
     try {
       final [users, stats] = await Future.wait([
         UserRoleService.getAllUsers(),
         UserRoleService.getUserRoleStats(),
       ]);
-      
+
       setState(() {
         _users = users as List<AppUser>;
         _roleStats = stats as Map<String, int>;
@@ -65,7 +65,7 @@ class _UserManagementContentState extends State<_UserManagementContent> {
   Future<void> _changeUserRole(AppUser user, UserRole newRole) async {
     try {
       await UserRoleService.changeUserRole(user.uid, newRole);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -197,9 +197,9 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                     Text(
                       'Rol: ${user.role.displayName}',
                       style: TextStyle(
-            color: user.role.isAdmin
-              ? Coloressito.badgeRed
-              : Colors.grey[600],
+                        color: user.role.isAdmin
+                            ? Coloressito.badgeRed
+                            : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -216,9 +216,9 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                           Icon(
                             role.isAdmin ? Icons.admin_panel_settings : Icons.person,
                             size: 16,
-              color: role.isAdmin
-                ? Coloressito.badgeRed
-                : Colors.grey[600],
+                            color: role.isAdmin
+                                ? Coloressito.badgeRed
+                                : Colors.grey[600],
                           ),
                           const SizedBox(width: 8),
                           Text(role.displayName),
