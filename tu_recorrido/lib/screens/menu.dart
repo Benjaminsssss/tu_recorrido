@@ -7,7 +7,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as dev;
 
-// Suposiciones de tus modelos (asegúrate de que existan)
+// Imports de modelos y widgets
+// Vmosoaaaa
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
 import 'package:tu_recorrido/screens/perfil.dart';
