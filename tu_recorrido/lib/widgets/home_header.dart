@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../screens/perfil.dart';
 
 class HomeHeader extends StatefulWidget {
@@ -91,20 +92,49 @@ class _HomeHeaderState extends State<HomeHeader>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgGradient = LinearGradient(
+      colors: [
+        const Color(0xFFD9F2E4), // verde muy claro
+        Colors.white.withOpacity(0.85),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      decoration: BoxDecoration(
+        gradient: bgGradient,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           // Título
           Expanded(
             child: Text(
               tr('app_title'),
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 21,
-                letterSpacing: 0.2,
-                color: isDark ? _onPrimaryDark : _onPrimary,
+              style: GoogleFonts.pacifico(
+                textStyle: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 28,
+                  letterSpacing: 0.2,
+                  color: isDark ? _onPrimaryDark : _onPrimary,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

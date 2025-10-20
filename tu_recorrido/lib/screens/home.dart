@@ -10,6 +10,8 @@ import '../widgets/home_header.dart';
 import '../widgets/welcome_banner.dart';
 import 'package:provider/provider.dart';
 import '../models/user_state.dart';
+import '../mock/mock_places.dart';
+import '../widgets/places_showcase.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -167,39 +169,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Sección: Cerca de ti
-                Text(tr('nearby'),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
+                // Sección: Lugares Imperdibles (nuevo feed vertical)
+                const SizedBox(height: 16),
                 SizedBox(
-                  height: 96,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (_, i) => SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8 < 260
-                          ? 260
-                          : MediaQuery.of(context).size.width * 0.8 > 340
-                              ? 340
-                              : MediaQuery.of(context).size.width * 0.8,
-                      child: CollectionCard(
-                        title:
-                            tr('featured_place', namedArgs: {'n': '${i + 1}'}),
-                        subtitle: '${tr('distance_meters_abbrev', namedArgs: {
-                              'm': '${200 * (i + 1)}'
-                            })} • ${tr('open_until', namedArgs: {
-                              'time': '18:00'
-                            })}',
-                        imageAsset: 'assets/img/insiginia.png',
-                        trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () {},
-                      ),
-                    ),
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemCount: 5,
-                  ),
+                  height: 480, // Ajusta la altura según tu diseño
+                  child: PlacesShowcase(places: mockPlaces),
                 ),
                 const SizedBox(height: 16),
                 // Sección: Últimas insignias

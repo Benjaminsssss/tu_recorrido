@@ -244,12 +244,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                 sigmaY: _blurAnim.value,
               ),
               child: Container(
-                color: Colors.black.withValues(alpha: _dimAnim.value),
+                color: Colors.black.withOpacity(_dimAnim.value),
               ),
             );
           },
         ),
-        // Sheet principal
+        // Sheet principal con degradado rural (beige a verde claro)
         AnimatedPositioned(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
@@ -262,34 +262,49 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             onVerticalDragEnd: _onVerticalDragEnd,
             child: SafeArea(
               top: false,
-              child: Material(
-                color: isDark ? Coloressito.backgroundDark : Colors.white,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(22)),
-                elevation: 0,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 12),
-                    // Handle visual
-                    Container(
-                      width: 48,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.25)
-                            : Colors.black.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(3),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                  gradient: isDark
+                      ? null
+                      : const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFFF5E9D2), // beige rural
+                            Color(0xFFD6EFC7), // verde muy claro
+                            Colors.white,
+                          ],
+                          stops: [0.0, 0.18, 1.0],
+                        ),
+                  color: isDark ? Coloressito.backgroundDark : null,
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                  elevation: 0,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      // Handle visual
+                      Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFBCA177).withOpacity(0.35), // marrón claro
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _modo == PerfilModo.hub
-                          ? _buildHub(context, isDark)
-                          : (_modo == PerfilModo.editar
-                              ? _buildEditar(context, isDark)
-                              : _buildConfiguracion(context, isDark)),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _modo == PerfilModo.hub
+                            ? _buildHub(context, isDark)
+                            : (_modo == PerfilModo.editar
+                                ? _buildEditar(context, isDark)
+                                : _buildConfiguracion(context, isDark)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -323,23 +338,30 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor:
-                  Coloressito.adventureGreen.withValues(alpha: 0.18),
+              backgroundColor: const Color(0xFFD6EFC7), // verde claro rural
               backgroundImage: avatarProvider,
               child: (avatarProvider == null)
                   ? Icon(Icons.person,
-                      color: Coloressito.adventureGreen, size: 40)
+                      color: const Color(0xFF7C6F57), // marrón rural
+                      size: 40)
                   : null,
             ),
             const SizedBox(height: 12),
-      Text(_nombre ?? '',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+            Text(
+              _nombre ?? '',
+              style: const TextStyle(
+                fontFamily: 'Pacifico',
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: Color(0xFF7C6F57), // marrón rural
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(handle, style: TextStyle(color: Colors.grey, fontSize: 15)),
+            Text(handle, style: const TextStyle(color: Color(0xFFBCA177), fontSize: 15)),
             const SizedBox(height: 2),
             Text(_nivel ?? 'Nivel Viajero 1',
-                style: TextStyle(
-                    color: Coloressito.adventureGreen,
+                style: const TextStyle(
+                    color: Color(0xFF7C9A5B), // verde hoja
                     fontWeight: FontWeight.w600,
                     fontSize: 15)),
           ],
@@ -350,11 +372,11 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _QuickAction(
-                icon: Icons.edit, label: 'Editar', onTap: _switchToEditar),
+                icon: Icons.edit, label: 'Editar', onTap: _switchToEditar, iconColor: Color(0xFF7C9A5B)),
             _QuickAction(
                 icon: Icons.settings,
                 label: 'Ajustes',
-                onTap: _switchToConfiguracion),
+                onTap: _switchToConfiguracion, iconColor: Color(0xFFBCA177)),
             _QuickAction(
               icon: Icons.qr_code,
               label: 'QR',
@@ -366,17 +388,26 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                       builder: (context) => const EscanerQRScreen()),
                 );
               },
+              iconColor: Color(0xFF7C6F57),
             ),
-            _QuickAction(icon: Icons.share, label: 'Compartir', onTap: () {}),
+            _QuickAction(icon: Icons.share, label: 'Compartir', onTap: () {}, iconColor: Color(0xFF7C9A5B)),
           ],
         ),
         const SizedBox(height: 18),
-        // Cards
+        // Separador rural
+        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        const SizedBox(height: 14),
         _buildProgressCard(),
+        const SizedBox(height: 10),
+        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildStampsCard(),
+        const SizedBox(height: 10),
+        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildStreakCard(),
+        const SizedBox(height: 10),
+        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildFriendsCard(),
       ],
@@ -840,8 +871,13 @@ class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _QuickAction(
-      {required this.icon, required this.label, required this.onTap});
+  final Color? iconColor;
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -854,21 +890,22 @@ class _QuickAction extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: const Color(0xFFF5E9D2), // beige rural
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 12,
+                  color: const Color(0xFFBCA177).withOpacity(0.13),
+                  blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
+              border: Border.all(color: const Color(0xFFBCA177), width: 1.2),
             ),
-            child: Icon(icon, color: Coloressito.adventureGreen, size: 24),
+            child: Icon(icon, color: iconColor ?? const Color(0xFF7C9A5B), size: 24),
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 12)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF7C6F57))),
       ],
     );
   }
