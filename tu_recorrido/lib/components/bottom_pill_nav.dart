@@ -14,28 +14,29 @@ class BottomPillNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = const [
       _PillItem(Icons.home_rounded, 'Inicio'),
-      _PillItem(Icons.map_rounded, 'Mapa'),
+      _PillItem(Icons.explore, 'Mapa'), // Ícono de exploración más atractivo
     ];
 
     return SafeArea(
       top: false,
       child: Container(
         color: const Color(0xFFFAFBF8), // Fondo igual al Scaffold
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFF7F8F4), // tinte muy leve
+            // Fondo azul petróleo clarito sólido
+            color: const Color(0xFF2B6B7F), // azul petróleo más claro
             border: Border.all(
-              color: const Color(0xFFE8EAE4), // neutro cálido
+              color: const Color(0xFF1A4D5C), // azul petróleo oscuro
               width: 1,
             ),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0A000000),
-                blurRadius: 4,
-                offset: Offset(0, 2),
+                blurRadius: 3,
+                offset: Offset(0, 1),
               ),
             ],
           ),
@@ -77,46 +78,50 @@ class _PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Activo: oliva oscuro #4E5338, Inactivo: oliva grisado #7B8063 @ 72%
-    final inactiveColor = const Color(0xFF7B8063).withOpacity(0.72);
-    final activeColor = const Color(0xFF4E5338); // oliva oscuro
-    final indicatorColor = const Color(0xFFC88400); // miel/mostaza
-    final fg = selected ? activeColor : inactiveColor;
+  // Ambos estados con el mismo color: blanco para contrastar con el fondo azul
+  final iconColor = const Color(0xFFFFFFFF); // blanco
+    final indicatorColor = const Color(0xFF66B7F0); // celeste claro
 
     return InkWell(
       borderRadius: BorderRadius.circular(40),
       onTap: onTap,
+  splashColor: indicatorColor.withValues(alpha: 0.3),
+      highlightColor: Colors.transparent,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
         decoration: const BoxDecoration(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(item.icon, size: 24, color: fg),
-            const SizedBox(height: 4),
+            Icon(item.icon, size: 20, color: iconColor),
+            const SizedBox(height: 2),
             Text(
               item.label,
               style: TextStyle(
-                fontSize: 12,
-                color: fg,
+                fontSize: 11,
+                color: iconColor,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 letterSpacing: 0.2,
               ),
             ),
-            // Indicador activo: línea miel
-            if (selected)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
+            // Indicador activo: línea celeste
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: selected ? 1.0 : 0.0,
                 child: Container(
                   height: 2,
-                  width: 20,
+                  width: 16,
                   decoration: BoxDecoration(
-                    color: indicatorColor, // miel/mostaza
+                    // Indicador celeste claro
+                    color: indicatorColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),

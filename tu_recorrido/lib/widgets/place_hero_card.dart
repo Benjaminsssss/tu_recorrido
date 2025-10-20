@@ -7,6 +7,18 @@ class PlaceHeroCard extends StatelessWidget {
   final Place place;
   const PlaceHeroCard({super.key, required this.place});
 
+  // Selección temporal de sello por tema; si no existe el asset, cae al fallback (insignia).
+  String _stampForPlace(Place p) {
+    const mapping = {
+      'Historia': 'assets/img/sellos/sello1.png',
+      'Arte': 'assets/img/sellos/sello2.png',
+      'Naturaleza': 'assets/img/sellos/sello3.png',
+      'Arquitectura': 'assets/img/sellos/sello4.png',
+      'Cultura': 'assets/img/sellos/sello5.png',
+    };
+    return mapping[p.badge.tema] ?? 'assets/img/sellos/sello1.png';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -18,14 +30,28 @@ class PlaceHeroCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: ImageCarousel(images: place.imagenes),
+            child: Stack(
+              children: [
+                ImageCarousel(images: place.imagenes),
+                // Sello grande, visible y superpuesto en la imagen
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _StampCircle(
+                    assetPath: _stampForPlace(place),
+                    size: 64, // más grande para que se vea mejor
+                    contentScale: 1.2, // zoom para compensar márgenes transparentes
+                  ),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Fila título + sello circular placeholder
+                // Fila título (el sello ahora va sobre la imagen)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -42,29 +68,6 @@ class PlaceHeroCard extends StatelessWidget {
                           letterSpacing: 0.3,
                           color: Color(0xFFC88400), // miel/mostaza
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Espacio reservado para sello circular (placeholder)
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFE7EAE4), // outline suave
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0F000000),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.verified,
-                        size: 22,
-                        color: Color(0xFF6A756E), // mutedText
                       ),
                     ),
                   ],
@@ -172,6 +175,54 @@ class PlaceHeroCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StampCircle extends StatelessWidget {
+  final String assetPath;
+  final double size;
+  final double contentScale; // permite hacer zoom a la imagen para alinearla al borde
+  const _StampCircle({required this.assetPath, this.size = 36, this.contentScale = 1.0});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFFE7EAE4), // fondo por si falla la imagen
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0F000000),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: const Color(0xFF1A4D5C), width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Transform.scale(
+          scale: contentScale,
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stack) {
+              // Fallback: usa la insignia existente si no hay asset
+              return Transform.scale(
+                scale: contentScale,
+                child: Image.asset(
+                  'assets/img/insiginia.png',
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

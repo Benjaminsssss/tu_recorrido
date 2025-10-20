@@ -5,11 +5,13 @@ import '../models/place.dart';
 class PlaceSearchBar extends StatefulWidget {
   final List<Place> allPlaces;
   final Function(Place?) onPlaceSelected;
+  final Function(String)? onSearchChanged; // Callback para filtrado en tiempo real
 
   const PlaceSearchBar({
     super.key,
     required this.allPlaces,
     required this.onPlaceSelected,
+    this.onSearchChanged,
   });
 
   @override
@@ -66,6 +68,8 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
         // Si está vacío, no filtramos; la visibilidad la maneja el foco/recientes
         _showSuggestions = _focusNode.hasFocus && _recentPlaces.isNotEmpty;
       });
+      // Notificar que se limpió la búsqueda - mostrar todos los lugares
+      widget.onSearchChanged?.call('');
       return;
     }
 
@@ -78,6 +82,9 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
           .toList();
       _showSuggestions = _filteredPlaces.isNotEmpty;
     });
+    
+    // Notificar el filtrado en tiempo real
+    widget.onSearchChanged?.call(query);
   }
 
   void _selectPlace(Place place) {
@@ -104,12 +111,13 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
     });
     _focusNode.unfocus();
     widget.onPlaceSelected(null); // Mostrar todos
+    widget.onSearchChanged?.call(''); // Notificar que se limpió la búsqueda
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
         // Barra de búsqueda clara tipo pill con borde suave
         Container(
@@ -154,6 +162,12 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
                       });
                     }
                   },
+                  onSubmitted: (value) {
+                    // Al presionar Enter, cerrar dropdown y mantener el filtro actual
+                    setState(() => _showSuggestions = false);
+                    _focusNode.unfocus();
+                    // El filtro ya está aplicado por onSearchChanged
+                  },
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xFF1A1A1A),
@@ -194,16 +208,19 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
             ],
           ),
         ),
-        // Sugerencias dropdown
+        // Sugerencias dropdown - posicionado absolutamente
         if (_showSuggestions)
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF), // surface
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFFE8EAE4), // neutro cálido
-                width: 1,
+          Positioned(
+            top: 56, // Altura de la barra de búsqueda (48) + margen (8)
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF), // surface
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFE8EAE4), // neutro cálido
+                  width: 1,
               ),
               boxShadow: const [
                 BoxShadow(
@@ -213,25 +230,26 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
                 ),
               ],
             ),
-            constraints: const BoxConstraints(maxHeight: 250),
-            child: Builder(
-              builder: (context) {
-                final List<Place> suggestions = _searchController.text.isEmpty
-                    ? _recentPlaces
-                    : _filteredPlaces;
-                if (suggestions.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              shrinkWrap: true,
-              itemCount: suggestions.length,
-              separatorBuilder: (_, __) => const Divider(
-                height: 1,
-                color: Color(0xFFE8EAE4), // neutro cálido
-                indent: 16,
-                endIndent: 16,
-              ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: Builder(
+                builder: (context) {
+                  final List<Place> suggestions = _searchController.text.isEmpty
+                      ? _recentPlaces
+                      : _filteredPlaces;
+                  if (suggestions.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    shrinkWrap: true,
+                    itemCount: suggestions.length,
+                    separatorBuilder: (_, __) => const Divider(
+                      height: 1,
+                      color: Color(0xFFE8EAE4), // neutro cálido
+                      indent: 16,
+                      endIndent: 16,
+                    ),
               itemBuilder: (context, index) {
                 final place = suggestions[index];
                 return InkWell(
@@ -283,7 +301,9 @@ class _PlaceSearchBarState extends State<PlaceSearchBar> {
                 );
               },
             );
-              },
+                },
+              ),
+            ),
             ),
           ),
       ],

@@ -50,7 +50,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
     if (!_showWelcome) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 10), // Mismo margen que las cards
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bannerBg,

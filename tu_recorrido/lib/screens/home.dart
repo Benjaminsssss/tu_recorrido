@@ -112,6 +112,23 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+  void _handleSearchChanged(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        // Mostrar todos los lugares cuando se limpia la búsqueda
+        _filteredPlaces = _places;
+      } else {
+        // Filtrar lugares en tiempo real mientras se escribe
+        _filteredPlaces = _places
+            ?.where((place) =>
+                place.nombre.toLowerCase().contains(query.toLowerCase()) ||
+                place.comuna.toLowerCase().contains(query.toLowerCase()) ||
+                place.region.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
   void _measureHeaderHeight() {
     final ctx = _headerKey.currentContext;
     if (ctx != null) {
@@ -252,6 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: PlaceSearchBar(
                               allPlaces: _places ?? [],
                               onPlaceSelected: _handlePlaceSearch,
+                              onSearchChanged: _handleSearchChanged,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -306,10 +324,12 @@ class _HomeScreenState extends State<HomeScreen> {
           // SIN FAB: se elimina el floatingActionButton
           bottomNavigationBar: BottomPillNav(
             currentIndex: _tab,
-            onTap: (i) {
+            onTap: (i) async {
               setState(() => _tab = i);
               if (i == 1) {
-                Navigator.pushNamed(context, '/mapa');
+                await Navigator.pushNamed(context, '/mapa');
+                // Al regresar del mapa, volver a poner el tab en Inicio
+                setState(() => _tab = 0);
               }
             },
           ),

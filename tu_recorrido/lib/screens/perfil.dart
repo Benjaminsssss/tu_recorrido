@@ -401,6 +401,10 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         const SizedBox(height: 10),
         Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
+        _buildSavedPlacesCard(),
+        const SizedBox(height: 10),
+        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        const SizedBox(height: 14),
         _buildStampsCard(),
         const SizedBox(height: 10),
         Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
@@ -753,6 +757,68 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedPlacesCard() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      elevation: 0,
+      color: Coloressito.surfaceLight,
+      child: InkWell(
+        onTap: () {
+          // Navegar a la pantalla de lugares guardados
+          Navigator.pushNamed(context, '/saved-places');
+        },
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.bookmark_rounded,
+                  color: Color(0xFF2B6B7F),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lugares guardados',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Ver tus lugares favoritos',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey,
+              ),
+            ],
+          ),
         ),
       ),
     );
