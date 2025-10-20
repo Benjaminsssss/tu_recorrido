@@ -198,22 +198,22 @@ class AdminScreen extends StatelessWidget {
       child: PantallaBase(
         titulo: 'Panel de Administración',
         body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeaderInfo(),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeaderInfo(),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Sección de gestión de estaciones
-          _buildSeccionEstaciones(context),
+            // Sección de gestión de estaciones
+            _buildSeccionEstaciones(context),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Sección de estadísticas generales
-          _buildSeccionEstadisticas(),
-        ],
+            // Sección de estadísticas generales
+            _buildSeccionEstadisticas(),
+          ],
+        ),
       ),
-    ),
     );
   }
 

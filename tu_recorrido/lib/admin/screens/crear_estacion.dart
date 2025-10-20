@@ -125,51 +125,52 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       child: PantallaBase(
         titulo: 'Crear Estación Patrimonial',
         body: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const EncabezadoEstacion(),
-            const SizedBox(height: 24),
-            CampoFormulario(
-              controller: _nombreController,
-              label: 'Nombre de la estación',
-              hint: 'Ej: Plaza de Armas',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Ingresa el nombre de la estación';
-                }
-                if (value.trim().length < 3) {
-                  return 'El nombre debe tener al menos 3 caracteres';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            CampoFormulario(
-              controller: _descripcionController,
-              label: 'Descripción histórica',
-              hint: 'Cuéntanos sobre la importancia histórica de este lugar...',
-              maxLines: 4,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Agrega una descripción del lugar';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            InfoUbicacion(ubicacion: _ubicacionActual),
-            const SizedBox(height: 32),
-            BotonAccion(
-              texto: 'Crear Estación',
-              onPressed: _crearEstacion,
-              cargando: _cargando,
-            ),
-          ],
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const EncabezadoEstacion(),
+              const SizedBox(height: 24),
+              CampoFormulario(
+                controller: _nombreController,
+                label: 'Nombre de la estación',
+                hint: 'Ej: Plaza de Armas',
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Ingresa el nombre de la estación';
+                  }
+                  if (value.trim().length < 3) {
+                    return 'El nombre debe tener al menos 3 caracteres';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              CampoFormulario(
+                controller: _descripcionController,
+                label: 'Descripción histórica',
+                hint:
+                    'Cuéntanos sobre la importancia histórica de este lugar...',
+                maxLines: 4,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Agrega una descripción del lugar';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              InfoUbicacion(ubicacion: _ubicacionActual),
+              const SizedBox(height: 32),
+              BotonAccion(
+                texto: 'Crear Estación',
+                onPressed: _crearEstacion,
+                cargando: _cargando,
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

@@ -37,13 +37,13 @@ class _UserManagementContentState extends State<_UserManagementContent> {
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
-    
+
     try {
       final [users, stats] = await Future.wait([
         UserRoleService.getAllUsers(),
         UserRoleService.getUserRoleStats(),
       ]);
-      
+
       setState(() {
         _users = users as List<AppUser>;
         _roleStats = stats as Map<String, int>;
@@ -65,7 +65,7 @@ class _UserManagementContentState extends State<_UserManagementContent> {
   Future<void> _changeUserRole(AppUser user, UserRole newRole) async {
     try {
       await UserRoleService.changeUserRole(user.uid, newRole);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -125,8 +125,8 @@ class _UserManagementContentState extends State<_UserManagementContent> {
         Text(
           'Estadísticas de Roles',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 16),
         Wrap(
@@ -146,10 +146,11 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                     const SizedBox(height: 8),
                     Text(
                       '${entry.value}',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Coloressito.badgeRed,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Coloressito.badgeRed,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                   ],
                 ),
@@ -168,8 +169,8 @@ class _UserManagementContentState extends State<_UserManagementContent> {
         Text(
           'Lista de Usuarios',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 16),
         Card(
@@ -181,11 +182,13 @@ class _UserManagementContentState extends State<_UserManagementContent> {
               final user = _users[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: user.role.isAdmin 
-                      ? Coloressito.badgeRed 
+                  backgroundColor: user.role.isAdmin
+                      ? Coloressito.badgeRed
                       : Coloressito.adventureGreen,
                   child: Icon(
-                    user.role.isAdmin ? Icons.admin_panel_settings : Icons.person,
+                    user.role.isAdmin
+                        ? Icons.admin_panel_settings
+                        : Icons.person,
                     color: Colors.white,
                   ),
                 ),
@@ -197,8 +200,8 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                     Text(
                       'Rol: ${user.role.displayName}',
                       style: TextStyle(
-                        color: user.role.isAdmin 
-                            ? Coloressito.badgeRed 
+                        color: user.role.isAdmin
+                            ? Coloressito.badgeRed
                             : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
@@ -214,17 +217,20 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                       child: Row(
                         children: [
                           Icon(
-                            role.isAdmin ? Icons.admin_panel_settings : Icons.person,
+                            role.isAdmin
+                                ? Icons.admin_panel_settings
+                                : Icons.person,
                             size: 16,
-                            color: role.isAdmin 
-                                ? Coloressito.badgeRed 
+                            color: role.isAdmin
+                                ? Coloressito.badgeRed
                                 : Colors.grey[600],
                           ),
                           const SizedBox(width: 8),
                           Text(role.displayName),
                           if (user.role == role) ...[
                             const SizedBox(width: 8),
-                            const Icon(Icons.check, size: 16, color: Colors.green),
+                            const Icon(Icons.check,
+                                size: 16, color: Colors.green),
                           ],
                         ],
                       ),
