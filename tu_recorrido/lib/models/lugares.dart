@@ -4,21 +4,25 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
 /// Modelo para un lugar (Google Places o generado)
-///CI porfaaaaaaaaaaa
 class PlaceResult {
   final String placeId;
   final String nombre;
   final LatLng ubicacion;
-  final double? rating;
+  double? rating; // ⭐️ Cambiado a no-final para poder actualizar
   final bool esGenerado;
 
   PlaceResult({
     required this.placeId,
     required this.nombre,
     required this.ubicacion,
-    required this.rating,
+    this.rating,
     this.esGenerado = false,
   });
+
+  // ⭐️ NUEVO: Método para actualizar el rating
+  void updateRating(double newRating) {
+    rating = newRating;
+  }
 
   factory PlaceResult.fromJson(Map<String, dynamic> json) {
     final geo = json['geometry']?['location'];
