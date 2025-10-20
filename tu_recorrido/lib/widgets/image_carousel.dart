@@ -38,16 +38,12 @@ class _ImageCarouselState extends State<ImageCarousel> {
               final img = widget.images[i];
               return ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: Image.network(
-                  img.url,
+                child: Image(
+                  image: img.imageProvider(),
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
                   semanticLabel: img.alt,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return Center(child: CircularProgressIndicator());
-                  },
                   errorBuilder: (context, error, stack) => Container(
                     color: Colors.grey[200],
                     child: const Center(child: Icon(Icons.broken_image, size: 48)),
@@ -66,7 +62,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
             width: _current == i ? 12 : 7,
             height: 7,
             decoration: BoxDecoration(
-              color: _current == i ? Theme.of(context).primaryColor : Colors.grey[400],
+              color: _current == i ? const Color(0xFFC5563A) : const Color(0xFFD9D1C9), // terracota activo, neutro cálido inactivo
               borderRadius: BorderRadius.circular(4),
             ),
           )),

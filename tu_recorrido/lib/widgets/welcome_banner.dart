@@ -20,11 +20,9 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
   bool _showWelcome = false;
   late SharedPreferences _prefs;
 
-  // Design tokens
-  static const _primaryGreen = Color(0xFF16A34A);
-  static const _onPrimary = Color(0xFF0F172A);
-  static const _onPrimaryDark = Color(0xFFE5F4EC);
-  static const bannerBg = Color(0xFFE8F5E9);
+  // Design tokens - Paleta cálida
+  static const _onPrimary = Color(0xFF1A1A1A); // onSurface
+  static const bannerBg = Color(0xFFEAF5FE); // celeste suave para fondo
 
   @override
   void initState() {
@@ -51,25 +49,23 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
   Widget build(BuildContext context) {
     if (!_showWelcome) return const SizedBox.shrink();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bannerBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Color(0x0A000000), // sombra sutil
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
-          Icon(Icons.explore, color: _primaryGreen, size: 28),
+          const Icon(Icons.explore, color: Color(0xFF66B7F0), size: 28), // celeste
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -77,10 +73,10 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
               children: [
                 Text(
                   tr('hello_name', namedArgs: {'name': widget.nombre}),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
-                    color: isDark ? _onPrimaryDark : _onPrimary,
+                    color: _onPrimary,
                   ),
                   semanticsLabel: 'Bienvenida',
                 ),
@@ -89,9 +85,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                   tr('welcome_activate_location'),
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark
-                        ? _onPrimaryDark.withValues(alpha: 0.7)
-                        : _onPrimary.withValues(alpha: 0.6),
+                    color: _onPrimary.withOpacity(0.6),
                   ),
                   semanticsLabel: 'Subtítulo bienvenida',
                 ),
@@ -99,7 +93,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 20),
+            icon: const Icon(Icons.close, size: 20, color: Color(0xFF6A756E)),
             tooltip: 'Cerrar banner de bienvenida',
             onPressed: _dismissWelcome,
           ),

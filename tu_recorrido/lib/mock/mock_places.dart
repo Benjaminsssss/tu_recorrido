@@ -5,6 +5,7 @@ final List<Place> mockPlaces = [
   Place(
     id: 'cerro-san-cristobal',
     nombre: 'Cerro San Cristóbal',
+    region: 'Chile',
     comuna: 'Providencia/Recoleta',
     shortDesc: 'Miradores icónicos, teleférico y atardeceres de postal.',
     descripcion: 'El parque urbano más grande de Chile. Sube en teleférico o funicular, disfruta de vistas 360° de la ciudad y visita la imagen de la Inmaculada Concepción.',

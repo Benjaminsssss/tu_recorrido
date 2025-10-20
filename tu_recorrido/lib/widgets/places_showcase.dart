@@ -16,6 +16,8 @@ class PlacesShowcase extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 16),
       itemCount: places.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, i) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: PlaceHeroCard(place: places[i]),

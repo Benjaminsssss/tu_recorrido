@@ -53,3 +53,4 @@ flutter:
   assets:
     - assets/img/    #esto importa todas las imágenes de la carpeta img
     - assets/translations/
+    - assets/data/places.json

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "cerro-san-cristobal",
+    "nombre": "Cerro San Cristóbal",
+      "region": "Chile",
+    "comuna": "Providencia/Recoleta",
+    "shortDesc": "Miradores icónicos, teleférico y atardeceres de postal.",
+    "descripcion": "El parque urbano más grande de Chile. Sube en teleférico o funicular, disfruta de vistas 360° de la ciudad y visita la imagen de la Inmaculada Concepción.",
+    "mejorMomento": "Tarde–atardecer.",
+    "badge": { "nombre": "Vigilante de la Ciudad", "tema": "Naturaleza" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1526402978125-f1d6df91cbac?w=1200&q=80",
+        "alt": "Vista panorámica de Santiago desde el Cerro San Cristóbal"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1598473571261-b68dc130c56f?w=1200&q=80",
+        "alt": "Teleférico del Cerro con ciudad al fondo"
+      }
+    ]
+  },
+  {
+    "id": "barrio-lastarria",
+    "nombre": "Barrio Lastarria",
+      "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Cafés, museos y vida cultural en calles patrimoniales.",
+    "descripcion": "Un barrio bohemio con arquitectura histórica, galerías, cine arte, ferias de libros y una amplia oferta gastronómica.",
+    "mejorMomento": "Fin de semana y atardecer-nocturno.",
+    "badge": { "nombre": "Rincón Cultural", "tema": "Cultura" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1518600506278-4e8ef466b810?w=1200&q=80",
+        "alt": "Fachadas históricas y cafés en Lastarria"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1504274066651-8d31a536b11a?w=1200&q=80",
+        "alt": "Feria de libros y arte callejero"
+      }
+    ]
+  },
+  {
+    "id": "parque-bicentenario",
+    "nombre": "Parque Bicentenario",
+      "region": "Chile",
+    "comuna": "Vitacura",
+    "shortDesc": "Áreas verdes, lagunas con flamencos y picnic familiar.",
+    "descripcion": "Parque moderno con extensas praderas, ciclovías, lagunas con aves y zonas de descanso. Ideal para familias y deporte.",
+    "mejorMomento": "Mañana y tarde.",
+    "badge": { "nombre": "Pulmón Urbano", "tema": "Naturaleza" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1509043759401-136742328bb3?w=1200&q=80",
+        "alt": "Praderas y laguna con flamencos"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&q=80",
+        "alt": "Familias en picnic bajo la sombra"
+      }
+    ]
+  },
+  {
+    "id": "museo-bellas-artes",
+    "nombre": "Museo Nacional de Bellas Artes",
+      "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Arte chileno y universal en edificio emblemático.",
+    "descripcion": "Colecciones y exposiciones temporales en un edificio neoclásico con gran cúpula de vidrio.",
+    "mejorMomento": "Tarde.",
+    "badge": { "nombre": "Arte Clásico", "tema": "Arte" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1499428665502-503f6c608263?w=1200&q=80",
+        "alt": "Interior del museo con cúpula"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1530023367847-a683933f417c?w=1200&q=80",
+        "alt": "Sala con obras de arte"
+      }
+    ]
+  },
+  {
+    "id": "mercado-central",
+    "nombre": "Mercado Central",
+      "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Gastronomía marina y arquitectura de fierro forjado.",
+    "descripcion": "Tradicional mercado con restaurantes de mariscos y pasillos llenos de vida.",
+    "mejorMomento": "Mediodía.",
+    "badge": { "nombre": "Sabor Típico", "tema": "Cultura" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&q=80",
+        "alt": "Puestos de mariscos frescos"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&q=80",
+        "alt": "Interior del mercado con estructura"
+      }
+    ]
+  }
+]

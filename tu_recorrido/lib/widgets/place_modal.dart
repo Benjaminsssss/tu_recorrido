@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/place.dart';
-import 'badge_pill.dart';
-import 'image_carousel.dart';
 
 class PlaceModal extends StatelessWidget {
   final Place place;
@@ -35,8 +33,8 @@ class PlaceModal extends StatelessWidget {
                 aspectRatio: 16/9,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Image.network(
-                    place.imagenes.first.url,
+                  child: Image(
+                    image: place.imagenes.first.imageProvider(),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
@@ -56,8 +54,7 @@ class PlaceModal extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              BadgePill(badge: place.badge),
-              const SizedBox(height: 18),
+              const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(

@@ -33,12 +33,6 @@ class _HomeHeaderState extends State<HomeHeader>
   late Animation<double> _scaleAnimation;
   bool _isPressed = false;
 
-  // Design tokens
-  static const _primaryGreen = Color(0xFF16A34A);
-  static const _onPrimary = Color(0xFF0F172A);
-  static const _onPrimaryDark = Color(0xFFE5F4EC);
-  static const _placeholderBg = Color(0xFFD9F2E4);
-
   @override
   void initState() {
     super.initState();
@@ -91,27 +85,28 @@ class _HomeHeaderState extends State<HomeHeader>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgGradient = LinearGradient(
-      colors: [
-        const Color(0xFFD9F2E4), // verde muy claro
-        Colors.white.withOpacity(0.85),
-      ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        gradient: bgGradient,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFF5F1E8), // beige claro
+            const Color(0xFFE8DCC4), // arena/crema
+          ],
+        ),
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFF5D4E37).withOpacity(0.15), // marrón tierra sutil
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: const Color(0xFF5D4E37).withOpacity(0.08),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -122,18 +117,11 @@ class _HomeHeaderState extends State<HomeHeader>
             child: Text(
               tr('app_title'),
               style: GoogleFonts.pacifico(
-                textStyle: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 28,
-                  letterSpacing: 0.2,
-                  color: isDark ? _onPrimaryDark : _onPrimary,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 24,
+                  letterSpacing: 0.3,
+                  color: Color(0xFF5D4E37), // marrón tierra
                 ),
               ),
               maxLines: 1,
@@ -142,16 +130,7 @@ class _HomeHeaderState extends State<HomeHeader>
             ),
           ),
           const SizedBox(width: 12),
-          // Campana opcional
-          if (widget.showBell)
-            _buildActionButton(
-              icon: Icons.notifications_outlined,
-              hasNotification: widget.hasNotifications,
-              onTap: () {},
-              isDark: isDark,
-            ),
-          if (widget.showBell) const SizedBox(width: 8),
-          // Avatar con hero animation
+          // Avatar minimalista
           Hero(
             tag: 'profile_avatar_${widget.uid}',
             child: GestureDetector(
@@ -165,19 +144,19 @@ class _HomeHeaderState extends State<HomeHeader>
                   return Transform.scale(
                     scale: _scaleAnimation.value,
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _isPressed
-                              ? _primaryGreen
-                              : Colors.transparent,
+                              ? const Color(0xFF4A7C59) // verde bosque al presionar
+                              : const Color(0xFF5D4E37).withOpacity(0.3), // marrón claro
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: const Color(0xFF5D4E37).withOpacity(0.12),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -196,38 +175,19 @@ class _HomeHeaderState extends State<HomeHeader>
                                 } catch (_) {}
                               }
                               return CircleAvatar(
-                                radius: 20,
-                                backgroundColor: _placeholderBg,
+                                radius: 18,
+                                backgroundColor: const Color(0xFFE8DCC4), // beige
                                 backgroundImage: avatarProvider,
                                 child: (avatarProvider == null)
-                                    ? Icon(
+                                    ? const Icon(
                                         Icons.person,
-                                        color: _primaryGreen,
+                                        color: Color(0xFF5D4E37), // marrón tierra
                                         size: 20,
                                       )
                                     : null,
                               );
                             },
                           ),
-                          if (widget.hasNotifications)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: _primaryGreen,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isDark
-                                        ? const Color(0xFF141414)
-                                        : Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
@@ -237,54 +197,6 @@ class _HomeHeaderState extends State<HomeHeader>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    required bool isDark,
-    bool hasNotification = false,
-  }) {
-    return Semantics(
-      label: 'Botón de acción',
-      button: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(
-                icon,
-                color: isDark ? _onPrimaryDark : _onPrimary,
-                size: 24,
-              ),
-              if (hasNotification)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _primaryGreen,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF141414) : Colors.white,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }

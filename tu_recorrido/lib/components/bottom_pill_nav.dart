@@ -12,7 +12,6 @@ class BottomPillNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final items = const [
       _PillItem(Icons.home_rounded, 'Inicio'),
       _PillItem(Icons.map_rounded, 'Mapa'),
@@ -20,23 +19,28 @@ class BottomPillNav extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: DecoratedBox(
-          decoration: ShapeDecoration(
-            color: Colors.white,
-            shape: StadiumBorder(
-              side: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+      child: Container(
+        color: const Color(0xFFFAFBF8), // Fondo igual al Scaffold
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7F8F4), // tinte muy leve
+            border: Border.all(
+              color: const Color(0xFFE8EAE4), // neutro cálido
+              width: 1,
             ),
-            shadows: [
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
+                color: Color(0x0A000000),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               for (var i = 0; i < items.length; i++)
                 Expanded(
@@ -44,7 +48,6 @@ class BottomPillNav extends StatelessWidget {
                     item: items[i],
                     selected: i == currentIndex,
                     onTap: () => onTap(i),
-                    color: theme.colorScheme.primary,
                   ),
                 ),
             ],
@@ -65,43 +68,55 @@ class _PillButton extends StatelessWidget {
   final _PillItem item;
   final bool selected;
   final VoidCallback onTap;
-  final Color color;
 
   const _PillButton({
     required this.item,
     required this.selected,
     required this.onTap,
-    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bg = selected ? color.withValues(alpha: 0.12) : Colors.transparent;
-    final fg = selected ? color : theme.colorScheme.onSurfaceVariant;
+    // Activo: oliva oscuro #4E5338, Inactivo: oliva grisado #7B8063 @ 72%
+    final inactiveColor = const Color(0xFF7B8063).withOpacity(0.72);
+    final activeColor = const Color(0xFF4E5338); // oliva oscuro
+    final indicatorColor = const Color(0xFFC88400); // miel/mostaza
+    final fg = selected ? activeColor : inactiveColor;
 
     return InkWell(
       borderRadius: BorderRadius.circular(40),
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(40),
-        ),
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: const BoxDecoration(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(item.icon, size: 22, color: fg),
+            Icon(item.icon, size: 24, color: fg),
             const SizedBox(height: 4),
             Text(
               item.label,
-              style: theme.textTheme.labelSmall?.copyWith(
+              style: TextStyle(
+                fontSize: 12,
                 color: fg,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                letterSpacing: 0.2,
               ),
             ),
+            // Indicador activo: línea miel
+            if (selected)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Container(
+                  height: 2,
+                  width: 20,
+                  decoration: BoxDecoration(
+                    color: indicatorColor, // miel/mostaza
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
