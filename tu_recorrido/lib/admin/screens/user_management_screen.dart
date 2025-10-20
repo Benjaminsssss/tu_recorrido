@@ -181,8 +181,8 @@ class _UserManagementContentState extends State<_UserManagementContent> {
               final user = _users[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: user.role.isAdmin 
-                      ? Coloressito.badgeRed 
+                  backgroundColor: user.role.isAdmin
+                      ? Coloressito.badgeRed
                       : Coloressito.adventureGreen,
                   child: Icon(
                     user.role.isAdmin ? Icons.admin_panel_settings : Icons.person,
@@ -197,9 +197,9 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                     Text(
                       'Rol: ${user.role.displayName}',
                       style: TextStyle(
-                        color: user.role.isAdmin 
-                            ? Coloressito.badgeRed 
-                            : Colors.grey[600],
+            color: user.role.isAdmin
+              ? Coloressito.badgeRed
+              : Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -216,9 +216,9 @@ class _UserManagementContentState extends State<_UserManagementContent> {
                           Icon(
                             role.isAdmin ? Icons.admin_panel_settings : Icons.person,
                             size: 16,
-                            color: role.isAdmin 
-                                ? Coloressito.badgeRed 
-                                : Colors.grey[600],
+              color: role.isAdmin
+                ? Coloressito.badgeRed
+                : Colors.grey[600],
                           ),
                           const SizedBox(width: 8),
                           Text(role.displayName),

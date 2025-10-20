@@ -32,7 +32,7 @@ class AppUser {
   /// Crear desde documento de Firestore
   factory AppUser.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     return AppUser(
       uid: doc.id,
       nombre: data['nombre'] ?? '',
