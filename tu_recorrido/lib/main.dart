@@ -4,10 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:device_preview/device_preview.dart';
 
 import 'app.dart';
 import 'firebase_options_dev.dart';
-import 'screens/menu.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,23 +25,9 @@ Future<void> main() async {
   };
 
   runApp(
-    MaterialApp(
-      // Delegates de localización
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      
-      // Idiomas soportados
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('es', ''),
-      ],
-      
-      // Tu pantalla principal
-      home: const Mapita(),
-      debugShowCheckedModeBanner: false,
+    DevicePreview(
+      enabled: !kReleaseMode && kIsWeb, // Solo en desarrollo y web
+      builder: (context) => MyApp(),
     ),
   );
 }
