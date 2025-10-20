@@ -34,8 +34,7 @@ class RegistroScreenState extends State<RegistroScreen> {
   final RegExp nombreReg = RegExp(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,20}$");
   final RegExp apodoReg = RegExp(r"^[A-Za-z0-9_ -]{3,15}$");
   final RegExp contrasReg = RegExp(
-    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%\^&\*\(\)\[\]\-_=+\{\}\|;:',<\.>\/\?\\~`]).{8,}$",
-  );
+      r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%\^&\*\(\)\[\]\-_=+\{\}\|;:',<\.>\/\?\\~`]).{8,}$");
 
   @override
   void dispose() {
@@ -85,8 +84,8 @@ class RegistroScreenState extends State<RegistroScreen> {
     setState(() => isLoading = true);
 
     try {
-      debugPrint('Iniciando registro con email: ${correo.text.trim()}');
-      debugPrint('Firebase App: ${FirebaseAuth.instance.app.name}');
+      print('🔄 Iniciando registro con email: ${correo.text.trim()}');
+      print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
 
       // 1) Crear usuario en Auth
       final userCredential = await AuthService.registerWithEmail(
@@ -119,45 +118,33 @@ class RegistroScreenState extends State<RegistroScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
-      debugPrint('FirebaseAuthException: ${e.code} - ${e.message}');
+      print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
       switch (e.code) {
         case 'weak-password':
-          errorMessage = 'La contraseña es muy débil.';
-          break;
+          errorMessage = 'La contraseña es muy débil.'; break;
         case 'email-already-in-use':
-          errorMessage = 'Ya existe una cuenta con este correo.';
-          break;
+          errorMessage = 'Ya existe una cuenta con este correo.'; break;
         case 'invalid-email':
-          errorMessage = 'El correo no es válido.';
-          break;
+          errorMessage = 'El correo no es válido.'; break;
         case 'operation-not-allowed':
-          errorMessage = 'El registro con email/contraseña no está habilitado.';
-          break;
+          errorMessage = 'El registro con email/contraseña no está habilitado.'; break;
         case 'invalid-api-key':
-          errorMessage = 'Error de configuración: API key inválida.';
-          break;
+          errorMessage = 'Error de configuración: API key inválida.'; break;
         case 'app-not-authorized':
-          errorMessage = 'La app no está autorizada para usar Firebase Auth.';
-          break;
+          errorMessage = 'La app no está autorizada para usar Firebase Auth.'; break;
         default:
           errorMessage = 'Error al registrar: ${e.code} - ${e.message}';
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(' $errorMessage'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('❌ $errorMessage'), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
-      debugPrint('Error general: $e');
+      print('🔥 Error general: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error inesperado: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('❌ Error inesperado: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -188,17 +175,17 @@ class RegistroScreenState extends State<RegistroScreen> {
       'nombre': nombre.text.trim(),
       'apodo': apodo.text.trim(),
       'email': correo.text.trim(),
-      'fechaNacimiento': fecha.text.trim(), // DD/MM/YYYY (lo que muestras)
-      'fechaNacimientoISO': iso, // YYYY-MM-DD (para queries)
+      'fechaNacimiento': fecha.text.trim(),     // DD/MM/YYYY (lo que muestras)
+      'fechaNacimientoISO': iso,                // YYYY-MM-DD (para queries)
       'region': regionSeleccionada ?? '',
       'comuna': comunaSeleccionada ?? '',
       'activo': true,
       // createdAt/updatedAt los maneja FirestoreService.upsertUser()
     };
 
-    debugPrint('Guardando datos completos del usuario en Firestore...');
+    print('📁 Guardando datos completos del usuario en Firestore...');
     await FirestoreService.instance.upsertUser(uid: uid, data: userData);
-    debugPrint('Datos guardados exitosamente en Firestore: $userData');
+    print('✅ Datos guardados exitosamente en Firestore: $userData');
   }
 
   void _limpiarFormulario() {
@@ -222,9 +209,7 @@ class RegistroScreenState extends State<RegistroScreen> {
         child: Card(
           elevation: 6,
           margin: const EdgeInsets.symmetric(horizontal: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Stack(
@@ -237,10 +222,7 @@ class RegistroScreenState extends State<RegistroScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(height: 8),
-                        Text(
-                          'Registro',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
+                        Text('Registro', style: Theme.of(context).textTheme.titleLarge),
                         const SizedBox(height: 12),
 
                         // Nombre
@@ -317,10 +299,10 @@ class RegistroScreenState extends State<RegistroScreen> {
                             errorStyle: TextStyle(height: 0.8),
                           ),
                           items: regionesYComunas.keys
-                              .map(
-                                (r) =>
-                                    DropdownMenuItem(value: r, child: Text(r)),
-                              )
+                              .map((r) => DropdownMenuItem(
+                                    value: r,
+                                    child: Text(r),
+                                  ))
                               .toList(),
                           onChanged: onRegionChanged,
                           validator: (v) {
@@ -341,13 +323,12 @@ class RegistroScreenState extends State<RegistroScreen> {
                             errorStyle: TextStyle(height: 0.8),
                           ),
                           items: comunas
-                              .map(
-                                (c) =>
-                                    DropdownMenuItem(value: c, child: Text(c)),
-                              )
+                              .map((c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(c),
+                                  ))
                               .toList(),
-                          onChanged: (v) =>
-                              setState(() => comunaSeleccionada = v),
+                          onChanged: (v) => setState(() => comunaSeleccionada = v),
                           validator: (v) {
                             if (v == null || v.isEmpty) {
                               return 'Debe seleccionar una comuna';
@@ -370,9 +351,8 @@ class RegistroScreenState extends State<RegistroScreen> {
                             if (v == null || v.trim().isEmpty) {
                               return 'El correo no puede quedar vacío';
                             }
-                            if (!RegExp(
-                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                            ).hasMatch(v.trim())) {
+                            if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                .hasMatch(v.trim())) {
                               return 'Ingrese un correo válido';
                             }
                             return null;
@@ -415,8 +395,7 @@ class RegistroScreenState extends State<RegistroScreen> {
                                         width: 20,
                                         height: 20,
                                         child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
+                                            strokeWidth: 2),
                                       ),
                                       SizedBox(width: 12),
                                       Text('Registrando...'),

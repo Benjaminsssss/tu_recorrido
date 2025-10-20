@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,7 +17,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
-  String? _photoUrl;
+  String? _photoBase64;
   Uint8List? _localBytes;
   Locale? _selectedLocale;
   bool _saving = false;
@@ -31,27 +32,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     setState(() {
       _nameCtrl.text = user?.displayName ?? '';
-      _photoUrl = user?.photoURL;
       _selectedLocale = context.locale;
-      // Nota: aquí podrías cargar Firestore para languageCode/photoUrl
     });
     if (user != null) {
+      final base64img = await ProfileService.getAvatarBase64(user.uid);
       final doc = await ProfileService.getUserProfile(user.uid);
       final data = doc?.data();
       if (data != null && mounted) {
         setState(() {
           final lang = data['languageCode'] as String?;
-          final purl = data['photoURL'] as String?;
           if (lang != null && lang.isNotEmpty) {
             _selectedLocale = Locale(lang);
             context.setLocale(_selectedLocale!);
           }
-          if (purl != null && purl.isNotEmpty) {
-            _photoUrl = purl;
-          }
           if ((data['displayName'] as String?)?.isNotEmpty ?? false) {
             _nameCtrl.text = data['displayName'];
           }
+          _photoBase64 = base64img;
         });
       }
     }
@@ -59,7 +56,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickPhoto() async {
     final picker = ImagePicker();
-    final x = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024);
+    final x =
+        await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024);
     if (x != null) {
       final bytes = await x.readAsBytes();
       setState(() {
@@ -74,26 +72,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _saving = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
+      final currentLocale = context.locale;
       if (user != null) {
         await user.updateDisplayName(_nameCtrl.text.trim());
-        // Subir avatar a Storage si hay bytes en memoria
-        String? newPhotoUrl = _photoUrl;
+        // Guardar avatar como base64 en Firestore
         if (_localBytes != null) {
-          newPhotoUrl = await ProfileService.uploadAvatar(user.uid, _localBytes!);
-          await user.updatePhotoURL(newPhotoUrl);
+          await ProfileService.saveAvatarBase64(user.uid, _localBytes!);
+          _photoBase64 = base64Encode(_localBytes!);
         }
         // Persistir en Firestore
         await ProfileService.updateUserProfile(user.uid, {
           'displayName': _nameCtrl.text.trim(),
-          'photoURL': newPhotoUrl,
-          'languageCode': context.locale.languageCode,
+          'languageCode': currentLocale.languageCode,
         });
       }
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('languageCode', context.locale.languageCode);
+      await prefs.setString('languageCode', currentLocale.languageCode);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('save') + ' OK')),
+          SnackBar(content: Text('${tr('save')} OK')),
         );
       }
     } finally {
@@ -118,14 +115,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 56,
-                      backgroundImage: _localBytes != null
-                          ? MemoryImage(_localBytes!)
-                          : (_photoUrl != null && _photoUrl!.isNotEmpty)
-                              ? NetworkImage(_photoUrl!) as ImageProvider
-                              : null,
-                      child: (_photoUrl == null && _localBytes == null)
-                          ? const Icon(Icons.person, size: 56)
-                          : null,
+            backgroundImage: _localBytes != null
+              ? MemoryImage(_localBytes!)
+              : (_photoBase64 != null && _photoBase64!.isNotEmpty)
+                ? MemoryImage(base64Decode(_photoBase64!))
+                : null,
+            child: (_photoBase64 == null && _localBytes == null)
+              ? const Icon(Icons.person, size: 56)
+              : null,
                     ),
                     Positioned(
                       bottom: -4,
@@ -139,7 +136,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: _pickPhoto,
                           child: Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Icon(Icons.camera_alt, color: Colors.green[700], size: 20),
+                            child: Icon(Icons.camera_alt,
+                                color: Colors.green[700], size: 20),
                           ),
                         ),
                       ),
@@ -164,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Locale>(
-                value: _selectedLocale ?? context.locale,
+                initialValue: _selectedLocale ?? context.locale,
                 decoration: InputDecoration(labelText: tr('language')),
                 items: const [
                   Locale('es'),
@@ -175,7 +173,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ]
                     .map((loc) => DropdownMenuItem(
                           value: loc,
-                          child: Text(loc.languageCode.toUpperCase(), overflow: TextOverflow.ellipsis),
+                          child: Text(loc.languageCode.toUpperCase(),
+                              overflow: TextOverflow.ellipsis),
                         ))
                     .toList(),
                 onChanged: (loc) async {
@@ -205,8 +204,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () async {
+                    final navigator = Navigator.of(context);
                     await FirebaseAuth.instance.signOut();
-                    if (mounted) Navigator.of(context).pop();
+                    if (mounted) navigator.pop();
                   },
                   child: Text(tr('sign_out'), overflow: TextOverflow.ellipsis),
                 ),

@@ -7,12 +7,12 @@ import '../utils/colores.dart';
 class ProfileTopSheet extends StatefulWidget {
   final String uid;
   final String? avatarUrl;
-  
+
   const ProfileTopSheet({
-    Key? key,
+    super.key,
     required this.uid,
     this.avatarUrl,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfileTopSheet> createState() => _ProfileTopSheetState();
@@ -24,12 +24,12 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
   late Animation<double> _sheetAnimation;
   late Animation<double> _blurAnimation;
   late Animation<double> _dimAnimation;
-  
+
   // Snap points: Oculto (-100%), Medio (70%), Expandido (92%)
   static const double hiddenSnap = -1.0;
   static const double mediumSnap = 0.70;
   static const double expandedSnap = 0.92;
-  
+
   double _currentSnap = mediumSnap;
   double _dragOffset = 0.0;
 
@@ -40,19 +40,19 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
       vsync: this,
       duration: const Duration(milliseconds: 240),
     );
-    
+
     _sheetAnimation = Tween<double>(begin: hiddenSnap, end: mediumSnap).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
-    
+
     _blurAnimation = Tween<double>(begin: 0.0, end: 12.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
-    
+
     _dimAnimation = Tween<double>(begin: 0.0, end: 0.18).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
-    
+
     _controller.forward();
   }
 
@@ -65,13 +65,14 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
   void _handleDragUpdate(DragUpdateDetails details) {
     setState(() {
       _dragOffset += details.primaryDelta! / MediaQuery.of(context).size.height;
-      _currentSnap = (_sheetAnimation.value - _dragOffset).clamp(0.0, expandedSnap);
+      _currentSnap =
+          (_sheetAnimation.value - _dragOffset).clamp(0.0, expandedSnap);
     });
   }
 
   void _handleDragEnd(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
-    
+
     // Cerrar si se desliza hacia arriba (negativo) con velocidad o si está muy arriba
     if (velocity < -700 || _currentSnap < 0.3) {
       _closeSheet();
@@ -82,7 +83,7 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
       // Medio
       _snapTo(mediumSnap);
     }
-    
+
     setState(() {
       _dragOffset = 0.0;
     });
@@ -113,11 +114,13 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
     final size = MediaQuery.of(context).size;
     final user = FirebaseAuth.instance.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return WillPopScope(
-      onWillPop: () async {
-        _closeSheet();
-        return false;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _closeSheet();
+        }
       },
       child: AnimatedBuilder(
         animation: _controller,
@@ -134,7 +137,8 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
                       sigmaY: _blurAnimation.value,
                     ),
                     child: Container(
-                      color: Colors.black.withOpacity(_dimAnimation.value),
+                      color:
+                          Colors.black.withValues(alpha: _dimAnimation.value),
                     ),
                   ),
                 ),
@@ -159,13 +163,14 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
                       shadowColor: Colors.transparent,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF1A1A1A) : Colors.white,
                           borderRadius: const BorderRadius.vertical(
                             bottom: Radius.circular(26),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.14),
+                              color: Colors.black.withValues(alpha: 0.14),
                               blurRadius: 28,
                               offset: const Offset(0, 12),
                             ),
@@ -180,8 +185,8 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
                               height: 5,
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.25)
-                                    : Colors.black.withOpacity(0.12),
+                                    ? Colors.white.withValues(alpha: 0.25)
+                                    : Colors.black.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
@@ -261,7 +266,7 @@ class _ProfileSheetHeader extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Coloressito.adventureGreen.withOpacity(0.25),
+                  color: Coloressito.adventureGreen.withValues(alpha: 0.25),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -307,10 +312,10 @@ class _ProfileSheetHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
-            color: Coloressito.adventureGreen.withOpacity(0.1),
+            color: Coloressito.adventureGreen.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Coloressito.adventureGreen.withOpacity(0.3),
+              color: Coloressito.adventureGreen.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
@@ -414,18 +419,18 @@ class _QuickActionChip extends StatelessWidget {
                 height: 56,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : Coloressito.adventureGreen.withOpacity(0.08),
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Coloressito.adventureGreen.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withOpacity(0.15)
-                        : Coloressito.adventureGreen.withOpacity(0.2),
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Coloressito.adventureGreen.withValues(alpha: 0.2),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -474,8 +479,8 @@ class _ProgressCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
             width: 1,
           ),
         ),
@@ -500,7 +505,7 @@ class _ProgressCard extends StatelessWidget {
                       value: 0.62,
                       minHeight: 10,
                       backgroundColor: isDark
-                          ? Colors.white.withOpacity(0.1)
+                          ? Colors.white.withValues(alpha: 0.1)
                           : Colors.grey[200],
                       color: Coloressito.adventureGreen,
                     ),
@@ -542,8 +547,8 @@ class _RecentStampsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
             width: 1,
           ),
         ),
@@ -573,7 +578,7 @@ class _RecentStampsCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -629,8 +634,8 @@ class _StreakCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
             width: 1,
           ),
         ),
@@ -651,7 +656,7 @@ class _StreakCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Coloressito.badgeRed.withOpacity(0.15),
+                    color: Coloressito.badgeRed.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

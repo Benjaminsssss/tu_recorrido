@@ -258,7 +258,7 @@ class _MapitaState extends State<Mapita> {
     setState(() {
       _polylines.clear();
       _isRouteActive = false;
-  _showSnackBar(tr('route_canceled'));
+      _showSnackBar(tr('route_canceled'));
     });
   }
 
@@ -433,7 +433,7 @@ class _MapitaState extends State<Mapita> {
 
     return Scaffold(
       appBar: AppBar(
-  title: Text(tr('poi_title')),
+        title: Text(tr('poi_title')),
         backgroundColor: theme.colorScheme.primary,
         actions: [
           IconButton(

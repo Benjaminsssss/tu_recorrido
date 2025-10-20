@@ -26,11 +26,11 @@ class BottomPillNav extends StatelessWidget {
           decoration: ShapeDecoration(
             color: Colors.white,
             shape: StadiumBorder(
-              side: BorderSide(color: Colors.black.withOpacity(0.06)),
+              side: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
             ),
             shadows: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )
@@ -77,7 +77,7 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bg = selected ? color.withOpacity(0.12) : Colors.transparent;
+    final bg = selected ? color.withValues(alpha: 0.12) : Colors.transparent;
     final fg = selected ? color : theme.colorScheme.onSurfaceVariant;
 
     return InkWell(

@@ -36,9 +36,9 @@ class MyApp extends StatelessWidget {
         '/home': (_) => const HomeScreen(),
         '/auth/login': (_) => const LoginScreen(),
         '/auth/registro': (_) => const RegistroScreen(),
-  '/escaner': (_) => const EscanerQRScreen(),
-  '/mapa': (_) => const Mapita(),
-  '/perfil': (_) => const ProfileScreen(),
+        '/escaner': (_) => const EscanerQRScreen(),
+        '/mapa': (_) => const Mapita(),
+        '/perfil': (_) => const ProfileScreen(),
 
         // Si ya tienes una pantalla de lugares, descomenta:
         // '/places': (_) => const PlacesScreen(),

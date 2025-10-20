@@ -26,7 +26,6 @@ class AppTheme {
       primary: _primary,
       secondary: _secondary,
       tertiary: _tertiary,
-      background: _background,
       surface: _surface,
     );
 
@@ -75,7 +74,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -92,7 +92,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: _onSurface,
-          side: BorderSide(color: _onSurfaceVariant.withOpacity(0.2)),
+          side: BorderSide(color: _onSurfaceVariant.withValues(alpha: 0.2)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

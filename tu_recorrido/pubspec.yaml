@@ -37,6 +37,7 @@ dependencies:
   # i18n + media picker
   easy_localization: ^3.0.5
   image_picker: ^1.0.7
+  image: ^4.5.4
 
   # La librería 'js' ha sido eliminada. Si tu código la requiere, puedes re-añadirla.
 

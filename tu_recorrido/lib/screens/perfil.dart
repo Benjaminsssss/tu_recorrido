@@ -1,17 +1,17 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 import '../models/user_state.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../components/white_card.dart';
 import '../utils/colores.dart';
-import 'dart:typed_data';
 import 'escanerqr.dart';
 import 'login.dart';
+import '../services/profile_service.dart';
 
 class Perfil extends StatefulWidget {
   const Perfil({super.key});
@@ -30,9 +30,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _blurAnim;
   late Animation<double> _dimAnim;
-  bool _loading = true;
-  User? _user;
-  String? _photoUrl;
+  String? _photoBase64;
   String? _nombre;
   String? _correo;
   String? _nivel;
@@ -64,9 +62,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
 
   Future<void> _loadUser() async {
     final user = FirebaseAuth.instance.currentUser;
+    String? base64img;
+    if (user != null) {
+      base64img = await ProfileService.getAvatarBase64(user.uid);
+    }
     setState(() {
-      _user = user;
-      _photoUrl = user?.photoURL;
+      _photoBase64 = base64img;
       _nombre = user?.displayName ?? '';
       _correo = user?.email ?? '';
       _nivel = 'Nivel Viajero 1';
@@ -75,13 +76,13 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
       _amigos = [];
       _selectedLocale = Locale('es');
       _nameCtrl.text = _nombre ?? '';
-      _loading = false;
     });
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
     setState(() {
-      _sheetFraction -= details.primaryDelta! / MediaQuery.of(context).size.height;
+      _sheetFraction -=
+          details.primaryDelta! / MediaQuery.of(context).size.height;
       _sheetFraction = _sheetFraction.clamp(minFraction, maxFraction);
     });
   }
@@ -109,7 +110,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   }
 
   void _switchToHub() {
-    setState(() => _modo = PerfilModo.hub);
+  // final userState = Provider.of<UserState>(context, listen: false);
+    setState(() {
+      _modo = PerfilModo.hub;
+      // Si hay avatar persistido en Provider, úsalo como respaldo
+      // Ya no se usa avatarUrl ni _photoUrl, solo base64/localBytes
+    });
     HapticFeedback.lightImpact();
   }
 
@@ -120,42 +126,106 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked != null) {
       final bytes = await picked.readAsBytes();
       setState(() {
         _localBytes = bytes;
-        _photoUrl = null; // Prioriza la imagen local
+        // No anulamos _photoUrl aún; la UI prioriza _localBytes automáticamente
       });
     }
   }
 
-  Future<void> _guardarPerfil() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
-    final nuevoNombre = _nameCtrl.text.trim();
-    setState(() {
-      _nombre = nuevoNombre;
-      // Si hay imagen local, se prioriza
-      // _photoUrl ya se actualizó en _pickImage
-    });
-    // Actualiza el nombre y avatar global
-    final userState = Provider.of<UserState>(context, listen: false);
-    await userState.setNombre(nuevoNombre);
-    if (_localBytes != null) {
-      // Para mantenerlo simple, guardamos la imagen local como base64 en el avatarUrl
-      final base64 = String.fromCharCodes(_localBytes!);
-      await userState.setAvatarUrl(base64);
-    } else if (_photoUrl != null && _photoUrl!.isNotEmpty) {
-      await userState.setAvatarUrl(_photoUrl);
+  Future<Uint8List> _compressImage(Uint8List input) async {
+    // Decodificar imagen
+    final decoded = img.decodeImage(input);
+    if (decoded == null) return input;
+    
+    // Redimensionar si es muy grande (max 512px en el lado mayor)
+    const maxSide = 512;
+    img.Image resized = decoded;
+    if (decoded.width > maxSide || decoded.height > maxSide) {
+      if (decoded.width >= decoded.height) {
+        resized = img.copyResize(decoded, width: maxSide);
+      } else {
+        resized = img.copyResize(decoded, height: maxSide);
+      }
     }
-    await Future.delayed(const Duration(milliseconds: 600));
-    setState(() => _saving = false);
-    _switchToHub();
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Perfil actualizado (solo local)')),
-    );
+    
+    // Comprimir a JPG calidad 80 (buen balance peso/calidad)
+    final jpg = img.encodeJpg(resized, quality: 80);
+    return Uint8List.fromList(jpg);
+  }
+
+  Future<void> _guardarPerfil() async {
+  if (!_formKey.currentState!.validate()) return;
+  setState(() => _saving = true);
+
+    final nuevoNombre = _nameCtrl.text.trim();
+    final user = FirebaseAuth.instance.currentUser;
+    final userState = Provider.of<UserState>(context, listen: false);
+
+    try {
+      // Actualizar nombre local
+      setState(() => _nombre = nuevoNombre);
+      await userState.setNombre(nuevoNombre);
+
+  // Ya no se usa finalUrl ni _photoUrl
+
+      // Si hay imagen nueva, comprimir y subir a Firebase Storage
+      if (_localBytes != null && user != null) {
+        final compressed = await _compressImage(_localBytes!);
+        await ProfileService.saveAvatarBase64(user.uid, compressed);
+        await user.updateDisplayName(nuevoNombre);
+        await user.reload();
+        await ProfileService.updateUserProfile(user.uid, {
+          'displayName': nuevoNombre,
+        });
+        setState(() {
+          _photoBase64 = base64Encode(compressed);
+          _localBytes = null;
+        });
+        await Future.delayed(const Duration(milliseconds: 100));
+      } else if (user != null) {
+        await user.updateDisplayName(nuevoNombre);
+        await user.reload();
+        await ProfileService.updateUserProfile(user.uid, {
+          'displayName': nuevoNombre,
+        });
+      }
+
+      setState(() => _saving = false);
+
+      // Esperar a que Provider notifique y la UI se reconstruya
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // Cerrar el modal de edición y volver al hub automáticamente
+      if (mounted) {
+        // Si estamos en modo editar, cambiamos a hub
+        if (_modo == PerfilModo.editar) {
+          setState(() => _modo = PerfilModo.hub);
+        }
+        // Cerrar el modal si está abierto
+        Future.microtask(() {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        });
+        // Mostrar confirmación
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perfil actualizado')),
+        );
+      }
+      HapticFeedback.lightImpact();
+    } catch (e) {
+      setState(() => _saving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -174,7 +244,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                 sigmaY: _blurAnim.value,
               ),
               child: Container(
-                color: Colors.black.withOpacity(_dimAnim.value),
+                color: Colors.black.withValues(alpha: _dimAnim.value),
               ),
             );
           },
@@ -194,7 +264,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               top: false,
               child: Material(
                 color: isDark ? Coloressito.backgroundDark : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(22)),
                 elevation: 0,
                 child: Column(
                   children: [
@@ -204,7 +275,9 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                       width: 48,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.12),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.25)
+                            : Colors.black.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -212,9 +285,9 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                     Expanded(
                       child: _modo == PerfilModo.hub
                           ? _buildHub(context, isDark)
-                          : _modo == PerfilModo.editar
+                          : (_modo == PerfilModo.editar
                               ? _buildEditar(context, isDark)
-                              : _buildConfiguracion(context, isDark),
+                              : _buildConfiguracion(context, isDark)),
                     ),
                   ],
                 ),
@@ -230,21 +303,19 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     final handle = _correo != null && _correo!.contains('@')
         ? '@${_correo!.split('@')[0].replaceAll(RegExp(r'\s'), '').toLowerCase()}'
         : '@usuario';
-    final userState = Provider.of<UserState>(context);
+  // final userState = Provider.of<UserState>(context);
+    
+    // Determinar fuente de avatar: prioridad local bytes > base64 > ícono
     ImageProvider? avatarProvider;
     if (_localBytes != null) {
       avatarProvider = MemoryImage(_localBytes!);
-    } else if (userState.avatarUrl != null && userState.avatarUrl!.isNotEmpty) {
+    } else if (_photoBase64 != null && _photoBase64!.isNotEmpty) {
       try {
-        // Si es base64 local
-        final bytes = userState.avatarUrl!.codeUnits;
-        avatarProvider = MemoryImage(Uint8List.fromList(bytes));
-      } catch (_) {
-        avatarProvider = NetworkImage(userState.avatarUrl!);
-      }
+        avatarProvider = MemoryImage(base64Decode(_photoBase64!));
+      } catch (_) {}
     }
-  // ...existing code...
-  return ListView(
+    // ...existing code...
+    return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       children: [
         // Header compacto
@@ -252,18 +323,25 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: Coloressito.adventureGreen.withOpacity(0.18),
+              backgroundColor:
+                  Coloressito.adventureGreen.withValues(alpha: 0.18),
               backgroundImage: avatarProvider,
               child: (avatarProvider == null)
-                  ? Icon(Icons.person, color: Coloressito.adventureGreen, size: 40)
+                  ? Icon(Icons.person,
+                      color: Coloressito.adventureGreen, size: 40)
                   : null,
             ),
             const SizedBox(height: 12),
-            Text(userState.nombre, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+      Text(_nombre ?? '',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
             const SizedBox(height: 2),
             Text(handle, style: TextStyle(color: Colors.grey, fontSize: 15)),
             const SizedBox(height: 2),
-            Text(_nivel ?? 'Nivel Viajero 1', style: TextStyle(color: Coloressito.adventureGreen, fontWeight: FontWeight.w600, fontSize: 15)),
+            Text(_nivel ?? 'Nivel Viajero 1',
+                style: TextStyle(
+                    color: Coloressito.adventureGreen,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15)),
           ],
         ),
         const SizedBox(height: 18),
@@ -271,8 +349,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _QuickAction(icon: Icons.edit, label: 'Editar', onTap: _switchToEditar),
-            _QuickAction(icon: Icons.settings, label: 'Ajustes', onTap: _switchToConfiguracion),
+            _QuickAction(
+                icon: Icons.edit, label: 'Editar', onTap: _switchToEditar),
+            _QuickAction(
+                icon: Icons.settings,
+                label: 'Ajustes',
+                onTap: _switchToConfiguracion),
             _QuickAction(
               icon: Icons.qr_code,
               label: 'QR',
@@ -280,7 +362,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                 Navigator.pop(context); // Cerrar el bottom sheet
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EscanerQRScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const EscanerQRScreen()),
                 );
               },
             ),
@@ -301,17 +384,16 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildEditar(BuildContext context, bool isDark) {
-    final userState = Provider.of<UserState>(context);
+  // final userState = Provider.of<UserState>(context);
+    
+    // Determinar fuente de avatar: prioridad local bytes > base64 > ícono
     ImageProvider? avatarProvider;
     if (_localBytes != null) {
       avatarProvider = MemoryImage(_localBytes!);
-    } else if (userState.avatarUrl != null && userState.avatarUrl!.isNotEmpty) {
+    } else if (_photoBase64 != null && _photoBase64!.isNotEmpty) {
       try {
-        final bytes = userState.avatarUrl!.codeUnits;
-        avatarProvider = MemoryImage(Uint8List.fromList(bytes));
-      } catch (_) {
-        avatarProvider = NetworkImage(userState.avatarUrl!);
-      }
+        avatarProvider = MemoryImage(base64Decode(_photoBase64!));
+      } catch (_) {}
     }
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -325,7 +407,14 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               splashRadius: 24,
             ),
             const SizedBox(width: 8),
-            Text('Editar perfil', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text('Editar perfil',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -334,10 +423,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             children: [
               CircleAvatar(
                 radius: 48,
-                backgroundColor: Coloressito.adventureGreen.withOpacity(0.18),
+                backgroundColor:
+                    Coloressito.adventureGreen.withValues(alpha: 0.18),
                 backgroundImage: avatarProvider,
                 child: (avatarProvider == null)
-                    ? Icon(Icons.person, color: Coloressito.adventureGreen, size: 48)
+                    ? Icon(Icons.person,
+                        color: Coloressito.adventureGreen, size: 48)
                     : null,
               ),
               Positioned(
@@ -352,11 +443,21 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(22),
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Icon(Icons.camera_alt, color: Coloressito.adventureGreen, size: 22),
+                      child: Icon(Icons.camera_alt,
+                          color: Coloressito.adventureGreen, size: 22),
                     ),
                   ),
                 ),
               ),
+              if (_saving)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.white.withOpacity(0.7),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -368,9 +469,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             children: [
               TextFormField(
                 controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nombre de usuario'),
+                decoration:
+                    const InputDecoration(labelText: 'Nombre de usuario'),
                 maxLength: 32,
-                validator: (v) => v != null && v.trim().length < 6 ? 'Mínimo 6 caracteres' : null,
+                validator: (v) => v != null && v.trim().length < 6
+                    ? 'Mínimo 6 caracteres'
+                    : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -383,11 +487,18 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _saving ? null : _guardarPerfil,
-                  child: const Text('Guardar'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Coloressito.adventureGreen,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22)),
                   ),
+                  child: _saving
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Guardar'),
                 ),
               ),
             ],
@@ -410,13 +521,21 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               splashRadius: 24,
             ),
             const SizedBox(width: 8),
-            Text('Ajustes', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text('Ajustes',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis),
+            ),
           ],
         ),
         const SizedBox(height: 24),
         // Selector de idioma
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
           color: isDark ? Colors.grey[850] : Colors.grey[50],
           child: ListTile(
@@ -430,11 +549,13 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         const SizedBox(height: 12),
         // Tema (placeholder para futuro)
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
           color: isDark ? Colors.grey[850] : Colors.grey[50],
           child: ListTile(
-            leading: Icon(Icons.brightness_6, color: Coloressito.adventureGreen),
+            leading:
+                Icon(Icons.brightness_6, color: Coloressito.adventureGreen),
             title: const Text('Tema'),
             subtitle: Text(isDark ? 'Oscuro' : 'Claro'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -446,11 +567,13 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         const SizedBox(height: 12),
         // Notificaciones (placeholder para futuro)
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
           color: isDark ? Colors.grey[850] : Colors.grey[50],
           child: ListTile(
-            leading: Icon(Icons.notifications, color: Coloressito.adventureGreen),
+            leading:
+                Icon(Icons.notifications, color: Coloressito.adventureGreen),
             title: const Text('Notificaciones'),
             subtitle: const Text('Configurar alertas'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -462,7 +585,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         const SizedBox(height: 12),
         // Privacidad (placeholder para futuro)
         Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
           color: isDark ? Colors.grey[850] : Colors.grey[50],
           child: ListTile(
@@ -482,10 +606,12 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           child: OutlinedButton.icon(
             onPressed: _cerrarSesion,
             icon: const Icon(Icons.logout, color: Colors.red),
-            label: const Text('Cerrar sesión', style: TextStyle(color: Colors.red)),
+            label: const Text('Cerrar sesión',
+                style: TextStyle(color: Colors.red)),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Colors.red),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22)),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
@@ -503,37 +629,23 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
+            RadioListTile<Locale>(
               title: const Text('Español'),
-              leading: Radio<Locale>(
-                value: const Locale('es'),
-                groupValue: _selectedLocale,
-                onChanged: (v) {
-                  setState(() => _selectedLocale = v);
-                  if (v != null) context.setLocale(v);
-                  Navigator.pop(context);
-                },
-              ),
-              onTap: () {
-                setState(() => _selectedLocale = const Locale('es'));
-                context.setLocale(const Locale('es'));
+              value: const Locale('es'),
+              groupValue: _selectedLocale,
+              onChanged: (v) {
+                setState(() => _selectedLocale = v);
+                if (v != null) context.setLocale(v);
                 Navigator.pop(context);
               },
             ),
-            ListTile(
+            RadioListTile<Locale>(
               title: const Text('English'),
-              leading: Radio<Locale>(
-                value: const Locale('en'),
-                groupValue: _selectedLocale,
-                onChanged: (v) {
-                  setState(() => _selectedLocale = v);
-                  if (v != null) context.setLocale(v);
-                  Navigator.pop(context);
-                },
-              ),
-              onTap: () {
-                setState(() => _selectedLocale = const Locale('en'));
-                context.setLocale(const Locale('en'));
+              value: const Locale('en'),
+              groupValue: _selectedLocale,
+              onChanged: (v) {
+                setState(() => _selectedLocale = v);
+                if (v != null) context.setLocale(v);
                 Navigator.pop(context);
               },
             ),
@@ -556,19 +668,20 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cerrar sesión', style: TextStyle(color: Colors.red)),
+            child: const Text('Cerrar sesión',
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
-    
+
     if (confirmar == true) {
       // Primero cerrar el bottom sheet con animación
       if (mounted) {
         _controller.reverse().then((_) async {
           // Cerrar sesión en Firebase
           await FirebaseAuth.instance.signOut();
-          
+
           // Navegar a la pantalla de login eliminando todas las rutas anteriores
           if (mounted) {
             Navigator.of(context).pushAndRemoveUntil(
@@ -591,7 +704,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Progreso del Pasaporte', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Progreso del Pasaporte',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -603,7 +717,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text('${(_progreso * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text('${(_progreso * 100).toInt()}%',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -623,12 +738,16 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Sellos recientes', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Sellos recientes',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             SizedBox(
               height: 56,
               child: empty
-                  ? Center(child: Text('Sin sellos. Explora cerca para conseguir uno.', style: TextStyle(color: Colors.grey)))
+                  ? Center(
+                      child: Text(
+                          'Sin sellos. Explora cerca para conseguir uno.',
+                          style: TextStyle(color: Colors.grey)))
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _sellos.length,
@@ -655,13 +774,15 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Racha de exploración', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Racha de exploración',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
               children: [
                 Icon(Icons.local_fire_department, color: Coloressito.badgeRed),
                 const SizedBox(width: 8),
-                Text('0 días seguidos', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text('0 días seguidos',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
               ],
             ),
           ],
@@ -681,12 +802,16 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Amigos cercanos', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Amigos cercanos',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             SizedBox(
               height: 48,
               child: empty
-                  ? Center(child: Text('Sin amigos cercanos. Explora cerca para conectar.', style: TextStyle(color: Colors.grey)))
+                  ? Center(
+                      child: Text(
+                          'Sin amigos cercanos. Explora cerca para conectar.',
+                          style: TextStyle(color: Colors.grey)))
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _amigos.length,
@@ -715,7 +840,8 @@ class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
+  const _QuickAction(
+      {required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -732,7 +858,7 @@ class _QuickAction extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),

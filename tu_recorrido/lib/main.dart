@@ -9,6 +9,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'firebase_options_dev.dart';
 
 import 'user_state_provider.dart';
+import 'models/user_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 Future<void> main() async {
   // Mantener todo en la misma zona evita 'Zone mismatch' en Web
@@ -17,7 +20,8 @@ Future<void> main() async {
     await EasyLocalization.ensureInitialized();
 
     // Inicializa Firebase con tus opciones DEV
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
 
     if (kIsWeb) {
       usePathUrlStrategy();
@@ -41,7 +45,26 @@ Future<void> main() async {
         saveLocale: true,
         child: UserStateProvider(
           nombre: 'Explorador',
-          child: const MyApp(),
+          child: Builder(
+            builder: (context) {
+              // Hidratar avatar desde SharedPreferences si existe, antes de construir la app
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                final prefs = await SharedPreferences.getInstance();
+                final savedUrl = prefs.getString('user_avatarUrl');
+                if (savedUrl != null && savedUrl.isNotEmpty) {
+                  try {
+                    final userState = context.read<UserState>();
+                    if (userState.avatarUrl != savedUrl) {
+                      await userState.setAvatarUrl(savedUrl);
+                    }
+                  } catch (_) {
+                    // Provider no disponible aún; ignorar silenciosamente
+                  }
+                }
+              });
+              return const MyApp();
+            },
+          ),
         ),
       ),
     );
