@@ -53,10 +53,10 @@ class _RoleProtectedWidgetState extends State<RoleProtectedWidget> {
             });
             return const Center(child: CircularProgressIndicator());
           }
-
-          return widget.fallback ??
-              _buildNoPermissionWidget(
-                  'Debes iniciar sesión para acceder a esta funcionalidad');
+        
+        return widget.fallback ?? _buildNoPermissionWidget(
+          'Debes iniciar sesión para acceder a esta funcionalidad',
+        );
         }
 
         final user = snapshot.data!;
@@ -66,10 +66,10 @@ class _RoleProtectedWidgetState extends State<RoleProtectedWidget> {
           return widget.child;
         }
 
-        // no tiene permisos
-        return widget.fallback ??
-            _buildNoPermissionWidget(widget.errorMessage ??
-                'No tienes permisos para acceder a esta funcionalidad');
+        // No tiene permisos
+        return widget.fallback ?? _buildNoPermissionWidget(
+          widget.errorMessage ?? 'No tienes permisos para acceder a esta funcionalidad',
+        );
       },
     );
   }

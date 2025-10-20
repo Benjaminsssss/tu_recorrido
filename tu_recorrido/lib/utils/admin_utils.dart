@@ -29,12 +29,12 @@ class AdminUtils {
       });
 
       debugPrint('Usuario $email promovido a administrador');
+      
     } catch (e) {
       debugPrint('Error al promover usuario: $e');
       rethrow;
     }
   }
-
   /// Degradar usuario a usuario normal
   static Future<void> makeUserNormal(String email) async {
     try {
@@ -57,6 +57,7 @@ class AdminUtils {
       });
 
       debugPrint('Usuario $email degradado a usuario normal');
+      
     } catch (e) {
       debugPrint('Error al degradar usuario: $e');
       rethrow;
@@ -68,7 +69,8 @@ class AdminUtils {
     try {
       final querySnapshot = await _firestore
           .collection('users')
-          .where('role', whereIn: ['admin']).get();
+          .where('role', whereIn: ['admin'])
+          .get();
 
       return querySnapshot.docs.map((doc) {
         final data = doc.data();
@@ -79,6 +81,7 @@ class AdminUtils {
           'role': data['role'],
         };
       }).toList();
+      
     } catch (e) {
       debugPrint('Error al listar administradores: $e');
       return [];
