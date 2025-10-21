@@ -11,7 +11,7 @@ import 'screens/menu.dart';
 import 'screens/profile_screen.dart';
 import 'screens/saved_places_screen.dart';
 
-// AuthGate
+// AuthGate & Protection
 import 'widgets/auth_gate.dart';
 
 class MyApp extends StatelessWidget {

@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:math';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 
+/// Modelo para un lugar (Google Places o generado)
 class PlaceResult {
   final String placeId;
   final String nombre;
