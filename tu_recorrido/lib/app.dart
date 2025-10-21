@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:device_preview/device_preview.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 // Screens
 import 'screens/home.dart';
@@ -12,11 +10,12 @@ import 'screens/places_screen.dart';
 import 'screens/escanerqr.dart';
 import 'screens/coleccion.dart';
 
-// Admin Screens
+// Admin Screens (Protegidos)
 import 'admin/screens/admin_screen.dart';
 import 'admin/screens/crear_estacion.dart';
+import 'admin/screens/user_management_screen.dart';
 
-// AuthGate
+// AuthGate & Protection
 import 'widgets/auth_gate.dart';
 
 class MyApp extends StatelessWidget {
@@ -25,22 +24,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      useInheritedMediaQuery: true,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
-      title: 'Tu Recorrido - Patrimonio Santiago',
+      title: 'Recorrido',
       debugShowCheckedModeBanner: false,
-      
-      // Configuración de localización
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('es', ''), // Español
-        Locale('en', ''), // Inglés
-      ],
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF4CAF50), // opcional
@@ -60,9 +45,9 @@ class MyApp extends StatelessWidget {
         '/places': (_) => const PlacesScreen(), // eliminar vista
         '/escanear': (_) => const EscanerQRScreen(),
         '/coleccion': (_) => const ColeccionScreen(),
-        '/admin': (_) => const AdminScreen(), // eliminar vista
-        '/admin/crear-estacion': (_) =>
-            const CrearEstacionScreen(), // eliminar vista
+        '/admin': (_) => const AdminScreen(),
+        '/admin/crear-estacion': (_) => const CrearEstacionScreen(),
+        '/admin/usuarios': (_) => const UserManagementScreen(),
       },
     );
   }

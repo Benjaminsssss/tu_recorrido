@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:device_preview/device_preview.dart';
 
 import 'app.dart';
 import 'firebase_options_dev.dart';
@@ -20,14 +18,15 @@ Future<void> main() async {
   }
 
   // Manejo global de errores
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-  };
-
-  runApp(
-    DevicePreview(
-      enabled: !kReleaseMode && kIsWeb, // Solo en desarrollo y web
-      builder: (context) => MyApp(),
-    ),
+  runZonedGuarded(
+    () {
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.dumpErrorToConsole(details);
+      };
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      debugPrint('❌ Uncaught error: $error\n$stack');
+    },
   );
 }

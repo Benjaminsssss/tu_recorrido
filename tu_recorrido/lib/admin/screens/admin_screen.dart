@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
 import '../../utils/estaciones_data.dart';
+import '../../widgets/role_protected_widget.dart';
 import 'crear_estacion.dart';
 
-/// Acceso a todas las funcionalidades de admin
+/// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
@@ -193,23 +194,25 @@ class AdminScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PantallaBase(
-      titulo: 'Panel de Administración',
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeaderInfo(),
+    return AdminProtectedWidget(
+      child: PantallaBase(
+        titulo: 'Panel de Administración',
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeaderInfo(),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Sección de gestión de estaciones
-          _buildSeccionEstaciones(context),
+            // Sección de gestión de estaciones
+            _buildSeccionEstaciones(context),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Sección de estadísticas generales
-          _buildSeccionEstadisticas(),
-        ],
+            // Sección de estadísticas generales
+            _buildSeccionEstadisticas(),
+          ],
+        ),
       ),
     );
   }
