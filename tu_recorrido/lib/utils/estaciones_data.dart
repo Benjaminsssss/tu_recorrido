@@ -72,10 +72,12 @@ class EstacionesData {
 
       for (final data in estacionesEjemplo) {
         final codigo = EstacionService.generarCodigo(data['nombre']);
+        final codigoQR = ''; // Se generará automáticamente en el servicio
 
         final estacion = Estacion(
           id: '', // Se genera automáticamente
           codigo: codigo,
+          codigoQR: codigoQR,
           nombre: data['nombre'],
           descripcion: data['descripcion'],
           latitud: data['latitud'],
@@ -122,10 +124,12 @@ class EstacionesData {
       debugPrint('Creando estación de prueba...');
 
       final codigo = EstacionService.generarCodigo('Plaza de Armas');
+      final codigoQR = ''; // Se generará automáticamente en el servicio
 
       final estacion = Estacion(
         id: '', // Se genera automáticamente
         codigo: codigo,
+        codigoQR: codigoQR,
         nombre: 'Plaza de Armas',
         descripcion:
             'Corazón histórico de Santiago, fundada en 1541 por Pedro de Valdivia. Punto central de la ciudad colonial.',

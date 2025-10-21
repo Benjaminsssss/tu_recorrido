@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Estacion {
   final String id; // ID único en Firestore
   final String codigo; // Código para QR (ej: "PLAZA_ARMAS_001")
+  final String
+      codigoQR; // Código QR único generado (ej: "TR_ABC123_1640995200")
   final String nombre; // Nombre descriptivo (ej: "Plaza de Armas")
   final String descripcion; // Info histórica del lugar
   final double latitud; // Coordenadas GPS
@@ -15,6 +17,7 @@ class Estacion {
   const Estacion({
     required this.id,
     required this.codigo,
+    required this.codigoQR,
     required this.nombre,
     required this.descripcion,
     required this.latitud,
@@ -30,6 +33,7 @@ class Estacion {
     return Estacion(
       id: doc.id,
       codigo: data['codigo'] ?? '',
+      codigoQR: data['codigoQR'] ?? '',
       nombre: data['nombre'] ?? '',
       descripcion: data['descripcion'] ?? '',
       latitud: (data['latitud'] ?? 0.0).toDouble(),
@@ -44,6 +48,7 @@ class Estacion {
   Map<String, dynamic> toFirestore() {
     return {
       'codigo': codigo,
+      'codigoQR': codigoQR,
       'nombre': nombre,
       'descripcion': descripcion,
       'latitud': latitud,
@@ -57,6 +62,7 @@ class Estacion {
   Estacion copyWith({
     String? id,
     String? codigo,
+    String? codigoQR,
     String? nombre,
     String? descripcion,
     double? latitud,
@@ -67,6 +73,7 @@ class Estacion {
     return Estacion(
       id: id ?? this.id,
       codigo: codigo ?? this.codigo,
+      codigoQR: codigoQR ?? this.codigoQR,
       nombre: nombre ?? this.nombre,
       descripcion: descripcion ?? this.descripcion,
       latitud: latitud ?? this.latitud,

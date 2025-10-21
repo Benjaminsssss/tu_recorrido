@@ -40,6 +40,12 @@ dependencies:
   image: ^4.5.4
   flutter_svg: ^2.2.1
 
+  # QR Code packages
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^3.5.7
+  crypto: ^3.0.3
+  logger: ^2.0.2+1
+
   # La librería 'js' ha sido eliminada. Si tu código la requiere, puedes re-añadirla.
 
 dev_dependencies:

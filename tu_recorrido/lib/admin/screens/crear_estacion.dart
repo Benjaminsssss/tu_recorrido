@@ -70,10 +70,12 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
     try {
       final codigo = EstacionService.generarCodigo(_nombreController.text);
+      final codigoQR = ''; // Se generará automáticamente en el servicio
 
       final estacion = Estacion(
         id: '', // Se genera automáticamente
         codigo: codigo,
+        codigoQR: codigoQR,
         nombre: _nombreController.text.trim(),
         descripcion: _descripcionController.text.trim(),
         latitud: _ubicacionActual!.latitude,
