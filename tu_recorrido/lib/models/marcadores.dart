@@ -40,6 +40,12 @@ class MarcadoresData {
       ubicacion: const LatLng(-33.526810215671425, -70.59585476249745),
       rating: null,
     ),
+    PlaceResult(
+      placeId: 'm7',
+      nombre: 'Duoc Uc San Joaquin',
+      ubicacion: const LatLng(-33.50010306659869, -70.6164537364426),
+      rating: null,
+    ),
   ];
 
   // ⭐️ NUEVO: Método para actualizar el rating de un lugar

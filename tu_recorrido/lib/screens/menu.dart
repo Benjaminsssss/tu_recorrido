@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
-import 'package:tu_recorrido/screens/perfil.dart';
+
 
 class Mapita extends StatefulWidget {
   const Mapita({super.key});
@@ -21,10 +21,17 @@ class Mapita extends StatefulWidget {
 class _MapitaState extends State<Mapita> {
   static const String googleApiKeyInline = "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
 
+  // ⭐ Paleta de colores personalizada
+  static const Color colorAmarillo = Color(0xFFF7DF3E);
+  static const Color colorVerdeOliva = Color(0xFFA2AD4E);
+  static const Color colorVerdeEsmeralda = Color(0xFF43A78A);
+  static const Color colorAzulPetroleo = Color(0xFF264E59);
+  static const Color colorGrisCarbon = Color(0xFF2E2F32);
+
   final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
 
-  static const double _cardHeight = 100;
+  static const double _cardHeight = 130;
   static const double _cardWidth = 300;
 
   final PageController _pageController = PageController(viewportFraction: 0.85);
@@ -39,7 +46,7 @@ class _MapitaState extends State<Mapita> {
   LatLng? _currentPosition;
   LatLng? _currentDestination;
 
-  static const double _arrivalToleranceMeters = 100.0; // 100 m
+  static const double _arrivalToleranceMeters = 50.0; // ⭐ Reducido a 50m para mayor precisión
   bool _isRouteActive = false;
   bool _arrivalHandled = false;
 
@@ -47,13 +54,14 @@ class _MapitaState extends State<Mapita> {
 
   PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
 
+  // ⭐ MEJORA 1: LocationSettings con máxima precisión
   final LocationSettings _locationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
-    distanceFilter: 5,
+    accuracy: LocationAccuracy.bestForNavigation, // Máxima precisión
+    distanceFilter: 3, // Actualiza cada 3 metros
   );
 
   final LocationSettings _oneTimeLocationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
+    accuracy: LocationAccuracy.best,
   );
 
   @override
@@ -133,7 +141,7 @@ class _MapitaState extends State<Mapita> {
           Marker(
             markerId: MarkerId(place.placeId),
             position: place.ubicacion,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen), // ⭐ Verde esmeralda
             infoWindow: InfoWindow(
               title: place.nombre,
               snippet: place.rating != null
@@ -166,14 +174,23 @@ class _MapitaState extends State<Mapita> {
 
   Future<void> _determinePositionAndStartListening() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) _showSnackBar('Los servicios de ubicación están deshabilitados.');
+    if (!serviceEnabled) {
+      _showSnackBar('⚠️ Los servicios de ubicación están deshabilitados.');
+      return;
+    }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        _showSnackBar('Los permisos de ubicación fueron denegados.');
+        _showSnackBar('❌ Los permisos de ubicación fueron denegados.');
+        return;
       }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _showSnackBar('❌ Permisos denegados permanentemente. Actívalos en Configuración.');
+      return;
     }
 
     try {
@@ -193,7 +210,7 @@ class _MapitaState extends State<Mapita> {
       _filterPlacesByDistance();
       _listenForRealTimeUpdates();
     } catch (e) {
-      dev.log("Error al obtener la ubicación inicial: $e");
+      dev.log("❌ Error al obtener la ubicación inicial: $e");
       if (mounted && _initialCameraPosition == null && MarcadoresData.lugaresMarcados.isNotEmpty) {
         setState(() {
           _initialCameraPosition = CameraPosition(
@@ -206,11 +223,18 @@ class _MapitaState extends State<Mapita> {
     }
   }
 
+  // ⭐ MEJORA 2: Filtro de precisión en el stream de ubicación
   void _listenForRealTimeUpdates() {
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: _locationSettings,
     ).listen((Position position) async {
       if (!mounted) return;
+
+      // ⭐ MEJORA 3: Filtrar ubicaciones con precisión menor a 20 metros
+      if (position.accuracy > 20.0) {
+        dev.log('⚠️ Precisión baja (${position.accuracy.toStringAsFixed(1)}m), ignorando lectura.');
+        return;
+      }
 
       final newLatLng = LatLng(position.latitude, position.longitude);
 
@@ -222,8 +246,8 @@ class _MapitaState extends State<Mapita> {
           _userMarker = Marker(
             markerId: const MarkerId('current_location'),
             position: newLatLng,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            infoWindow: const InfoWindow(title: 'Tú Estás Aquí'),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure), // ⭐ Azul petróleo
+            infoWindow: const InfoWindow(title: '📍 Tú Estás Aquí'),
           );
 
           _markers.removeWhere((m) => m.markerId.value == 'current_location');
@@ -232,7 +256,6 @@ class _MapitaState extends State<Mapita> {
 
         _filterPlacesByDistance();
 
-        // ⭐ CORREGIDO: Llegada automática con Future.delayed
         if (_isRouteActive && _currentDestination != null) {
           final distToDest = Geolocator.distanceBetween(
             position.latitude,
@@ -241,13 +264,12 @@ class _MapitaState extends State<Mapita> {
             _currentDestination!.longitude,
           );
 
-          dev.log('📍 Distancia al destino: ${distToDest.toStringAsFixed(1)} m | _arrivalHandled: $_arrivalHandled');
+          dev.log('📍 Distancia: ${distToDest.toStringAsFixed(1)}m | Precisión: ${position.accuracy.toStringAsFixed(1)}m | _arrivalHandled: $_arrivalHandled');
 
           if (distToDest <= _arrivalToleranceMeters && !_arrivalHandled) {
-            dev.log('🎉 ACTIVANDO MODAL DE LLEGADA');
+            dev.log('🎉 LLEGADA CONFIRMADA (dentro de ${_arrivalToleranceMeters}m)');
             _arrivalHandled = true;
             
-            // ⭐ Future.delayed para asegurar que el modal se muestre
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
                 _onArrivedAtDestination();
@@ -258,7 +280,7 @@ class _MapitaState extends State<Mapita> {
       }
     }, onError: (e) {
       dev.log("❌ Error en el stream de ubicación: $e");
-      _showSnackBar('No se puede actualizar la ubicación en tiempo real.');
+      _showSnackBar('❌ No se puede actualizar la ubicación en tiempo real.');
     });
   }
 
@@ -270,10 +292,10 @@ class _MapitaState extends State<Mapita> {
       _destinationPlace = null;
       _arrivalHandled = false;
     });
-    _showSnackBar('Ruta cancelada.');
+    _showSnackBar('🚫 Ruta cancelada.');
   }
 
-  // ⭐ Modal automático de llegada CORREGIDO
+  // ⭐ Modal con diseño renovado
   void _onArrivedAtDestination() {
     if (!mounted) return;
 
@@ -290,22 +312,48 @@ class _MapitaState extends State<Mapita> {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text(
-            '¡Felicidades!',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: colorVerdeEsmeralda,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle, color: Colors.white, size: 48),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¡Felicidades!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: colorGrisCarbon,
+                ),
+              ),
+            ],
           ),
           content: const Text(
-            'Has llegado al lugar.',
+            'Has llegado al lugar de destino.',
             textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: colorAzulPetroleo),
           ),
           actions: [
             Center(
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorAmarillo,
+                  foregroundColor: colorGrisCarbon,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                ),
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
                 },
-                child: const Text('Aceptar'),
+                child: const Text('Aceptar', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -314,7 +362,6 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
-  // ⭐ Modal de evaluación CORREGIDO (sin overflow)
   void _showRatingDialog(PlaceResult place) {
     int selectedRating = 0;
 
@@ -325,10 +372,27 @@ class _MapitaState extends State<Mapita> {
         return StatefulBuilder(
           builder: (_, setStateDialog) {
             return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-              title: Text(
-                'Evalúa ${place.nombre}',
-                style: const TextStyle(fontSize: 18),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorVerdeEsmeralda.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.star, color: colorVerdeEsmeralda, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Evalúa ${place.nombre}',
+                      style: const TextStyle(fontSize: 18, color: colorGrisCarbon),
+                    ),
+                  ),
+                ],
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -336,20 +400,20 @@ class _MapitaState extends State<Mapita> {
                   children: [
                     const Text(
                       '¿Cómo calificarías tu experiencia?',
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14, color: colorAzulPetroleo),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (i) {
                         final starValue = i + 1;
                         return IconButton(
-                          iconSize: 32,
+                          iconSize: 36,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           icon: Icon(
                             selectedRating >= starValue ? Icons.star : Icons.star_border,
-                            color: selectedRating >= starValue ? Colors.amber : Colors.grey,
+                            color: selectedRating >= starValue ? colorAmarillo : Colors.grey.shade400,
                           ),
                           onPressed: () => setStateDialog(() => selectedRating = starValue),
                         );
@@ -357,9 +421,16 @@ class _MapitaState extends State<Mapita> {
                     ),
                     const SizedBox(height: 8),
                     if (selectedRating > 0)
-                      Text(
-                        '$selectedRating de 5 estrellas',
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: colorAmarillo.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$selectedRating de 5 estrellas',
+                          style: const TextStyle(fontSize: 12, color: colorGrisCarbon, fontWeight: FontWeight.w600),
+                        ),
                       ),
                   ],
                 ),
@@ -369,10 +440,18 @@ class _MapitaState extends State<Mapita> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: colorGrisCarbon,
+                      ),
                       onPressed: () => Navigator.of(dialogContext).pop(),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedRating > 0 ? colorVerdeEsmeralda : Colors.grey,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
                       onPressed: selectedRating > 0
                           ? () {
                               MarcadoresData.updatePlaceRating(
@@ -383,7 +462,7 @@ class _MapitaState extends State<Mapita> {
                               setState(() {
                                 _filterPlacesByDistance();
                               });
-                              _showSnackBar('Gracias por evaluar ${place.nombre}.');
+                              _showSnackBar('✅ Gracias por evaluar ${place.nombre}.');
                             }
                           : null,
                       child: const Text('Enviar'),
@@ -403,24 +482,52 @@ class _MapitaState extends State<Mapita> {
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: Text('Iniciar Viaje a ${place.nombre}'),
-          content: const Text('¿Deseas trazar la ruta en el mapa?'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorAzulPetroleo.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.navigation, color: colorAzulPetroleo),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Viaje a ${place.nombre}',
+                  style: const TextStyle(fontSize: 18, color: colorGrisCarbon),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            '¿Deseas trazar la ruta en el mapa?',
+            style: TextStyle(color: colorAzulPetroleo),
+          ),
           actions: <Widget>[
             TextButton(
-              child: const Text('No', style: TextStyle(color: Colors.red)),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               onPressed: () => Navigator.of(context).pop(),
+              child: const Text('No'),
             ),
-            TextButton(
-              child: const Text('Sí, Iniciar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorVerdeEsmeralda,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 if (_currentPosition == null) {
-                  _showSnackBar('Obteniendo tu ubicación para trazar la ruta...');
+                  _showSnackBar('📍 Obteniendo tu ubicación para trazar la ruta...');
                   _goToPosition(place.ubicacion, zoom: 17.0);
                   return;
                 }
                 _getRoute(_currentPosition!, place.ubicacion, place);
               },
+              child: const Text('Sí, Iniciar', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -429,7 +536,7 @@ class _MapitaState extends State<Mapita> {
   }
 
   Future<void> _getRoute(LatLng origin, LatLng destination, PlaceResult place) async {
-    _showSnackBar('Trazando ruta con la API directa...');
+    _showSnackBar('🗺️ Trazando ruta...');
 
     final String url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$googleApiKeyInline';
@@ -455,9 +562,9 @@ class _MapitaState extends State<Mapita> {
             _polylines.add(
               Polyline(
                 polylineId: const PolylineId('http_route_to_poi'),
-                color: Theme.of(context).colorScheme.primary,
+                color: colorVerdeEsmeralda, // ⭐ Verde esmeralda
                 points: coords,
-                width: 5,
+                width: 6,
                 geodesic: true,
               ),
             );
@@ -465,14 +572,14 @@ class _MapitaState extends State<Mapita> {
 
           _fitMapToRoute(origin, destination);
         } else {
-          _showSnackBar('No se encontró ninguna ruta.');
+          _showSnackBar('❌ No se encontró ninguna ruta.');
         }
       } else {
-        _showSnackBar('Error de conexión a la API de Google: ${response.statusCode}');
+        _showSnackBar('❌ Error de conexión: ${response.statusCode}');
       }
     } catch (e) {
       dev.log("❌ Error al obtener la ruta: $e");
-      _showSnackBar('Error al trazar la ruta. Verifica tu conexión.');
+      _showSnackBar('❌ Error al trazar la ruta. Verifica tu conexión.');
     }
   }
 
@@ -509,22 +616,39 @@ class _MapitaState extends State<Mapita> {
       await _goToPosition(LatLng(currentPosition.latitude, currentPosition.longitude), zoom: 16.0);
     } catch (e) {
       dev.log("❌ Error en el botón Mi ubicación: $e");
-      _showSnackBar('No se pudo obtener la ubicación. Verifica permisos y GPS.');
+      _showSnackBar('❌ No se pudo obtener la ubicación. Verifica permisos y GPS.');
     }
   }
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: colorAzulPetroleo,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_initialCameraPosition == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: colorVerdeEsmeralda),
+              const SizedBox(height: 16),
+              const Text('Obteniendo ubicación...', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      );
     }
-
-    final theme = Theme.of(context);
 
     bool canShowFlagBtn = false;
     if (_isRouteActive && _currentDestination != null && _currentPosition != null) {
@@ -538,18 +662,7 @@ class _MapitaState extends State<Mapita> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Puntos de Interés'),
-        backgroundColor: theme.colorScheme.primary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const Perfil()));
-            },
-          ),
-        ],
-      ),
+      
       body: Stack(
         children: [
           GoogleMap(
@@ -557,24 +670,26 @@ class _MapitaState extends State<Mapita> {
             initialCameraPosition: _initialCameraPosition!,
             onMapCreated: (GoogleMapController controller) => _controller.complete(controller),
             myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+            myLocationButtonEnabled: false,
             markers: _markers,
             polylines: _polylines,
             zoomControlsEnabled: false,
           ),
 
+          // ⭐ Botón Mi ubicación con nuevo diseño
           Positioned(
             top: 16,
             right: 16,
             child: FloatingActionButton(
               onPressed: _goToTheUserLocation,
               heroTag: 'miUbicacionBtn',
-              backgroundColor: Colors.amber,
-              tooltip: 'Mi ubicación',
-              child: const Icon(Icons.my_location),
+              backgroundColor: colorVerdeOliva,
+              elevation: 4,
+              child: const Icon(Icons.my_location, color: Color.fromARGB(255, 255, 255, 255)),
             ),
           ),
 
+          // ⭐ Botón cancelar ruta
           if (_isRouteActive)
             Positioned(
               top: 85,
@@ -583,12 +698,12 @@ class _MapitaState extends State<Mapita> {
                 onPressed: _cancelRoute,
                 heroTag: 'cancelRouteBtn',
                 backgroundColor: Colors.redAccent,
-                tooltip: 'Cancelar Ruta',
                 mini: true,
-                child: const Icon(Icons.close),
+                child: const Icon(Icons.close, color: Colors.white),
               ),
             ),
 
+          // ⭐ Botón evaluar lugar
           if (canShowFlagBtn && _destinationPlace != null)
             Positioned(
               top: 140,
@@ -596,32 +711,32 @@ class _MapitaState extends State<Mapita> {
               child: FloatingActionButton(
                 onPressed: () => _showRatingDialog(_destinationPlace!),
                 heroTag: 'nearArrivalBtn',
-                backgroundColor: Colors.green,
-                tooltip: 'Evaluar ${_destinationPlace!.nombre}',
+                backgroundColor: colorVerdeEsmeralda,
                 mini: true,
-                child: const Icon(Icons.flag),
+                child: const Icon(Icons.star, color: Colors.white),
               ),
             ),
 
+          // ⭐ Botón QR
           Positioned(
             top: 16,
             left: 16,
             child: FloatingActionButton(
-              onPressed: () => _showSnackBar('Escaneando QR...'),
+              onPressed: () => _showSnackBar('📷 Escaneando QR...'),
               heroTag: 'qrBtn',
-              backgroundColor: Colors.amber,
-              tooltip: 'Escanear QR',
-              child: const Icon(Icons.qr_code_scanner),
+              backgroundColor: colorVerdeOliva,
+              child: const Icon(Icons.qr_code_scanner, color: Colors.white),
             ),
           ),
 
+          // ⭐ Carrusel con nuevo diseño
           Positioned(
             bottom: 8,
             left: 0,
             right: 0,
             child: ClipRect(
               child: SizedBox(
-                height: _cardHeight + 16,
+                height: _cardHeight + 20,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -633,13 +748,29 @@ class _MapitaState extends State<Mapita> {
                               height: _cardHeight,
                               margin: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(12),
+                                gradient: LinearGradient(
+                                  colors: [colorAzulPetroleo, colorGrisCarbon],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
                               child: const Center(
                                 child: Text(
-                                  "No hay lugares en un radio de 5 km",
-                                  style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                                  "🔍 No hay lugares en un radio de 5 km",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             )
@@ -658,7 +789,7 @@ class _MapitaState extends State<Mapita> {
                               }).toList(),
                             ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     if (_lugares.isNotEmpty)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -671,7 +802,7 @@ class _MapitaState extends State<Mapita> {
                             height: 8,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _currentPage == index ? theme.colorScheme.primary : Colors.grey.withOpacity(0.5),
+                              color: _currentPage == index ? colorAmarillo : Colors.grey.withOpacity(0.5),
                             ),
                           ),
                         ),
@@ -699,51 +830,89 @@ class _MapitaState extends State<Mapita> {
           width: _cardWidth,
           height: _cardHeight,
           child: Card(
-            elevation: 4.0,
-            color: isDisabled ? Colors.grey[200] : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            elevation: 8,
+            shadowColor: Colors.black.withOpacity(0.3),
+            color: isDisabled ? Colors.grey[300] : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: InkWell(
               onTap: isDisabled
-                  ? () => _showSnackBar('Cancela la ruta actual (botón X) antes de iniciar una nueva.')
+                  ? () => _showSnackBar('⚠️ Cancela la ruta actual (botón X) antes de iniciar una nueva.')
                   : () => _showStartTripConfirmation(place),
-              borderRadius: BorderRadius.circular(12.0),
-              splashColor: Colors.amber.withOpacity(0.25),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
+              borderRadius: BorderRadius.circular(16),
+              splashColor: colorAmarillo.withOpacity(0.3),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: isDisabled
+                      ? null
+                      : LinearGradient(
+                          colors: [
+                            colorVerdeEsmeralda.withOpacity(0.1),
+                            colorAmarillo.withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                ),
+                padding: const EdgeInsets.all(14.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: isDisabled ? Colors.black45 : Colors.black87,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorVerdeEsmeralda.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.place,
+                            color: isDisabled ? Colors.grey : colorVerdeEsmeralda,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: isDisabled ? Colors.black45 : colorGrisCarbon,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      displayRating,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDisabled ? Colors.black38 : Colors.black54,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.star, size: 16, color: colorAmarillo),
+                        const SizedBox(width: 4),
+                        Text(
+                          displayRating,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDisabled ? Colors.black38 : colorAzulPetroleo,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                     if (place.rating != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 3.0),
+                        padding: const EdgeInsets.only(top: 4.0),
                         child: Row(
                           children: List.generate(
                             5,
                             (index) => Icon(
                               index < place.rating!.round() ? Icons.star : Icons.star_border,
                               size: 14,
-                              color: Colors.amber,
+                              color: colorAmarillo,
                             ),
                           ),
                         ),
