@@ -1,4 +1,5 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'lugares.dart';
 
 /// Lista fija de lugares marcados manualmente
@@ -36,4 +37,16 @@ class MarcadoresData {
       rating: 4.3,
     ),
   ];
+
+  // ⭐️ NUEVO: Método para actualizar el rating de un lugar
+  static void updatePlaceRating(String placeId, double rating) {
+    try {
+      final place = lugaresMarcados.firstWhere(
+        (p) => p.placeId == placeId,
+      );
+      place.updateRating(rating);
+    } catch (e) {
+      debugPrint('❌ Error: Lugar con placeId "$placeId" no encontrado');
+    }
+  }
 }

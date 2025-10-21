@@ -24,13 +24,21 @@ dependencies:
   google_maps_flutter: ^2.6.1
   geolocator: ^14.0.0
   google_sign_in: ^6.3.0
+  geolocator_web: ^4.1.3
+  http: ^1.2.1
 
   # UI / utilities
   provider: ^6.1.5+1
   cupertino_icons: ^1.0.8
   flutter_polyline_points: ^3.1.0
-  geolocator_web: ^4.1.3
-  http: ^1.2.1
+  google_fonts: ^6.3.2
+  shared_preferences: ^2.2.2
+
+  # i18n + media picker
+  easy_localization: ^3.0.5
+  image_picker: ^1.0.7
+  image: ^4.5.4
+  flutter_svg: ^2.2.1
 
   # La librería 'js' ha sido eliminada. Si tu código la requiere, puedes re-añadirla.
 
@@ -44,3 +52,5 @@ flutter:
 
   assets:
     - assets/img/    #esto importa todas las imágenes de la carpeta img
+    - assets/translations/
+    - assets/data/places.json

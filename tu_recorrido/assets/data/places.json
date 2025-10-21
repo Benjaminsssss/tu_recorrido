@@ -1,0 +1,202 @@
+[
+  {
+    "id": "cerro-san-cristobal",
+    "nombre": "Cerro San Cristóbal",
+      "region": "Chile",
+    "comuna": "Providencia/Recoleta",
+    "shortDesc": "Miradores icónicos, teleférico y atardeceres de postal.",
+    "descripcion": "El parque urbano más grande de Chile. Sube en teleférico o funicular, disfruta de vistas 360° de la ciudad y visita la imagen de la Inmaculada Concepción.",
+    "mejorMomento": "Tarde–atardecer.",
+    "badge": { "nombre": "Vigilante de la Ciudad", "tema": "Naturaleza" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1526402978125-f1d6df91cbac?w=1200&q=80",
+        "alt": "Vista panorámica de Santiago desde el Cerro San Cristóbal"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1598473571261-b68dc130c56f?w=1200&q=80",
+        "alt": "Teleférico del Cerro con ciudad al fondo"
+      }
+    ]
+  },
+  {
+    "id": "barrio-lastarria",
+    "nombre": "Barrio Lastarria",
+      "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Cafés, museos y vida cultural en calles patrimoniales.",
+    "descripcion": "Un barrio bohemio con arquitectura histórica, galerías, cine arte, ferias de libros y una amplia oferta gastronómica.",
+    "mejorMomento": "Fin de semana y atardecer-nocturno.",
+    "badge": { "nombre": "Rincón Cultural", "tema": "Cultura" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1580837119756-563d608dd119?w=1200&q=80",
+        "alt": "Fachadas históricas y calles de Lastarria"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1581974206814-d76c22ed2e06?w=1200&q=80",
+        "alt": "Arquitectura patrimonial del barrio"
+      }
+    ]
+  },
+  {
+    "id": "parque-bicentenario",
+    "nombre": "Parque Bicentenario",
+      "region": "Chile",
+    "comuna": "Vitacura",
+    "shortDesc": "Áreas verdes, lagunas con flamencos y picnic familiar.",
+    "descripcion": "Parque moderno con extensas praderas, ciclovías, lagunas con aves y zonas de descanso. Ideal para familias y deporte.",
+    "mejorMomento": "Mañana y tarde.",
+    "badge": { "nombre": "Pulmón Urbano", "tema": "Naturaleza" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&q=80",
+        "alt": "Vista del parque con lagunas y áreas verdes"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1571104508999-893933ded431?w=1200&q=80",
+        "alt": "Senderos y praderas del parque"
+      }
+    ]
+  },
+  {
+    "id": "museo-bellas-artes",
+    "nombre": "Museo Nacional de Bellas Artes",
+      "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Arte chileno y universal en edificio emblemático.",
+    "descripcion": "Colecciones y exposiciones temporales en un edificio neoclásico con gran cúpula de vidrio.",
+    "mejorMomento": "Tarde.",
+    "badge": { "nombre": "Arte Clásico", "tema": "Arte" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1566127444979-b3d2b64d6d66?w=1200&q=80",
+        "alt": "Fachada neoclásica del museo"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?w=1200&q=80",
+        "alt": "Interior del museo con arquitectura"
+      }
+    ]
+  },
+  {
+    "id": "mercado-central",
+    "nombre": "Mercado Central",
+      "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Gastronomía marina y arquitectura de fierro forjado.",
+    "descripcion": "Tradicional mercado con restaurantes de mariscos y pasillos llenos de vida.",
+    "mejorMomento": "Mediodía.",
+    "badge": { "nombre": "Sabor Típico", "tema": "Cultura" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=1200&q=80",
+        "alt": "Estructura de fierro forjado del mercado"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1567696911980-2eed69a46042?w=1200&q=80",
+        "alt": "Interior arquitectónico del Mercado Central"
+      }
+    ]
+  },
+  {
+    "id": "palacio-la-moneda",
+    "nombre": "Palacio de La Moneda",
+    "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Palacio presidencial y centro cultural subterráneo.",
+    "descripcion": "Sede del gobierno chileno con cambio de guardia ceremonial y el Centro Cultural La Moneda bajo la Plaza de la Ciudadanía.",
+    "mejorMomento": "Mañana (10:00 cambio de guardia).",
+    "badge": { "nombre": "Corazón Cívico", "tema": "Historia" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1563204424-e48d88d4161d?w=1200&q=80",
+        "alt": "Fachada del Palacio de La Moneda"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=1200&q=80",
+        "alt": "Cambio de guardia en La Moneda"
+      }
+    ]
+  },
+  {
+    "id": "costanera-center",
+    "nombre": "Costanera Center",
+    "region": "Chile",
+    "comuna": "Providencia",
+    "shortDesc": "Torre más alta de Sudamérica con mirador Sky Costanera.",
+    "descripcion": "Centro comercial de 6 pisos y el mirador más alto de Latinoamérica en el piso 61 y 62 con vistas 360° de Santiago y la cordillera.",
+    "mejorMomento": "Atardecer en el mirador.",
+    "badge": { "nombre": "Cielo Urbano", "tema": "Panorámica" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&q=80",
+        "alt": "Torre Costanera Center en el skyline"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=1200&q=80",
+        "alt": "Vista panorámica desde el mirador"
+      }
+    ]
+  },
+  {
+    "id": "barrio-bellavista",
+    "nombre": "Barrio Bellavista",
+    "region": "Chile",
+    "comuna": "Recoleta",
+    "shortDesc": "Vida nocturna, arte callejero y La Chascona de Neruda.",
+    "descripcion": "Barrio bohemio conocido por sus murales coloridos, restaurantes, bares, discotecas y la casa-museo La Chascona de Pablo Neruda.",
+    "mejorMomento": "Tarde-noche y fines de semana.",
+    "badge": { "nombre": "Alma Bohemia", "tema": "Vida Nocturna" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1568849676085-51415703900f?w=1200&q=80",
+        "alt": "Calles coloridas de Bellavista"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80",
+        "alt": "Murales y arquitectura del barrio"
+      }
+    ]
+  },
+  {
+    "id": "parque-quinta-normal",
+    "nombre": "Parque Quinta Normal",
+    "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Parque histórico con lagunas, museos y áreas infantiles.",
+    "descripcion": "Uno de los parques más antiguos de Santiago con jardines botánicos, lagunas con botes, múltiples museos (Ferroviario, Historia Natural, Artequin) y zonas de juegos.",
+    "mejorMomento": "Fin de semana y mañanas.",
+    "badge": { "nombre": "Tesoro Histórico", "tema": "Familia" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1587974928442-77dc3e0dba72?w=1200&q=80",
+        "alt": "Entrada y jardines del parque"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1598454267962-aa1c7d451f3e?w=1200&q=80",
+        "alt": "Laguna y árboles centenarios"
+      }
+    ]
+  },
+  {
+    "id": "centro-historico",
+    "nombre": "Centro Histórico de Santiago",
+    "region": "Chile",
+    "comuna": "Santiago",
+    "shortDesc": "Plaza de Armas, Catedral y arquitectura colonial.",
+    "descripcion": "Corazón de la ciudad fundacional con la Plaza de Armas, Catedral Metropolitana, Correo Central, Municipalidad y paseos peatonales llenos de historia.",
+    "mejorMomento": "Mañana-mediodía.",
+    "badge": { "nombre": "Raíces de Santiago", "tema": "Historia" },
+    "imagenes": [
+      {
+        "url": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80",
+        "alt": "Plaza de Armas con Catedral al fondo"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=1200&q=80",
+        "alt": "Paseos peatonales del centro histórico"
+      }
+    ]
+  }
+]
