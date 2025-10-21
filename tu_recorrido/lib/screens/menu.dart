@@ -217,8 +217,7 @@ class _MapitaState extends State<Mapita> {
             CameraPosition(target: _currentPosition!, zoom: 16.0);
       });
 
-        _filterPlacesByDistance();
-      }
+      _filterPlacesByDistance();
       _listenForRealTimeUpdates();
     } catch (e) {
       dev.log("Error al obtener la ubicación inicial: $e");
@@ -243,13 +242,12 @@ class _MapitaState extends State<Mapita> {
       (Position position) async {
         if (!mounted) return;
 
-          _userMarker = Marker(
-            markerId: const MarkerId('current_location'),
-            position: newLatLng,
-            icon:
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            infoWindow: const InfoWindow(title: 'Tú Estás Aquí'),
-          );
+        _userMarker = Marker(
+          markerId: const MarkerId('current_location'),
+          position: newLatLng,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          infoWindow: const InfoWindow(title: 'Tú Estás Aquí'),
+        );
 
         if (_currentPosition?.latitude != newLatLng.latitude ||
             _currentPosition?.longitude != newLatLng.longitude) {
@@ -737,6 +735,7 @@ class _MapitaState extends State<Mapita> {
                                 final place = entry.value;
 
                                 return _buildCard(
+                                  'assets/img/insignia.png',
                                   place.nombre,
                                   'Rating: ${place.rating?.toStringAsFixed(1) ?? 'Sin calificar'}',
                                   index + 1,
@@ -762,46 +761,11 @@ class _MapitaState extends State<Mapita> {
                                   ? theme.colorScheme.primary
                                   : Colors.grey.withValues(alpha: 0.5),
                             ),
-                          )
-                        : PageView(
-                            controller: _pageController,
-                            physics: const ClampingScrollPhysics(),
-                            children: _lugares.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final place = entry.value;
-
-                              return _buildCard(
-                                'assets/img/insignia.png',
-                                place.nombre,
-                                'Rating: ${place.rating?.toStringAsFixed(1) ?? 'N/A'}',
-                                index + 1,
-                              );
-                            }).toList(),
-                          ),
-                  ),
-
-                  // Indicadores de página
-                  const SizedBox(height: 8),
-                  if (_lugares.isNotEmpty)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        _lugares.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                          width: _currentPage == index ? 12 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _currentPage == index
-                                ? theme.colorScheme.primary
-                                : Colors.grey.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -815,10 +779,7 @@ class _MapitaState extends State<Mapita> {
       String imagePath, String title, String subtitle, int cardNumber) {
     // Buscamos el lugar por índice dentro de la lista _lugares (filtrada)
     final place = _lugares[cardNumber - 1];
-
-    final displayRating = place.rating != null
-        ? 'Rating: ${place.rating!.toStringAsFixed(1)}'
-        : 'Sin calificar';
+    final bool isDisabled = _isRouteActive;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -859,22 +820,36 @@ class _MapitaState extends State<Mapita> {
                         ),
                       ),
                     ),
-                    if (place.rating != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3.0),
-                        child: Row(
-                          children: List.generate(
-                            5,
-                            (index) => Icon(
-                              index < place.rating!.round()
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              size: 14,
-                              color: Colors.amber,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDisabled ? Colors.black38 : Colors.black,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 4),
+                          if (place.rating != null)
+                            Row(
+                              children: List.generate(
+                                5,
+                                (index) => Icon(
+                                  index < place.rating!.round()
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  size: 14,
+                                  color: Colors.amber,
+                                ),
+                              ),
+                            ),
                           const SizedBox(height: 4),
                           Text(
                             subtitle,
