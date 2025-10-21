@@ -50,7 +50,8 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
     if (!_showWelcome) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 10), // Mismo margen que las cards
+      margin: const EdgeInsets.symmetric(
+          horizontal: 2, vertical: 10), // Mismo margen que las cards
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bannerBg,
@@ -65,7 +66,8 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.explore, color: Color(0xFF66B7F0), size: 28), // celeste
+          const Icon(Icons.explore,
+              color: Color(0xFF66B7F0), size: 28), // celeste
           const SizedBox(width: 12),
           Expanded(
             child: Column(

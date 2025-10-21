@@ -78,14 +78,14 @@ class _PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  // Ambos estados con el mismo color: blanco para contrastar con el fondo azul
-  final iconColor = const Color(0xFFFFFFFF); // blanco
+    // Ambos estados con el mismo color: blanco para contrastar con el fondo azul
+    final iconColor = const Color(0xFFFFFFFF); // blanco
     final indicatorColor = const Color(0xFF66B7F0); // celeste claro
 
     return InkWell(
       borderRadius: BorderRadius.circular(40),
       onTap: onTap,
-  splashColor: indicatorColor.withValues(alpha: 0.3),
+      splashColor: indicatorColor.withValues(alpha: 0.3),
       highlightColor: Colors.transparent,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),

@@ -58,7 +58,7 @@ class SavedPlacesService {
           .collection('saved_places')
           .orderBy('savedAt', descending: true)
           .get();
-      
+
       return snapshot.docs.map((doc) => doc.id).toList();
     } catch (e) {
       return [];

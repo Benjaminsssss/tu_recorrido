@@ -24,7 +24,8 @@ class _PlaceModalState extends State<PlaceModal> {
   Future<void> _checkIfSaved() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final isSaved = await SavedPlacesService.isPlaceSaved(user.uid, widget.place.id);
+      final isSaved =
+          await SavedPlacesService.isPlaceSaved(user.uid, widget.place.id);
       if (mounted) {
         setState(() {
           _isSaved = isSaved;
@@ -122,7 +123,7 @@ class _PlaceModalState extends State<PlaceModal> {
               ),
               const SizedBox(height: 16),
               AspectRatio(
-                aspectRatio: 16/9,
+                aspectRatio: 16 / 9,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
                   child: Image(
@@ -173,7 +174,9 @@ class _PlaceModalState extends State<PlaceModal> {
                     // Ícono de bookmark/guardar a la derecha
                     Container(
                       decoration: BoxDecoration(
-                        color: _isSaved ? const Color(0xFFE3F2FD) : Colors.grey[100],
+                        color: _isSaved
+                            ? const Color(0xFFE3F2FD)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: _isLoading

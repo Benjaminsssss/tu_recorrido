@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,12 +5,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ProfileService {
   static final _db = FirebaseFirestore.instance;
 
-  static Future<DocumentSnapshot<Map<String, dynamic>>?> getUserProfile(String uid) async {
+  static Future<DocumentSnapshot<Map<String, dynamic>>?> getUserProfile(
+      String uid) async {
     if (uid.isEmpty) return null;
     return _db.collection('users').doc(uid).get();
   }
 
-  static Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+  static Future<void> updateUserProfile(
+      String uid, Map<String, dynamic> data) async {
     if (uid.isEmpty) return;
     await _db.collection('users').doc(uid).set(
       {

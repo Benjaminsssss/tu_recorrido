@@ -40,7 +40,8 @@ class PlaceHeroCard extends StatelessWidget {
                   child: _StampCircle(
                     assetPath: _stampForPlace(place),
                     size: 64, // más grande para que se vea mejor
-                    contentScale: 1.2, // zoom para compensar márgenes transparentes
+                    contentScale:
+                        1.2, // zoom para compensar márgenes transparentes
                   ),
                 ),
               ],
@@ -116,7 +117,8 @@ class PlaceHeroCard extends StatelessWidget {
                               heightFactor: 0.92,
                               child: Material(
                                 color: Colors.white,
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(32)),
                                 child: PlaceModal(place: place),
                               ),
                             ),
@@ -183,8 +185,10 @@ class PlaceHeroCard extends StatelessWidget {
 class _StampCircle extends StatelessWidget {
   final String assetPath;
   final double size;
-  final double contentScale; // permite hacer zoom a la imagen para alinearla al borde
-  const _StampCircle({required this.assetPath, this.size = 36, this.contentScale = 1.0});
+  final double
+      contentScale; // permite hacer zoom a la imagen para alinearla al borde
+  const _StampCircle(
+      {required this.assetPath, this.size = 36, this.contentScale = 1.0});
 
   @override
   Widget build(BuildContext context) {

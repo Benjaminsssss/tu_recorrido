@@ -34,14 +34,13 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
     try {
       // Obtener IDs de lugares guardados
       final savedIds = await SavedPlacesService.getSavedPlaceIds(user.uid);
-      
+
       // Cargar todos los lugares desde JSON
       final allPlaces = await PlaceService.loadPlacesFromJson();
-      
+
       // Filtrar solo los lugares guardados
-      final savedPlaces = allPlaces
-          .where((place) => savedIds.contains(place.id))
-          .toList();
+      final savedPlaces =
+          allPlaces.where((place) => savedIds.contains(place.id)).toList();
 
       if (mounted) {
         setState(() {
@@ -80,7 +79,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
           : _savedPlaces.isEmpty
               ? _buildEmptyState()
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   itemCount: _savedPlaces.length,
                   itemBuilder: (context, index) {
                     return Padding(
@@ -138,7 +138,8 @@ class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2B6B7F),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

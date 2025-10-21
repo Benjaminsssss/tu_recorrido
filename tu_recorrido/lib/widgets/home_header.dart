@@ -99,7 +99,8 @@ class _HomeHeaderState extends State<HomeHeader>
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFF5D4E37).withOpacity(0.15), // marrón tierra sutil
+          color:
+              const Color(0xFF5D4E37).withOpacity(0.15), // marrón tierra sutil
           width: 1,
         ),
         boxShadow: [
@@ -150,8 +151,10 @@ class _HomeHeaderState extends State<HomeHeader>
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _isPressed
-                              ? const Color(0xFF4A7C59) // verde bosque al presionar
-                              : const Color(0xFF5D4E37).withOpacity(0.3), // marrón claro
+                              ? const Color(
+                                  0xFF4A7C59) // verde bosque al presionar
+                              : const Color(0xFF5D4E37)
+                                  .withOpacity(0.3), // marrón claro
                           width: 2,
                         ),
                         boxShadow: [
@@ -170,18 +173,20 @@ class _HomeHeaderState extends State<HomeHeader>
                               if (widget.avatarBase64 != null &&
                                   widget.avatarBase64!.isNotEmpty) {
                                 try {
-                                  avatarProvider =
-                                      MemoryImage(base64Decode(widget.avatarBase64!));
+                                  avatarProvider = MemoryImage(
+                                      base64Decode(widget.avatarBase64!));
                                 } catch (_) {}
                               }
                               return CircleAvatar(
                                 radius: 18,
-                                backgroundColor: const Color(0xFFE8DCC4), // beige
+                                backgroundColor:
+                                    const Color(0xFFE8DCC4), // beige
                                 backgroundImage: avatarProvider,
                                 child: (avatarProvider == null)
                                     ? const Icon(
                                         Icons.person,
-                                        color: Color(0xFF5D4E37), // marrón tierra
+                                        color:
+                                            Color(0xFF5D4E37), // marrón tierra
                                         size: 20,
                                       )
                                     : null,

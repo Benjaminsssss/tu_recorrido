@@ -19,7 +19,8 @@ class PlacesShowcase extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, i) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8), // Reducido a 2 para máximo ancho
+        padding: const EdgeInsets.symmetric(
+            horizontal: 2, vertical: 8), // Reducido a 2 para máximo ancho
         child: PlaceHeroCard(place: places[i]),
       ),
     );

@@ -115,14 +115,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 56,
-            backgroundImage: _localBytes != null
-              ? MemoryImage(_localBytes!)
-              : (_photoBase64 != null && _photoBase64!.isNotEmpty)
-                ? MemoryImage(base64Decode(_photoBase64!))
-                : null,
-            child: (_photoBase64 == null && _localBytes == null)
-              ? const Icon(Icons.person, size: 56)
-              : null,
+                      backgroundImage: _localBytes != null
+                          ? MemoryImage(_localBytes!)
+                          : (_photoBase64 != null && _photoBase64!.isNotEmpty)
+                              ? MemoryImage(base64Decode(_photoBase64!))
+                              : null,
+                      child: (_photoBase64 == null && _localBytes == null)
+                          ? const Icon(Icons.person, size: 56)
+                          : null,
                     ),
                     Positioned(
                       bottom: -4,

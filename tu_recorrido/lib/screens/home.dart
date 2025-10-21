@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _places = places;
-            _filteredPlaces = places; // Inicialmente mostrar todos
+          _filteredPlaces = places; // Inicialmente mostrar todos
           _loadingPlaces = false;
         });
       }
@@ -87,30 +87,30 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _places = [];
-            _filteredPlaces = [];
+          _filteredPlaces = [];
           _loadingPlaces = false;
         });
       }
     }
   }
 
-    void _handlePlaceSearch(Place? selectedPlace) {
-      setState(() {
-        if (selectedPlace == null) {
-          // Mostrar todos los lugares
-          _filteredPlaces = _places;
-        } else {
-          // Mostrar solo el lugar seleccionado
-          _filteredPlaces = [selectedPlace];
-        }
-      });
-      // Scroll al top para ver el resultado
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+  void _handlePlaceSearch(Place? selectedPlace) {
+    setState(() {
+      if (selectedPlace == null) {
+        // Mostrar todos los lugares
+        _filteredPlaces = _places;
+      } else {
+        // Mostrar solo el lugar seleccionado
+        _filteredPlaces = [selectedPlace];
+      }
+    });
+    // Scroll al top para ver el resultado
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
 
   void _handleSearchChanged(String query) {
     setState(() {
@@ -164,8 +164,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final userState = Provider.of<UserState>(context);
         final nombre = userState.nombre;
         final uid = user?.uid ?? '';
-  final double headerSpace = _headerHeight > 0 ? _headerHeight : 110; // espacio según medida
-        
+        final double headerSpace =
+            _headerHeight > 0 ? _headerHeight : 110; // espacio según medida
+
         // Cargar datos del usuario desde Firestore solo una vez
         if (user != null && !_userDataLoaded) {
           _userDataLoaded = true;
@@ -177,10 +178,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 final firestoreName = data['displayName'] as String?;
                 if (firestoreName != null && firestoreName.isNotEmpty) {
                   await userState.setNombre(firestoreName);
-                } else if (user.displayName != null && user.displayName!.isNotEmpty) {
+                } else if (user.displayName != null &&
+                    user.displayName!.isNotEmpty) {
                   await userState.setNombre(user.displayName!);
                 }
-                
+
                 // Cargar avatar desde Firestore (por si acaso no se cargó en initState)
                 final base64 = data['photoBase64'] as String?;
                 if (base64 != null && base64.isNotEmpty && mounted) {
@@ -194,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           });
         }
-        
+
         // Resetear flag si el usuario cierra sesión
         if (user == null && _userDataLoaded) {
           _userDataLoaded = false;
@@ -204,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           }
         }
-        
+
         return Scaffold(
           backgroundColor: const Color(0xFFFAFBF8), // Fondo claro #FAFBF8
           body: SafeArea(
@@ -212,20 +214,22 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Contenido scrolleable bajo el header fijo
                 ScrollConfiguration(
-                  behavior: const ScrollBehavior().copyWith(overscroll: false, scrollbars: false),
+                  behavior: const ScrollBehavior()
+                      .copyWith(overscroll: false, scrollbars: false),
                   child: ListView(
                     controller: _scrollController,
                     padding: EdgeInsets.fromLTRB(16, headerSpace, 16, 100),
                     physics: const ClampingScrollPhysics(),
                     children: [
-                    WelcomeBanner(
-                      nombre: nombre,
-                      uid: uid,
-                    ),
-                    const SizedBox(height: 16),
-                    if (_loadingPlaces)
-                      const Center(child: CircularProgressIndicator())
-                      else if (_filteredPlaces == null || _filteredPlaces!.isEmpty)
+                      WelcomeBanner(
+                        nombre: nombre,
+                        uid: uid,
+                      ),
+                      const SizedBox(height: 16),
+                      if (_loadingPlaces)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_filteredPlaces == null ||
+                          _filteredPlaces!.isEmpty)
                         Center(
                           child: Column(
                             children: [
@@ -246,11 +250,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         )
-                    else
+                      else
                         PlacesShowcase(places: _filteredPlaces!),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
                 // Header flotante: solo Row, sin fondo, padding horizontal 16, altura 80
                 Positioned(
                   left: 0,
@@ -293,18 +297,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: const Color(0xFF2F6B5F), // verde soporte
+                                  color:
+                                      const Color(0xFF2F6B5F), // verde soporte
                                   width: 2,
                                 ),
-                                image: _avatarBase64 != null && _avatarBase64!.isNotEmpty
+                                image: _avatarBase64 != null &&
+                                        _avatarBase64!.isNotEmpty
                                     ? DecorationImage(
-                                        image: MemoryImage(base64Decode(_avatarBase64!)),
+                                        image: MemoryImage(
+                                            base64Decode(_avatarBase64!)),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
                               ),
                               alignment: Alignment.center,
-                              child: _avatarBase64 == null || _avatarBase64!.isEmpty
+                              child: _avatarBase64 == null ||
+                                      _avatarBase64!.isEmpty
                                   ? const Icon(
                                       Icons.person,
                                       size: 26,

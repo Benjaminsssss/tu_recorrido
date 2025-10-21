@@ -20,7 +20,8 @@ class Mapita extends StatefulWidget {
 }
 
 class _MapitaState extends State<Mapita> {
-  static const String googleApiKeyInline = "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
+  static const String googleApiKeyInline =
+      "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
 
   final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
@@ -134,7 +135,8 @@ class _MapitaState extends State<Mapita> {
           Marker(
             markerId: MarkerId(place.placeId),
             position: place.ubicacion,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
             infoWindow: InfoWindow(
               title: place.nombre,
               snippet: place.rating != null
@@ -142,7 +144,8 @@ class _MapitaState extends State<Mapita> {
                   : 'Sin calificar',
             ),
             onTap: () {
-              final index = _lugares.indexWhere((p) => p.placeId == place.placeId);
+              final index =
+                  _lugares.indexWhere((p) => p.placeId == place.placeId);
               if (index != -1 && _pageController.hasClients) {
                 _pageController.animateToPage(
                   index,
@@ -167,7 +170,8 @@ class _MapitaState extends State<Mapita> {
 
   Future<void> _determinePositionAndStartListening() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) _showSnackBar('Los servicios de ubicación están deshabilitados.');
+    if (!serviceEnabled)
+      _showSnackBar('Los servicios de ubicación están deshabilitados.');
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -187,15 +191,19 @@ class _MapitaState extends State<Mapita> {
       if (!mounted) return;
 
       setState(() {
-        _currentPosition = LatLng(initialPosition.latitude, initialPosition.longitude);
-        _initialCameraPosition = CameraPosition(target: _currentPosition!, zoom: 16.0);
+        _currentPosition =
+            LatLng(initialPosition.latitude, initialPosition.longitude);
+        _initialCameraPosition =
+            CameraPosition(target: _currentPosition!, zoom: 16.0);
       });
 
       _filterPlacesByDistance();
       _listenForRealTimeUpdates();
     } catch (e) {
       dev.log("Error al obtener la ubicación inicial: $e");
-      if (mounted && _initialCameraPosition == null && MarcadoresData.lugaresMarcados.isNotEmpty) {
+      if (mounted &&
+          _initialCameraPosition == null &&
+          MarcadoresData.lugaresMarcados.isNotEmpty) {
         setState(() {
           _initialCameraPosition = CameraPosition(
             target: MarcadoresData.lugaresMarcados.first.ubicacion,
@@ -203,7 +211,8 @@ class _MapitaState extends State<Mapita> {
           );
         });
       }
-      _showSnackBar('No se pudo obtener la ubicación inicial. Usando ubicación por defecto.');
+      _showSnackBar(
+          'No se pudo obtener la ubicación inicial. Usando ubicación por defecto.');
     }
   }
 
@@ -223,7 +232,8 @@ class _MapitaState extends State<Mapita> {
           _userMarker = Marker(
             markerId: const MarkerId('current_location'),
             position: newLatLng,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+            icon:
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
             infoWindow: const InfoWindow(title: 'Tú Estás Aquí'),
           );
 
@@ -242,12 +252,13 @@ class _MapitaState extends State<Mapita> {
             _currentDestination!.longitude,
           );
 
-          dev.log('📍 Distancia al destino: ${distToDest.toStringAsFixed(1)} m | _arrivalHandled: $_arrivalHandled');
+          dev.log(
+              '📍 Distancia al destino: ${distToDest.toStringAsFixed(1)} m | _arrivalHandled: $_arrivalHandled');
 
           if (distToDest <= _arrivalToleranceMeters && !_arrivalHandled) {
             dev.log('🎉 ACTIVANDO MODAL DE LLEGADA');
             _arrivalHandled = true;
-            
+
             // ⭐ Future.delayed para asegurar que el modal se muestre
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
@@ -347,10 +358,15 @@ class _MapitaState extends State<Mapita> {
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            selectedRating >= starValue ? Icons.star : Icons.star_border,
-                            color: selectedRating >= starValue ? Colors.amber : Colors.grey,
+                            selectedRating >= starValue
+                                ? Icons.star
+                                : Icons.star_border,
+                            color: selectedRating >= starValue
+                                ? Colors.amber
+                                : Colors.grey,
                           ),
-                          onPressed: () => setStateDialog(() => selectedRating = starValue),
+                          onPressed: () =>
+                              setStateDialog(() => selectedRating = starValue),
                         );
                       }),
                     ),
@@ -358,7 +374,8 @@ class _MapitaState extends State<Mapita> {
                     if (selectedRating > 0)
                       Text(
                         '$selectedRating de 5 estrellas',
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
                       ),
                   ],
                 ),
@@ -382,7 +399,8 @@ class _MapitaState extends State<Mapita> {
                               setState(() {
                                 _filterPlacesByDistance();
                               });
-                              _showSnackBar('Gracias por evaluar ${place.nombre}.');
+                              _showSnackBar(
+                                  'Gracias por evaluar ${place.nombre}.');
                             }
                           : null,
                       child: const Text('Enviar'),
@@ -410,11 +428,13 @@ class _MapitaState extends State<Mapita> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text('Sí, Iniciar', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Sí, Iniciar',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               onPressed: () {
                 Navigator.of(context).pop();
                 if (_currentPosition == null) {
-                  _showSnackBar('Obteniendo tu ubicación para trazar la ruta...');
+                  _showSnackBar(
+                      'Obteniendo tu ubicación para trazar la ruta...');
                   _goToPosition(place.ubicacion, zoom: 17.0);
                   return;
                 }
@@ -427,7 +447,8 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
-  Future<void> _getRoute(LatLng origin, LatLng destination, PlaceResult place) async {
+  Future<void> _getRoute(
+      LatLng origin, LatLng destination, PlaceResult place) async {
     _showSnackBar('Trazando ruta con la API directa...');
 
     final String url =
@@ -440,7 +461,8 @@ class _MapitaState extends State<Mapita> {
         if (data['routes'] != null && data['routes'].isNotEmpty) {
           final points = data['routes'][0]['overview_polyline']['points'];
           final decoded = PolylinePoints.decodePolyline(points);
-          final coords = decoded.map((p) => LatLng(p.latitude, p.longitude)).toList();
+          final coords =
+              decoded.map((p) => LatLng(p.latitude, p.longitude)).toList();
 
           setState(() {
             _polylines.clear();
@@ -449,7 +471,8 @@ class _MapitaState extends State<Mapita> {
             _currentDestination = destination;
             _destinationPlace = place;
 
-            dev.log('🚀 Ruta activada. Destino: ${destination.latitude}, ${destination.longitude}');
+            dev.log(
+                '🚀 Ruta activada. Destino: ${destination.latitude}, ${destination.longitude}');
 
             _polylines.add(
               Polyline(
@@ -467,7 +490,8 @@ class _MapitaState extends State<Mapita> {
           _showSnackBar('No se encontró ninguna ruta.');
         }
       } else {
-        _showSnackBar('Error de conexión a la API de Google: ${response.statusCode}');
+        _showSnackBar(
+            'Error de conexión a la API de Google: ${response.statusCode}');
       }
     } catch (e) {
       dev.log("❌ Error al obtener la ruta: $e");
@@ -479,21 +503,31 @@ class _MapitaState extends State<Mapita> {
     final GoogleMapController controller = await _controller.future;
 
     final sw = LatLng(
-      origin.latitude < destination.latitude ? origin.latitude : destination.latitude,
-      origin.longitude < destination.longitude ? origin.longitude : destination.longitude,
+      origin.latitude < destination.latitude
+          ? origin.latitude
+          : destination.latitude,
+      origin.longitude < destination.longitude
+          ? origin.longitude
+          : destination.longitude,
     );
     final ne = LatLng(
-      origin.latitude > destination.latitude ? origin.latitude : destination.latitude,
-      origin.longitude > destination.longitude ? origin.longitude : destination.longitude,
+      origin.latitude > destination.latitude
+          ? origin.latitude
+          : destination.latitude,
+      origin.longitude > destination.longitude
+          ? origin.longitude
+          : destination.longitude,
     );
 
-    await controller.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: sw, northeast: ne), 70));
+    await controller.animateCamera(CameraUpdate.newLatLngBounds(
+        LatLngBounds(southwest: sw, northeast: ne), 70));
   }
 
   Future<void> _goToPosition(LatLng position, {double zoom = 16.0}) async {
     final GoogleMapController controller = await _controller.future;
     await controller.animateCamera(
-      CameraUpdate.newCameraPosition(CameraPosition(target: position, zoom: zoom)),
+      CameraUpdate.newCameraPosition(
+          CameraPosition(target: position, zoom: zoom)),
     );
   }
 
@@ -505,16 +539,20 @@ class _MapitaState extends State<Mapita> {
         throw TimeoutException('No se pudo obtener la ubicación a tiempo.');
       });
 
-      await _goToPosition(LatLng(currentPosition.latitude, currentPosition.longitude), zoom: 16.0);
+      await _goToPosition(
+          LatLng(currentPosition.latitude, currentPosition.longitude),
+          zoom: 16.0);
     } catch (e) {
       dev.log("❌ Error en el botón Mi ubicación: $e");
-      _showSnackBar('No se pudo obtener la ubicación. Verifica permisos y GPS.');
+      _showSnackBar(
+          'No se pudo obtener la ubicación. Verifica permisos y GPS.');
     }
   }
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -526,7 +564,9 @@ class _MapitaState extends State<Mapita> {
     final theme = Theme.of(context);
 
     bool canShowFlagBtn = false;
-    if (_isRouteActive && _currentDestination != null && _currentPosition != null) {
+    if (_isRouteActive &&
+        _currentDestination != null &&
+        _currentPosition != null) {
       final distToDest = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
@@ -552,14 +592,14 @@ class _MapitaState extends State<Mapita> {
           GoogleMap(
             mapType: MapType.normal,
             initialCameraPosition: _initialCameraPosition!,
-            onMapCreated: (GoogleMapController controller) => _controller.complete(controller),
+            onMapCreated: (GoogleMapController controller) =>
+                _controller.complete(controller),
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
             markers: _markers,
             polylines: _polylines,
             zoomControlsEnabled: false,
           ),
-
           Positioned(
             top: 16,
             right: 16,
@@ -571,7 +611,6 @@ class _MapitaState extends State<Mapita> {
               child: const Icon(Icons.my_location),
             ),
           ),
-
           if (_isRouteActive)
             Positioned(
               top: 85,
@@ -585,7 +624,6 @@ class _MapitaState extends State<Mapita> {
                 child: const Icon(Icons.close),
               ),
             ),
-
           if (canShowFlagBtn && _destinationPlace != null)
             Positioned(
               top: 140,
@@ -599,7 +637,6 @@ class _MapitaState extends State<Mapita> {
                 child: const Icon(Icons.flag),
               ),
             ),
-
           Positioned(
             top: 16,
             left: 16,
@@ -611,7 +648,6 @@ class _MapitaState extends State<Mapita> {
               child: const Icon(Icons.qr_code_scanner),
             ),
           ),
-
           Positioned(
             bottom: 8,
             left: 0,
@@ -628,7 +664,8 @@ class _MapitaState extends State<Mapita> {
                           ? Container(
                               width: double.infinity,
                               height: _cardHeight,
-                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.9),
                                 borderRadius: BorderRadius.circular(12),
@@ -636,7 +673,9 @@ class _MapitaState extends State<Mapita> {
                               child: const Center(
                                 child: Text(
                                   "No hay lugares en un radio de 5 km",
-                                  style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             )
@@ -656,6 +695,7 @@ class _MapitaState extends State<Mapita> {
                             ),
                     ),
                     const SizedBox(height: 6),
+                    // Indicadores de página
                     if (_lugares.isNotEmpty)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -668,43 +708,10 @@ class _MapitaState extends State<Mapita> {
                             height: 8,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _currentPage == index ? theme.colorScheme.primary : Colors.grey.withOpacity(0.5),
+                              color: _currentPage == index
+                                  ? theme.colorScheme.primary
+                                  : Colors.grey.withValues(alpha: 0.5),
                             ),
-                          )
-                        : PageView(
-                            controller: _pageController,
-                            physics: const ClampingScrollPhysics(),
-                            children: _lugares.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final place = entry.value;
-
-                              return _buildCard(
-                                'assets/img/insiginia.png',
-                                place.nombre,
-                                'Rating: ${place.rating?.toStringAsFixed(1) ?? 'N/A'}',
-                                index + 1,
-                              );
-                            }).toList(),
-                          ),
-                  ),
-
-                  // Indicadores de página
-                  const SizedBox(height: 8),
-                  if (_lugares.isNotEmpty)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        _lugares.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                          width: _currentPage == index ? 12 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _currentPage == index
-                                ? theme.colorScheme.primary
-                                : Colors.grey.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -722,7 +729,9 @@ class _MapitaState extends State<Mapita> {
     final place = _lugares[cardNumber - 1];
     final bool isDisabled = _isRouteActive;
 
-    final displayRating = place.rating != null ? 'Rating: ${place.rating!.toStringAsFixed(1)}' : 'Sin calificar';
+    final displayRating = place.rating != null
+        ? 'Rating: ${place.rating!.toStringAsFixed(1)}'
+        : 'Sin calificar';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -733,10 +742,12 @@ class _MapitaState extends State<Mapita> {
           child: Card(
             elevation: 4.0,
             color: isDisabled ? Colors.grey[200] : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0)),
             child: InkWell(
               onTap: isDisabled
-                  ? () => _showSnackBar('Cancela la ruta actual (botón X) antes de iniciar una nueva.')
+                  ? () => _showSnackBar(
+                      'Cancela la ruta actual (botón X) antes de iniciar una nueva.')
                   : () => _showStartTripConfirmation(place),
               borderRadius: BorderRadius.circular(12.0),
               splashColor: Colors.amber.withOpacity(0.25),
@@ -773,7 +784,9 @@ class _MapitaState extends State<Mapita> {
                           children: List.generate(
                             5,
                             (index) => Icon(
-                              index < place.rating!.round() ? Icons.star : Icons.star_border,
+                              index < place.rating!.round()
+                                  ? Icons.star
+                                  : Icons.star_border,
                               size: 14,
                               color: Colors.amber,
                             ),

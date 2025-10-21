@@ -5,7 +5,11 @@ class ImageCarousel extends StatefulWidget {
   final List<PlaceImage> images;
   final double aspectRatio;
   final void Function(int)? onPageChanged;
-  const ImageCarousel({super.key, required this.images, this.aspectRatio = 16/9, this.onPageChanged});
+  const ImageCarousel(
+      {super.key,
+      required this.images,
+      this.aspectRatio = 16 / 9,
+      this.onPageChanged});
 
   @override
   State<ImageCarousel> createState() => _ImageCarouselState();
@@ -46,7 +50,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
                   semanticLabel: img.alt,
                   errorBuilder: (context, error, stack) => Container(
                     color: Colors.grey[200],
-                    child: const Center(child: Icon(Icons.broken_image, size: 48)),
+                    child:
+                        const Center(child: Icon(Icons.broken_image, size: 48)),
                   ),
                 ),
               );
@@ -56,16 +61,21 @@ class _ImageCarouselState extends State<ImageCarousel> {
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.images.length, (i) => AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: _current == i ? 12 : 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: _current == i ? const Color(0xFFC5563A) : const Color(0xFFD9D1C9), // terracota activo, neutro cálido inactivo
-              borderRadius: BorderRadius.circular(4),
-            ),
-          )),
+          children: List.generate(
+              widget.images.length,
+              (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: _current == i ? 12 : 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: _current == i
+                          ? const Color(0xFFC5563A)
+                          : const Color(
+                              0xFFD9D1C9), // terracota activo, neutro cálido inactivo
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  )),
         ),
       ],
     );

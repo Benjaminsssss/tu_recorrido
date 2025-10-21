@@ -110,7 +110,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   }
 
   void _switchToHub() {
-  // final userState = Provider.of<UserState>(context, listen: false);
+    // final userState = Provider.of<UserState>(context, listen: false);
     setState(() {
       _modo = PerfilModo.hub;
       // Si hay avatar persistido en Provider, úsalo como respaldo
@@ -141,7 +141,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     // Decodificar imagen
     final decoded = img.decodeImage(input);
     if (decoded == null) return input;
-    
+
     // Redimensionar si es muy grande (max 512px en el lado mayor)
     const maxSide = 512;
     img.Image resized = decoded;
@@ -152,15 +152,15 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         resized = img.copyResize(decoded, height: maxSide);
       }
     }
-    
+
     // Comprimir a JPG calidad 80 (buen balance peso/calidad)
     final jpg = img.encodeJpg(resized, quality: 80);
     return Uint8List.fromList(jpg);
   }
 
   Future<void> _guardarPerfil() async {
-  if (!_formKey.currentState!.validate()) return;
-  setState(() => _saving = true);
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
 
     final nuevoNombre = _nameCtrl.text.trim();
     final user = FirebaseAuth.instance.currentUser;
@@ -171,7 +171,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
       setState(() => _nombre = nuevoNombre);
       await userState.setNombre(nuevoNombre);
 
-  // Ya no se usa finalUrl ni _photoUrl
+      // Ya no se usa finalUrl ni _photoUrl
 
       // Si hay imagen nueva, comprimir y subir a Firebase Storage
       if (_localBytes != null && user != null) {
@@ -264,7 +264,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               top: false,
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(22)),
                   gradient: isDark
                       ? null
                       : const LinearGradient(
@@ -281,7 +282,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                 ),
                 child: Material(
                   color: Colors.transparent,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(22)),
                   elevation: 0,
                   child: Column(
                     children: [
@@ -291,7 +293,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                         width: 48,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFBCA177).withOpacity(0.35), // marrón claro
+                          color: const Color(0xFFBCA177)
+                              .withOpacity(0.35), // marrón claro
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -318,8 +321,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     final handle = _correo != null && _correo!.contains('@')
         ? '@${_correo!.split('@')[0].replaceAll(RegExp(r'\s'), '').toLowerCase()}'
         : '@usuario';
-  // final userState = Provider.of<UserState>(context);
-    
+    // final userState = Provider.of<UserState>(context);
+
     // Determinar fuente de avatar: prioridad local bytes > base64 > ícono
     ImageProvider? avatarProvider;
     if (_localBytes != null) {
@@ -357,7 +360,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               ),
             ),
             const SizedBox(height: 2),
-            Text(handle, style: const TextStyle(color: Color(0xFFBCA177), fontSize: 15)),
+            Text(handle,
+                style: const TextStyle(color: Color(0xFFBCA177), fontSize: 15)),
             const SizedBox(height: 2),
             Text(_nivel ?? 'Nivel Viajero 1',
                 style: const TextStyle(
@@ -372,11 +376,15 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _QuickAction(
-                icon: Icons.edit, label: 'Editar', onTap: _switchToEditar, iconColor: Color(0xFF7C9A5B)),
+                icon: Icons.edit,
+                label: 'Editar',
+                onTap: _switchToEditar,
+                iconColor: Color(0xFF7C9A5B)),
             _QuickAction(
                 icon: Icons.settings,
                 label: 'Ajustes',
-                onTap: _switchToConfiguracion, iconColor: Color(0xFFBCA177)),
+                onTap: _switchToConfiguracion,
+                iconColor: Color(0xFFBCA177)),
             _QuickAction(
               icon: Icons.qr_code,
               label: 'QR',
@@ -390,28 +398,47 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               },
               iconColor: Color(0xFF7C6F57),
             ),
-            _QuickAction(icon: Icons.share, label: 'Compartir', onTap: () {}, iconColor: Color(0xFF7C9A5B)),
+            _QuickAction(
+                icon: Icons.share,
+                label: 'Compartir',
+                onTap: () {},
+                iconColor: Color(0xFF7C9A5B)),
           ],
         ),
         const SizedBox(height: 18),
         // Separador rural
-        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildProgressCard(),
         const SizedBox(height: 10),
-        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildSavedPlacesCard(),
         const SizedBox(height: 10),
-        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildStampsCard(),
         const SizedBox(height: 10),
-        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildStreakCard(),
         const SizedBox(height: 10),
-        Divider(height: 1, thickness: 1, color: Color(0xFFBCA177).withOpacity(0.18)),
+        Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFBCA177).withOpacity(0.18)),
         const SizedBox(height: 14),
         _buildFriendsCard(),
       ],
@@ -419,8 +446,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildEditar(BuildContext context, bool isDark) {
-  // final userState = Provider.of<UserState>(context);
-    
+    // final userState = Provider.of<UserState>(context);
+
     // Determinar fuente de avatar: prioridad local bytes > base64 > ícono
     ImageProvider? avatarProvider;
     if (_localBytes != null) {
@@ -967,11 +994,13 @@ class _QuickAction extends StatelessWidget {
               ],
               border: Border.all(color: const Color(0xFFBCA177), width: 1.2),
             ),
-            child: Icon(icon, color: iconColor ?? const Color(0xFF7C9A5B), size: 24),
+            child: Icon(icon,
+                color: iconColor ?? const Color(0xFF7C9A5B), size: 24),
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF7C6F57))),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF7C6F57))),
       ],
     );
   }

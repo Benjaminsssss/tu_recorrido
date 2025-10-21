@@ -26,8 +26,12 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final image = svgString != null
-        ? SvgPicture.string(svgString!, width: width, height: height, fit: BoxFit.contain)
-        : Icon(icon ?? Icons.landscape, size: 64, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6));
+        ? SvgPicture.string(svgString!,
+            width: width, height: height, fit: BoxFit.contain)
+        : Icon(icon ?? Icons.landscape,
+            size: 64,
+            color:
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.6));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -36,9 +40,18 @@ class EmptyState extends StatelessWidget {
         children: [
           Center(child: image),
           const SizedBox(height: 8),
-          Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(title,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text(message, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]), textAlign: TextAlign.center),
+          Text(message,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey[700]),
+              textAlign: TextAlign.center),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: 10),
             OutlinedButton(

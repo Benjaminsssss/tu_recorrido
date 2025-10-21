@@ -104,7 +104,7 @@ class Place {
   Map<String, dynamic> toJson() => {
         'id': id,
         'nombre': nombre,
-      'region': region,
+        'region': region,
         'comuna': comuna,
         'shortDesc': shortDesc,
         'descripcion': descripcion,

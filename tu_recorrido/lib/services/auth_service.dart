@@ -203,19 +203,20 @@ class AuthService {
       if (email.trim().isEmpty || !email.contains('@')) {
         throw 'Ingrese un correo válido';
       }
-      
+
       // Intentar enviar el email de restablecimiento
       // Firebase automáticamente maneja si el email existe o no
       await _auth.sendPasswordResetEmail(email: email.trim());
-      
+
       if (kDebugMode) {
         print('Email de restablecimiento enviado a: ${email.trim()}');
       }
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        print('Error al enviar email de restablecimiento: ${e.code} - ${e.message}');
+        print(
+            'Error al enviar email de restablecimiento: ${e.code} - ${e.message}');
       }
-      
+
       // Manejar errores específicos de Firebase Auth
       switch (e.code) {
         case 'user-not-found':
