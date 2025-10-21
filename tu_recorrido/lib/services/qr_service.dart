@@ -9,16 +9,17 @@ class QRService {
   /// Ejemplo: "TR_ABC123_1640995200"
   static String generarCodigoQR(String estacionId, String nombre) {
     // Crear un hash único basado en la estación
-    final input = '$estacionId-$nombre-${DateTime.now().millisecondsSinceEpoch}';
+    final input =
+        '$estacionId-$nombre-${DateTime.now().millisecondsSinceEpoch}';
     final bytes = utf8.encode(input);
     final digest = sha256.convert(bytes);
-    
+
     // Tomar los primeros 8 caracteres del hash
     final hashCorto = digest.toString().substring(0, 8).toUpperCase();
-    
+
     // Timestamp para unicidad
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    
+
     return 'TR_${hashCorto}_$timestamp';
   }
 
@@ -53,7 +54,7 @@ class QRService {
     final random = Random();
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final randomStr = random.nextInt(99999999).toString().padLeft(8, '0');
-    
+
     return 'TR_${randomStr.substring(0, 8)}_$timestamp';
   }
 
@@ -63,7 +64,7 @@ class QRService {
       final info = extraerInfoCodigo(codigo);
       final fecha = info['fecha'] as DateTime;
       final diferencia = DateTime.now().difference(fecha).inDays;
-      
+
       return diferencia <= diasMaximos;
     } catch (e) {
       return false;

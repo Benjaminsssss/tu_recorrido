@@ -21,13 +21,13 @@ class EscanerQRScreen extends StatefulWidget {
 class _EscanerQRScreenState extends State<EscanerQRScreen>
     with SingleTickerProviderStateMixin {
   final _codigoController = TextEditingController();
-  
+
   bool _escaneando = false;
   bool _validando = false;
   bool _modoDemo = true; // Para alternar entre demo y escáner real
   Estacion? _estacionEncontrada;
   MobileScannerController? _scannerController;
-  
+
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
 
@@ -42,7 +42,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.repeat(reverse: true);
-    
+
     // Inicializar usuario mock para desarrollo
     _inicializarUsuario();
   }
@@ -125,7 +125,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
   /// escáner real con cámara
   void _mostrarEscanerReal() {
     _scannerController = MobileScannerController();
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -164,7 +164,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
   Future<void> _procesarCodigoEscaneado(String codigo) async {
     // Cerrar el escáner
     Navigator.of(context).pop();
-    
+
     // Validar y procesar el código
     await _validarCodigo(codigo);
   }
@@ -301,9 +301,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _modoDemo 
-                    ? 'Modo Demo: Ingresa código manualmente'
-                    : 'Modo Real: Usa la cámara para escanear',
+                  _modoDemo
+                      ? 'Modo Demo: Ingresa código manualmente'
+                      : 'Modo Real: Usa la cámara para escanear',
                   style: TextStyle(
                     color: _modoDemo ? Colors.orange[800] : Colors.green[800],
                     fontWeight: FontWeight.w500,
@@ -312,7 +312,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
               ],
             ),
           ),
-          
+
           // Contenido principal
           Expanded(
             child: Center(
@@ -325,7 +325,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   ),
                   const SizedBox(height: 32),
                   TextoInstructivo(
-                    escaneando: _escaneando, 
+                    escaneando: _escaneando,
                     validando: _validando,
                   ),
                   const SizedBox(height: 48),
@@ -334,9 +334,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                     validando: _validando,
                     onPressed: _iniciarEscaneo,
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Botón para alternar modo
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -353,7 +353,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                       ),
                     ],
                   ),
-                  
+
                   if (_estacionEncontrada != null) ...[
                     const SizedBox(height: 24),
                     UltimaEstacionVisitada(estacion: _estacionEncontrada!),

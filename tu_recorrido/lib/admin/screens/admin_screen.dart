@@ -144,7 +144,8 @@ class AdminScreen extends StatelessWidget {
       // Mostrar información (en consola por ahora)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('ℹ️ Estado verificado. Revisa la consola de debug para más detalles.'),
+          content: Text(
+              'Estado verificado. Revisa la consola de debug para más detalles.'),
           backgroundColor: Coloressito.badgeBlue,
         ),
       );
@@ -263,7 +264,7 @@ class AdminScreen extends StatelessWidget {
             style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 16),
-          
+
           // Botones principales - solo lo esencial
           Row(
             children: [

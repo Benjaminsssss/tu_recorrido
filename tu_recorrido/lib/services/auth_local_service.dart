@@ -23,7 +23,7 @@ class AuthLocalService {
   static Future<Map<String, String>?> obtenerUsuarioActual() async {
     final prefs = await SharedPreferences.getInstance();
     final estaLogueado = prefs.getBool(_keyIsLoggedIn) ?? false;
-    
+
     if (!estaLogueado) return null;
 
     return {
@@ -40,7 +40,7 @@ class AuthLocalService {
     String? userEmail,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     await prefs.setString(_keyUserId, userId ?? _defaultUserId);
     await prefs.setString(_keyUserName, userName ?? _defaultUserName);
     await prefs.setString(_keyUserEmail, userEmail ?? _defaultUserEmail);

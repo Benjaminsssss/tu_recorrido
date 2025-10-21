@@ -49,7 +49,7 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
     try {
       await EstacionService.generarQRParaEstacionesExistentes();
       await _cargarEstaciones(); // Recargar para mostrar los nuevos QR
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -100,8 +100,8 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.admin_panel_settings, 
-                        color: Coloressito.primary),
+                      const Icon(Icons.admin_panel_settings,
+                          color: Coloressito.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -124,13 +124,13 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                     ],
                   ),
                 ),
-                
+
                 // Lista de estaciones
                 Expanded(
                   flex: 1,
                   child: _buildListaEstaciones(),
                 ),
-                
+
                 // Mostrar QR seleccionado
                 if (_estacionSeleccionada != null)
                   Expanded(
@@ -164,14 +164,16 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
       itemBuilder: (context, index) {
         final estacion = _estaciones[index];
         final tieneQR = estacion.codigoQR.isNotEmpty;
-        
+
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: tieneQR ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                color: tieneQR
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -187,9 +189,7 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tieneQR 
-                    ? 'QR: ${estacion.codigoQR}'
-                    : 'Sin código QR',
+                  tieneQR ? 'QR: ${estacion.codigoQR}' : 'Sin código QR',
                   style: TextStyle(
                     color: tieneQR ? Colors.black54 : Colors.orange,
                     fontSize: 12,
@@ -206,12 +206,12 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                 ),
               ],
             ),
-            trailing: tieneQR 
-              ? const Icon(Icons.visibility, color: Colors.blue)
-              : const Icon(Icons.warning, color: Colors.orange),
-            onTap: tieneQR 
-              ? () => setState(() => _estacionSeleccionada = estacion)
-              : null,
+            trailing: tieneQR
+                ? const Icon(Icons.visibility, color: Colors.blue)
+                : const Icon(Icons.warning, color: Colors.orange),
+            onTap: tieneQR
+                ? () => setState(() => _estacionSeleccionada = estacion)
+                : null,
           ),
         );
       },
@@ -253,9 +253,9 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Código QR
           Expanded(
             child: Container(
@@ -297,9 +297,9 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Botones de acción
           Row(
             children: [

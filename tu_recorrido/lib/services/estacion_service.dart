@@ -172,8 +172,9 @@ class EstacionService {
         // Si no tiene código QR, generar uno
         if (codigoQR == null || codigoQR.isEmpty) {
           final estacion = Estacion.fromFirestore(doc);
-          final nuevoCodigoQR = QRService.generarCodigoQR(doc.id, estacion.nombre);
-          
+          final nuevoCodigoQR =
+              QRService.generarCodigoQR(doc.id, estacion.nombre);
+
           batch.update(doc.reference, {'codigoQR': nuevoCodigoQR});
           contador++;
         }

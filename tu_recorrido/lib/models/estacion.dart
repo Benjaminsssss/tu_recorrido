@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Estacion {
   final String id; // ID único en Firestore
   final String codigo; // Código para QR (ej: "PLAZA_ARMAS_001")
-  final String codigoQR; // Código QR único generado (ej: "TR_ABC123_1640995200")
+  final String
+      codigoQR; // Código QR único generado (ej: "TR_ABC123_1640995200")
   final String nombre; // Nombre descriptivo (ej: "Plaza de Armas")
   final String descripcion; // Info histórica del lugar
   final double latitud; // Coordenadas GPS
