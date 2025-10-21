@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
-import '../../utils/estaciones_data.dart';
+import '../../utils/qr_management_helper.dart';
 import '../../widgets/role_protected_widget.dart';
 import 'crear_estacion.dart';
+import 'generador_qr_screen.dart';
 
 /// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
-  /// Crear UNA estación de prueba (para que se cargue más rápido)
-  Future<void> _crearEstacionPrueba(BuildContext context) async {
+  /// Genera códigos QR para estaciones existentes
+  Future<void> _generarQRParaEstacionesExistentes(BuildContext context) async {
     // Mostrar diálogo de confirmación
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Coloressito.surfaceDark,
         title: const Text(
-          'Crear Estación de Prueba',
+          'Generar Códigos QR',
           style: TextStyle(color: Coloressito.textPrimary),
         ),
         content: const Text(
-          '¿Crear Plaza de Armas en Firestore para probar el escáner QR?\n\nCódigo que obtendrás: PLAZA_ARMAS_001',
+          '¿Generar códigos QR únicos para todas las estaciones existentes en Firestore?\n\nEsto actualizará las estaciones que no tengan códigos QR válidos.',
           style: TextStyle(color: Coloressito.textSecondary),
         ),
         actions: [
@@ -38,7 +39,7 @@ class AdminScreen extends StatelessWidget {
               backgroundColor: Coloressito.adventureGreen,
             ),
             child: const Text(
-              'Crear',
+              'Generar QR',
               style: TextStyle(color: Coloressito.textPrimary),
             ),
           ),
@@ -65,7 +66,7 @@ class AdminScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Creando Plaza de Armas...',
+              'Generando códigos QR...',
               style: TextStyle(color: Coloressito.textPrimary),
             ),
           ],
@@ -74,19 +75,27 @@ class AdminScreen extends StatelessWidget {
     );
 
     try {
-      await EstacionesData.crearEstacionPrueba();
+      final resultado = await QRManagementHelper.ejecutarDesdeAdmin();
 
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
 
-      // Mostrar éxito con el código QR
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Plaza de Armas creada!\nUsa código: PLAZA_ARMAS_001'),
-          backgroundColor: Coloressito.adventureGreen,
-          duration: Duration(seconds: 5),
-        ),
-      );
+      if (resultado['success']) {
+        // Mostrar éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${resultado['message']}\n'
+              'Total: ${resultado['total']} estaciones\n'
+              'Actualizadas: ${resultado['updated']} códigos QR',
+            ),
+            backgroundColor: Coloressito.adventureGreen,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } else {
+        throw Exception(resultado['message']);
+      }
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
@@ -101,47 +110,8 @@ class AdminScreen extends StatelessWidget {
     }
   }
 
-  /// Crear estaciones de ejemplo en Firestore
-  Future<void> _crearEstacionesEjemplo(BuildContext context) async {
-    // MUESTRA diálogo de confirmación
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Coloressito.surfaceDark,
-        title: const Text(
-          'Crear Estaciones de Ejemplo',
-          style: TextStyle(color: Coloressito.textPrimary),
-        ),
-        content: const Text(
-          '¿Deseas crear 8 estaciones patrimoniales de Santiago en Firestore?\n\nEsto incluye: Plaza de Armas, La Moneda, Cerro Santa Lucía, etc.',
-          style: TextStyle(color: Coloressito.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Coloressito.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Coloressito.adventureGreen,
-            ),
-            child: const Text(
-              'Crear',
-              style: TextStyle(color: Coloressito.textPrimary),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmar != true) return;
-    if (!context.mounted) return;
-
-    // Muestra diálogo de progreso
+  /// Mostrar estado actual de códigos QR
+  Future<void> _mostrarEstadoQR(BuildContext context) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -152,12 +122,12 @@ class AdminScreen extends StatelessWidget {
           children: [
             const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(
-                Coloressito.adventureGreen,
+                Coloressito.badgeBlue,
               ),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Creando estaciones...',
+              'Verificando estado de QR...',
               style: TextStyle(color: Coloressito.textPrimary),
             ),
           ],
@@ -166,23 +136,22 @@ class AdminScreen extends StatelessWidget {
     );
 
     try {
-      await EstacionesData.crearEstacionesEjemplo();
+      await QRManagementHelper.verificarEstadoQR();
 
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
 
-      // Mostrar éxito
+      // Mostrar información (en consola por ahora)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('¡8 estaciones patrimoniales creadas exitosamente!'),
-          backgroundColor: Coloressito.adventureGreen,
+          content: Text('ℹ️ Estado verificado. Revisa la consola de debug para más detalles.'),
+          backgroundColor: Coloressito.badgeBlue,
         ),
       );
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
 
-      // Mostrar error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -290,17 +259,19 @@ class AdminScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Crear, editar y administrar las estaciones patrimoniales de Santiago',
+            'Crear y gestionar las estaciones existentes en Firestore',
             style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 16),
+          
+          // Botones principales - solo lo esencial
           Row(
             children: [
               Expanded(
                 child: _buildBotonAccion(
                   context: context,
                   icono: Icons.add_location,
-                  texto: 'Crear Estación',
+                  texto: 'Crear Nueva\nEstación',
                   color: Coloressito.adventureGreen,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -313,17 +284,14 @@ class AdminScreen extends StatelessWidget {
               Expanded(
                 child: _buildBotonAccion(
                   context: context,
-                  icono: Icons.list,
-                  texto: 'Ver Estaciones',
+                  icono: Icons.qr_code,
+                  texto: 'Gestionar\nCódigos QR',
                   color: Coloressito.badgeBlue,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Función próximamente disponible'),
-                        backgroundColor: Coloressito.badgeYellow,
-                      ),
-                    );
-                  },
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const GeneradorQRScreen(),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -331,26 +299,26 @@ class AdminScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Botones para crear estaciones
+          // Botones secundarios
           Row(
             children: [
               Expanded(
                 child: _buildBotonAccion(
                   context: context,
-                  icono: Icons.science,
-                  texto: 'Crear 1 Estación\n(Plaza de Armas)',
-                  color: Coloressito.badgeGreen,
-                  onTap: () => _crearEstacionPrueba(context),
+                  icono: Icons.qr_code_2,
+                  texto: 'Generar QR\nFaltantes',
+                  color: Coloressito.badgeYellow,
+                  onTap: () => _generarQRParaEstacionesExistentes(context),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildBotonAccion(
                   context: context,
-                  icono: Icons.upload,
-                  texto: 'Crear 8 Estaciones\n(Todas)',
-                  color: Coloressito.badgeYellow,
-                  onTap: () => _crearEstacionesEjemplo(context),
+                  icono: Icons.list_alt,
+                  texto: 'Estado\nQR',
+                  color: Coloressito.badgeGreen,
+                  onTap: () => _mostrarEstadoQR(context),
                 ),
               ),
             ],
