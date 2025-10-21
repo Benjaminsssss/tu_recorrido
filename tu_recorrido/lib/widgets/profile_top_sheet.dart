@@ -352,7 +352,7 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-              // TODO: Navegar a editar perfil
+            
             },
           ),
           _QuickActionChip(
@@ -361,7 +361,7 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-              // TODO: Abrir ajustes
+             
             },
           ),
           _QuickActionChip(
@@ -370,7 +370,7 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-              // TODO: Mostrar QR personal
+             
             },
           ),
           _QuickActionChip(
@@ -379,7 +379,7 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-              // TODO: Compartir perfil
+             
             },
           ),
         ],

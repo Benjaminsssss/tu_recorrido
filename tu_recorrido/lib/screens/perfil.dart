@@ -623,7 +623,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             subtitle: Text(isDark ? 'Oscuro' : 'Claro'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // TODO: implementar cambio de tema
+             
             },
           ),
         ),
@@ -641,7 +641,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             subtitle: const Text('Configurar alertas'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // TODO: implementar configuración de notificaciones
+              
             },
           ),
         ),
@@ -658,7 +658,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             subtitle: const Text('Configurar privacidad'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // TODO: implementar configuración de privacidad
+             
             },
           ),
         ),

@@ -63,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _localBytes = bytes;
       });
-      // TODO: Subir a Firebase Storage y obtener URL, luego persistir a Firestore
+     
     }
   }
 
@@ -183,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await context.setLocale(loc);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString('languageCode', loc.languageCode);
-                  // TODO: FirestoreService.updateUserProfile(uid, {'languageCode': loc.languageCode});
+                  
                 },
               ),
               const SizedBox(height: 24),

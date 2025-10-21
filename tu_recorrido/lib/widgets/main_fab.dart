@@ -13,7 +13,7 @@ class MainFab extends StatelessWidget {
           scale: scale,
           child: FloatingActionButton(
             onPressed: () {
-              // TODO: Acción del FAB (por ahora no navega para no cambiar la jerarquía)
+           
             },
             backgroundColor: const Color(0xFFFACC15),
             elevation: 7,

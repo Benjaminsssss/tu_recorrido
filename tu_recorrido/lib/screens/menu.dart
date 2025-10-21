@@ -399,7 +399,7 @@ class _MapitaState extends State<Mapita> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorVerdeEsmeralda.withOpacity(0.2),
+                      color: colorVerdeEsmeralda..withAlpha((255 * 0.5).round()),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.star,
@@ -451,7 +451,7 @@ class _MapitaState extends State<Mapita> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colorAmarillo.withOpacity(0.2),
+                          color: colorAmarillo..withAlpha((255 * 0.5).round()),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -523,7 +523,7 @@ class _MapitaState extends State<Mapita> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorAzulPetroleo.withOpacity(0.2),
+                  color: colorAzulPetroleo..withAlpha((255 * 0.5).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.navigation, color: colorAzulPetroleo),
@@ -815,7 +815,7 @@ class _MapitaState extends State<Mapita> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
+                                    color: Colors.black.withAlpha((255 * 0.5).round()),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -863,7 +863,7 @@ class _MapitaState extends State<Mapita> {
                               shape: BoxShape.circle,
                               color: _currentPage == index
                                   ? colorAmarillo
-                                  : Colors.grey.withOpacity(0.5),
+                                  : Colors.grey.withAlpha((255 * 0.5).round()),
                             ),
                           ),
                         ),
@@ -894,7 +894,7 @@ class _MapitaState extends State<Mapita> {
           height: _cardHeight,
           child: Card(
             elevation: 8,
-            shadowColor: Colors.black.withOpacity(0.3),
+            shadowColor: Colors.black.withAlpha((255 * 0.5).round()),
             color: isDisabled ? Colors.grey[300] : Colors.white,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -904,7 +904,7 @@ class _MapitaState extends State<Mapita> {
                       '⚠️ Cancela la ruta actual (botón X) antes de iniciar una nueva.')
                   : () => _showStartTripConfirmation(place),
               borderRadius: BorderRadius.circular(16),
-              splashColor: colorAmarillo.withOpacity(0.3),
+              splashColor: colorAmarillo.withAlpha((255 * 0.5).round()),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
@@ -912,8 +912,8 @@ class _MapitaState extends State<Mapita> {
                       ? null
                       : LinearGradient(
                           colors: [
-                            colorVerdeEsmeralda.withOpacity(0.1),
-                            colorAmarillo.withOpacity(0.05),
+                            colorVerdeEsmeralda.withAlpha((255 * 0.5).round()),
+                            colorAmarillo.withAlpha((255 * 0.5).round()),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -929,7 +929,7 @@ class _MapitaState extends State<Mapita> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colorVerdeEsmeralda.withOpacity(0.2),
+                            color: colorVerdeEsmeralda.withAlpha((255 * 0.5).round()),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
