@@ -8,7 +8,7 @@ import 'screens/login.dart';
 import 'screens/registro.dart';
 import 'screens/escanerqr.dart';
 import 'screens/menu.dart';
-import 'screens/profile_screen.dart';
+import 'screens/perfil.dart';
 import 'screens/saved_places_screen.dart';
 
 // AuthGate & Protection
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         '/auth/registro': (_) => const RegistroScreen(),
         '/escaner': (_) => const EscanerQRScreen(),
         '/mapa': (_) => const Mapita(),
-        '/perfil': (_) => const ProfileScreen(),
+        '/perfil': (_) => const Perfil(),
         '/saved-places': (_) => const SavedPlacesScreen(),
 
         // Si ya tienes una pantalla de lugares, descomenta:

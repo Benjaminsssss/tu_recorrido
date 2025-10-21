@@ -1,18 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
-import '../services/profile_service.dart';
-import '../components/bottom_pill_nav.dart';
-import '../widgets/place_search_bar.dart';
-import '../widgets/welcome_banner.dart';
-import './perfil.dart';
-import 'package:provider/provider.dart';
-import '../models/user_state.dart';
-import '../services/place_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/firestore_service.dart';
 import '../models/place.dart';
-import '../widgets/places_showcase.dart';
+import '../widgets/place_modal.dart';
 
+/// Nuevo Home: buscador, avatar, lista/carrusel de lugares y barra inferior.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,328 +13,792 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _tab = 0;
-  bool _userDataLoaded = false;
-  final ScrollController _scrollController = ScrollController();
-  final GlobalKey _headerKey = GlobalKey();
-  double _headerHeight = 0;
-  double _elevT = 0; // 0.0 (top) -> 1.0 (scrolled)
-  List<Place>? _places;
-  List<Place>? _filteredPlaces; // Lugares filtrados por búsqueda
-  bool _loadingPlaces = true;
-  String? _avatarBase64; // Imagen del avatar en base64
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      final o = _scrollController.offset;
-      final t = (o / 48.0).clamp(0.0, 1.0);
-      if ((t - _elevT).abs() > 0.05) {
-        setState(() => _elevT = t);
-      }
-    });
-    // Medir altura del header tras el primer frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _measureHeaderHeight();
-      _loadUserAvatar(); // Cargar avatar al iniciar
-    });
-    // Cargar lugares una sola vez
-    _loadPlaces();
-  }
-
-  Future<void> _loadUserAvatar() async {
-    final user = AuthService.currentUser;
-    if (user != null) {
-      try {
-        final doc = await ProfileService.getUserProfile(user.uid);
-        if (doc != null && doc.exists && mounted) {
-          final data = doc.data();
-          if (data != null) {
-            final base64 = data['photoBase64'] as String?;
-            if (base64 != null && base64.isNotEmpty && mounted) {
-              setState(() {
-                _avatarBase64 = base64;
-              });
-            }
-          }
-        }
-      } catch (e) {
-        // Error silencioso, el avatar mostrará el ícono por defecto
-      }
-    }
-  }
-
-  Future<void> _loadPlaces() async {
-    try {
-      final places = await PlaceService.loadPlacesFromJson();
-      if (mounted) {
-        setState(() {
-          _places = places;
-          _filteredPlaces = places; // Inicialmente mostrar todos
-          _loadingPlaces = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _places = [];
-          _filteredPlaces = [];
-          _loadingPlaces = false;
-        });
-      }
-    }
-  }
-
-  void _handlePlaceSearch(Place? selectedPlace) {
-    setState(() {
-      if (selectedPlace == null) {
-        // Mostrar todos los lugares
-        _filteredPlaces = _places;
-      } else {
-        // Mostrar solo el lugar seleccionado
-        _filteredPlaces = [selectedPlace];
-      }
-    });
-    // Scroll al top para ver el resultado
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
-  void _handleSearchChanged(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        // Mostrar todos los lugares cuando se limpia la búsqueda
-        _filteredPlaces = _places;
-      } else {
-        // Filtrar lugares en tiempo real mientras se escribe
-        _filteredPlaces = _places
-            ?.where((place) =>
-                place.nombre.toLowerCase().contains(query.toLowerCase()) ||
-                place.comuna.toLowerCase().contains(query.toLowerCase()) ||
-                place.region.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
-  }
-
-  void _measureHeaderHeight() {
-    final ctx = _headerKey.currentContext;
-    if (ctx != null) {
-      final box = ctx.findRenderObject() as RenderBox?;
-      if (box != null) {
-        final h = box.size.height;
-        if (h > 0 && (_headerHeight - h).abs() > 0.5) {
-          setState(() => _headerHeight = h + 12); // margen superior más pequeño
-        }
-      }
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Re-medimos cuando cambian dependencias por si cambian textos/estilos
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeaderHeight());
-  }
+  final TextEditingController _searchCtrl = TextEditingController();
+  int _currentIndex = 0; // 0: Inicio, 1: Mapa
+  
+  // Filtros
+  String? _selectedCountry;
+  String? _selectedCity;
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
+  }
+  
+  void _clearFilters() {
+    setState(() {
+      _selectedCountry = null;
+      _selectedCity = null;
+    });
+  }
+
+  /// Convierte un documento de Firestore al modelo Place
+  Place _convertToPlace(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data();
+    
+    // Convertir imageUrl a lista de PlaceImage
+    final imageUrl = d['imageUrl']?.toString();
+    final images = <PlaceImage>[];
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      images.add(PlaceImage(
+        url: imageUrl,
+        alt: d['name']?.toString() ?? 'Imagen del lugar',
+      ));
+    }
+    
+    // Si no hay imagen, usar una por defecto
+    if (images.isEmpty) {
+      images.add(PlaceImage(
+        url: null,
+        alt: 'Sin imagen',
+      ));
+    }
+
+    return Place(
+      id: doc.id,
+      nombre: d['name']?.toString() ?? 'Sin nombre',
+      region: d['country']?.toString() ?? d['region']?.toString() ?? 'Chile',
+      comuna: d['city']?.toString() ?? d['comuna']?.toString() ?? 'Sin ubicación',
+      shortDesc: d['shortDesc']?.toString() ?? d['category']?.toString() ?? '',
+      descripcion: d['description']?.toString() ?? d['descripcion']?.toString() ?? 'Sin descripción disponible.',
+      mejorMomento: d['bestTime']?.toString() ?? d['mejorMomento']?.toString() ?? 'Todo el año',
+      badge: PlaceBadge(
+        nombre: d['badge']?.toString() ?? d['category']?.toString() ?? 'General',
+        tema: d['theme']?.toString() ?? d['tema']?.toString() ?? d['category']?.toString() ?? 'Cultura',
+      ),
+      imagenes: images,
+      lat: (d['lat'] as num?)?.toDouble() ?? (d['latitude'] as num?)?.toDouble(),
+      lng: (d['lng'] as num?)?.toDouble() ?? (d['longitude'] as num?)?.toDouble(),
+    );
+  }
+  
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FilterBottomSheet(
+        initialCountry: _selectedCountry,
+        initialCity: _selectedCity,
+        onApply: (country, city) {
+          setState(() {
+            _selectedCountry = country;
+            _selectedCity = city;
+          });
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: AuthService.authStateChanges,
-      builder: (context, snap) {
-        final user = snap.data;
-        final userState = Provider.of<UserState>(context);
-        final nombre = userState.nombre;
-        final uid = user?.uid ?? '';
-        final double headerSpace =
-            _headerHeight > 0 ? _headerHeight : 110; // espacio según medida
+    final theme = Theme.of(context);
 
-        // Cargar datos del usuario desde Firestore solo una vez
-        if (user != null && !_userDataLoaded) {
-          _userDataLoaded = true;
-          ProfileService.getUserProfile(user.uid).then((doc) async {
-            if (doc != null && doc.exists && mounted) {
-              final data = doc.data();
-              if (data != null) {
-                // Actualizar nombre desde Firestore
-                final firestoreName = data['displayName'] as String?;
-                if (firestoreName != null && firestoreName.isNotEmpty) {
-                  await userState.setNombre(firestoreName);
-                } else if (user.displayName != null &&
-                    user.displayName!.isNotEmpty) {
-                  await userState.setNombre(user.displayName!);
-                }
-
-                // Cargar avatar desde Firestore (por si acaso no se cargó en initState)
-                final base64 = data['photoBase64'] as String?;
-                if (base64 != null && base64.isNotEmpty && mounted) {
-                  if (_avatarBase64 != base64) {
-                    setState(() {
-                      _avatarBase64 = base64;
-                    });
-                  }
-                }
-              }
-            }
-          });
-        }
-
-        // Resetear flag si el usuario cierra sesión
-        if (user == null && _userDataLoaded) {
-          _userDataLoaded = false;
-          if (_avatarBase64 != null) {
-            setState(() {
-              _avatarBase64 = null;
-            });
-          }
-        }
-
-        return Scaffold(
-          backgroundColor: const Color(0xFFFAFBF8), // Fondo claro #FAFBF8
-          body: SafeArea(
-            child: Stack(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F7),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
               children: [
-                // Contenido scrolleable bajo el header fijo
-                ScrollConfiguration(
-                  behavior: const ScrollBehavior()
-                      .copyWith(overscroll: false, scrollbars: false),
-                  child: ListView(
-                    controller: _scrollController,
-                    padding: EdgeInsets.fromLTRB(16, headerSpace, 16, 100),
-                    physics: const ClampingScrollPhysics(),
-                    children: [
-                      WelcomeBanner(
-                        nombre: nombre,
-                        uid: uid,
-                      ),
-                      const SizedBox(height: 16),
-                      if (_loadingPlaces)
-                        const Center(child: CircularProgressIndicator())
-                      else if (_filteredPlaces == null ||
-                          _filteredPlaces!.isEmpty)
-                        Center(
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 40),
-                              Icon(
-                                Icons.search_off,
-                                size: 64,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No se encontraron lugares',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        PlacesShowcase(places: _filteredPlaces!),
-                    ],
-                  ),
-                ),
-                // Header flotante: solo Row, sin fondo, padding horizontal 16, altura 80
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 12,
-                  child: RepaintBoundary(
-                    key: _headerKey,
+                // Botón de filtro - IZQUIERDA
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _showFilterSheet,
+                    borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      height: 80,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Barra de búsqueda expandida
-                          Expanded(
-                            child: PlaceSearchBar(
-                              allPlaces: _places ?? [],
-                              onPlaceSelected: _handlePlaceSearch,
-                              onSearchChanged: _handleSearchChanged,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Avatar: círculo blanco 48px con imagen o ícono, borde verde
-                          GestureDetector(
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) => SizedBox(
-                                  height: MediaQuery.of(context).size.height,
-                                  child: Perfil(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      const Color(0xFF2F6B5F), // verde soporte
-                                  width: 2,
-                                ),
-                                image: _avatarBase64 != null &&
-                                        _avatarBase64!.isNotEmpty
-                                    ? DecorationImage(
-                                        image: MemoryImage(
-                                            base64Decode(_avatarBase64!)),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                              ),
-                              alignment: Alignment.center,
-                              child: _avatarBase64 == null ||
-                                      _avatarBase64!.isEmpty
-                                  ? const Icon(
-                                      Icons.person,
-                                      size: 26,
-                                      color: Color(0xFF66B7F0), // celeste
-                                    )
-                                  : null,
-                            ),
+                      width: 48,
+                      height: 48,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: (_selectedCountry != null || _selectedCity != null)
+                            ? const Color(0xFF156A79)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
+                      ),
+                      child: Icon(
+                        Icons.tune_rounded,
+                        color: (_selectedCountry != null || _selectedCity != null)
+                            ? Colors.white
+                            : const Color(0xFF156A79),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                // Buscador
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      decoration: const InputDecoration(
+                        hintText: 'Busca aqui',
+                        border: InputBorder.none,
+                        prefixIcon: Icon(Icons.search),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Avatar / Perfil
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/perfil'),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: theme.colorScheme.primary),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(Icons.person,
+                        color: theme.colorScheme.primary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+      body: Column(
+        children: [
+          // Chips de filtros activos
+          if (_selectedCountry != null || _selectedCity != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Chip(
+                    label: Text(
+                      _selectedCity != null
+                          ? '$_selectedCountry - $_selectedCity'
+                          : _selectedCountry!,
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    deleteIcon: const Icon(Icons.close, size: 18),
+                    onDeleted: _clearFilters,
+                    backgroundColor: Colors.blue.shade50,
+                    deleteIconColor: Colors.blue.shade700,
+                  ),
+                ],
+              ),
+            ),
+          // Lista de lugares
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirestoreService.instance.watchPlaces(),
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snap.hasError) {
+                  return Center(child: Text('Error: ${snap.error}'));
+                }
+                final all = snap.data?.docs ?? [];
+                
+                // Aplicar filtros
+                var filtered = all;
+                
+                // Filtro por país
+                if (_selectedCountry != null) {
+                  filtered = filtered.where((d) {
+                    final country = d.data()['country']?.toString();
+                    return country == _selectedCountry;
+                  }).toList();
+                }
+                
+                // Filtro por ciudad
+                if (_selectedCity != null) {
+                  filtered = filtered.where((d) {
+                    final city = d.data()['city']?.toString();
+                    return city == _selectedCity;
+                  }).toList();
+                }
+                
+                // Filtro por texto de búsqueda
+                final q = _searchCtrl.text.trim().toLowerCase();
+                if (q.isNotEmpty) {
+                  filtered = filtered.where((d) {
+                    final name = (d.data()['name'] ?? '').toString().toLowerCase();
+                    return name.contains(q);
+                  }).toList();
+                }
+
+                if (filtered.isEmpty) {
+                  return const Center(
+                    child: Text('No hay lugares que coincidan con los filtros'),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 96),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, i) {
+                    final doc = filtered[i];
+                    final d = doc.data();
+                    final name = d['name']?.toString() ?? '—';
+                    final category = d['category']?.toString() ?? '';
+                    final city = d['city']?.toString();
+                    final country = d['country']?.toString();
+                    final imageUrl = d['imageUrl']?.toString();
+                    
+                    String? subtitle;
+                    if (city != null && country != null) {
+                      subtitle = '$city, $country';
+                    } else if (city != null) {
+                      subtitle = city;
+                    } else if (country != null) {
+                      subtitle = country;
+                    } else if (category.isNotEmpty) {
+                      subtitle = category;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: _PlaceCard(
+                        title: name,
+                        subtitle: subtitle,
+                        imageUrl: imageUrl,
+                        onDetails: () {
+                          // Convertir documento Firestore a Place
+                          try {
+                            final place = _convertToPlace(doc);
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) {
+                                return AnimatedPadding(
+                                  duration: const Duration(milliseconds: 240),
+                                  curve: Curves.easeOut,
+                                  padding: EdgeInsets.only(
+                                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                                  ),
+                                  child: FractionallySizedBox(
+                                    heightFactor: 0.92,
+                                    child: Material(
+                                      color: Colors.white,
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(32)),
+                                      child: PlaceModal(place: place),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          } catch (e) {
+                            debugPrint('Error al convertir lugar: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al cargar detalles de "$name"'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+
+      bottomNavigationBar: _BottomNav(
+        currentIndex: _currentIndex,
+        onChanged: (idx) {
+          if (idx == 1) {
+            // ir a Mapa (manteniendo el estado del Home en el stack)
+            Navigator.pushNamed(context, '/menu');
+          } else {
+            setState(() => _currentIndex = idx);
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _PlaceCard extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final String? imageUrl;
+  final VoidCallback onDetails;
+
+  const _PlaceCard({
+    required this.title,
+    this.subtitle,
+    this.imageUrl,
+    required this.onDetails,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 2,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen superior
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: const Color(0xFFF0F0F0),
+                          child: const Center(
+                            child: Icon(Icons.image_not_supported, size: 48, color: Colors.black38),
+                          ),
+                        ),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: const Color(0xFFF0F0F0),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        color: const Color(0xFFF0F0F0),
+                        child: const Center(
+                          child: Icon(Icons.image, size: 48, color: Colors.black38),
+                        ),
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFB57A00), // similar al dorado de la maqueta
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.place, size: 16, color: Colors.black45),
+                        const SizedBox(width: 6),
+                        Text(subtitle!, style: const TextStyle(color: Colors.black54)),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed: onDetails,
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text('Ver detalles'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDAA520),
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        elevation: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onChanged;
+
+  const _BottomNav({
+    required this.currentIndex,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF156A79),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            _BottomItem(
+              icon: Icons.home,
+              label: 'Inicio',
+              selected: currentIndex == 0,
+              onTap: () => onChanged(0),
+            ),
+            const Spacer(),
+            _BottomItem(
+              icon: Icons.my_location,
+              label: 'Mapa',
+              selected: currentIndex == 1,
+              onTap: () => onChanged(1),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _BottomItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget del BottomSheet de filtros
+class _FilterBottomSheet extends StatefulWidget {
+  final String? initialCountry;
+  final String? initialCity;
+  final Function(String?, String?) onApply;
+
+  const _FilterBottomSheet({
+    this.initialCountry,
+    this.initialCity,
+    required this.onApply,
+  });
+
+  @override
+  State<_FilterBottomSheet> createState() => _FilterBottomSheetState();
+}
+
+class _FilterBottomSheetState extends State<_FilterBottomSheet> {
+  String? _selectedCountry;
+  String? _selectedCity;
+  
+  // Lista de países y ciudades
+  final Map<String, List<String>> _countriesAndCities = {
+    'Chile': ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Antofagasta', 'Temuco', 'Viña del Mar'],
+    'Argentina': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Tucumán'],
+    'Perú': ['Lima', 'Cusco', 'Arequipa', 'Trujillo', 'Chiclayo', 'Piura'],
+    'Colombia': ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Cúcuta'],
+    'México': ['Ciudad de México', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'Cancún'],
+    'Brasil': ['São Paulo', 'Río de Janeiro', 'Brasilia', 'Salvador', 'Fortaleza', 'Belo Horizonte'],
+    'España': ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga'],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCountry = widget.initialCountry;
+    _selectedCity = widget.initialCity;
+  }
+
+  List<String> get _availableCities {
+    if (_selectedCountry == null) return [];
+    return _countriesAndCities[_selectedCountry] ?? [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Filtrar Lugares',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            // País
+            const Text(
+              'País',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedCountry,
+                  hint: const Text('Selecciona un país'),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  borderRadius: BorderRadius.circular(12),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('Todos los países'),
+                    ),
+                    ..._countriesAndCities.keys.map((country) {
+                      return DropdownMenuItem<String>(
+                        value: country,
+                        child: Text(country),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCountry = value;
+                      // Resetear ciudad si cambia el país
+                      if (_selectedCity != null && 
+                          !_availableCities.contains(_selectedCity)) {
+                        _selectedCity = null;
+                      }
+                    });
+                  },
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Ciudad
+            const Text(
+              'Ciudad',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedCountry == null
+                      ? Colors.grey.shade200
+                      : Colors.grey.shade300,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedCity,
+                  hint: Text(
+                    _selectedCountry == null
+                        ? 'Primero selecciona un país'
+                        : 'Selecciona una ciudad',
+                    style: TextStyle(
+                      color: _selectedCountry == null
+                          ? Colors.grey.shade400
+                          : Colors.black54,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  borderRadius: BorderRadius.circular(12),
+                  items: _selectedCountry == null
+                      ? []
+                      : [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('Todas las ciudades'),
+                          ),
+                          ..._availableCities.map((city) {
+                            return DropdownMenuItem<String>(
+                              value: city,
+                              child: Text(city),
+                            );
+                          }),
+                        ],
+                  onChanged: _selectedCountry == null
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedCity = value;
+                          });
+                        },
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Botones de acción
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedCountry = null;
+                        _selectedCity = null;
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Limpiar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      widget.onApply(_selectedCountry, _selectedCity);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFF156A79),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text(
+                      'Aplicar Filtros',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          // SIN FAB: se elimina el floatingActionButton
-          bottomNavigationBar: BottomPillNav(
-            currentIndex: _tab,
-            onTap: (i) async {
-              setState(() => _tab = i);
-              if (i == 1) {
-                await Navigator.pushNamed(context, '/mapa');
-                // Al regresar del mapa, volver a poner el tab en Inicio
-                setState(() => _tab = 0);
-              }
-            },
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }
