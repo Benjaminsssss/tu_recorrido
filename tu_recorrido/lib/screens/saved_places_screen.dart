@@ -269,7 +269,7 @@ class SavedPlacesScreen extends StatelessWidget {
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: oliveDark.withOpacity(0.08)),
+                  side: BorderSide(color: oliveDark.withValues(alpha: 0.08)),
                 ),
                 child: InkWell(
                   onTap: () => _showPlaceDetails(context, place),

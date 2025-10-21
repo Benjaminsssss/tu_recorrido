@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfileService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -17,7 +17,7 @@ class ProfileService {
       }
       return null;
     } catch (e) {
-      print('Error getting avatar: $e');
+      debugPrint('Error getting avatar: $e');
       return null;
     }
   }
@@ -39,10 +39,10 @@ class ProfileService {
         final ref = _storage.ref().child('avatars/$uid.jpg');
         await ref.putData(bytes);
       } catch (e) {
-        print('Error uploading to Storage (non-critical): $e');
+        debugPrint('Error uploading to Storage (non-critical): $e');
       }
     } catch (e) {
-      print('Error saving avatar: $e');
+      debugPrint('Error saving avatar: $e');
       rethrow;
     }
   }
@@ -58,7 +58,7 @@ class ProfileService {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
-      print('Error updating user profile: $e');
+      debugPrint('Error updating user profile: $e');
       rethrow;
     }
   }
@@ -72,7 +72,7 @@ class ProfileService {
       }
       return null;
     } catch (e) {
-      print('Error getting user profile: $e');
+      debugPrint('Error getting user profile: $e');
       return null;
     }
   }

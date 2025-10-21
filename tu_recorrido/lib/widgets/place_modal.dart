@@ -86,7 +86,7 @@ class PlaceModal extends StatelessWidget {
                     color: const Color(0xFFE7EAE4), // fondo suave
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: const Color(0xFF1A4D5C).withOpacity(0.2),
+                      color: const Color(0xFF1A4D5C).withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
@@ -155,7 +155,7 @@ class PlaceModal extends StatelessWidget {
                       color: const Color(0xFFFFF9E6), // amarillo suave
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFFC88400).withOpacity(0.3),
+                        color: const Color(0xFFC88400).withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
