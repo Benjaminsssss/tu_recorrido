@@ -11,23 +11,23 @@ class PlaceModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-          // Handle bar para indicar que es deslizable
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
+        // Handle bar para indicar que es deslizable
+        Container(
+          margin: const EdgeInsets.only(top: 12, bottom: 8),
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(2),
           ),
+        ),
 
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 // Carrusel de imágenes
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
@@ -220,11 +220,11 @@ class PlaceModal extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],  // fin de children del Column interno
-            ),    // fin del Column interno
-          ),      // fin del SingleChildScrollView
-        ),        // fin del Expanded
-      ],          // fin de children del Column externo
-    );            // fin del Column externo
+              ], // fin de children del Column interno
+            ), // fin del Column interno
+          ), // fin del SingleChildScrollView
+        ), // fin del Expanded
+      ], // fin de children del Column externo
+    ); // fin del Column externo
   }
 }

@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   int _currentIndex = 0; // 0: Inicio, 1: Mapa
-  
+
   // Filtros
   String? _selectedCountry;
   String? _selectedCity;
@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchCtrl.dispose();
     super.dispose();
   }
-  
+
   void _clearFilters() {
     setState(() {
       _selectedCountry = null;
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Convierte un documento de Firestore al modelo Place
   Place _convertToPlace(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data();
-    
+
     // Convertir imageUrl a lista de PlaceImage
     final imageUrl = d['imageUrl']?.toString();
     final images = <PlaceImage>[];
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
         alt: d['name']?.toString() ?? 'Imagen del lugar',
       ));
     }
-    
+
     // Si no hay imagen, usar una por defecto
     if (images.isEmpty) {
       images.add(PlaceImage(
@@ -61,20 +61,31 @@ class _HomeScreenState extends State<HomeScreen> {
       id: doc.id,
       nombre: d['name']?.toString() ?? 'Sin nombre',
       region: d['country']?.toString() ?? d['region']?.toString() ?? 'Chile',
-      comuna: d['city']?.toString() ?? d['comuna']?.toString() ?? 'Sin ubicación',
+      comuna:
+          d['city']?.toString() ?? d['comuna']?.toString() ?? 'Sin ubicación',
       shortDesc: d['shortDesc']?.toString() ?? d['category']?.toString() ?? '',
-      descripcion: d['description']?.toString() ?? d['descripcion']?.toString() ?? 'Sin descripción disponible.',
-      mejorMomento: d['bestTime']?.toString() ?? d['mejorMomento']?.toString() ?? 'Todo el año',
+      descripcion: d['description']?.toString() ??
+          d['descripcion']?.toString() ??
+          'Sin descripción disponible.',
+      mejorMomento: d['bestTime']?.toString() ??
+          d['mejorMomento']?.toString() ??
+          'Todo el año',
       badge: PlaceBadge(
-        nombre: d['badge']?.toString() ?? d['category']?.toString() ?? 'General',
-        tema: d['theme']?.toString() ?? d['tema']?.toString() ?? d['category']?.toString() ?? 'Cultura',
+        nombre:
+            d['badge']?.toString() ?? d['category']?.toString() ?? 'General',
+        tema: d['theme']?.toString() ??
+            d['tema']?.toString() ??
+            d['category']?.toString() ??
+            'Cultura',
       ),
       imagenes: images,
-      lat: (d['lat'] as num?)?.toDouble() ?? (d['latitude'] as num?)?.toDouble(),
-      lng: (d['lng'] as num?)?.toDouble() ?? (d['longitude'] as num?)?.toDouble(),
+      lat:
+          (d['lat'] as num?)?.toDouble() ?? (d['latitude'] as num?)?.toDouble(),
+      lng: (d['lng'] as num?)?.toDouble() ??
+          (d['longitude'] as num?)?.toDouble(),
     );
   }
-  
+
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
@@ -117,9 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 48,
                       margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
-                        color: (_selectedCountry != null || _selectedCity != null)
-                            ? const Color(0xFF156A79)
-                            : Colors.white,
+                        color:
+                            (_selectedCountry != null || _selectedCity != null)
+                                ? const Color(0xFF156A79)
+                                : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -131,9 +143,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Icon(
                         Icons.tune_rounded,
-                        color: (_selectedCountry != null || _selectedCity != null)
-                            ? Colors.white
-                            : const Color(0xFF156A79),
+                        color:
+                            (_selectedCountry != null || _selectedCity != null)
+                                ? Colors.white
+                                : const Color(0xFF156A79),
                         size: 24,
                       ),
                     ),
@@ -189,8 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    child: Icon(Icons.person,
-                        color: theme.colorScheme.primary),
+                    child: Icon(Icons.person, color: theme.colorScheme.primary),
                   ),
                 ),
               ],
@@ -198,7 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-
       body: Column(
         children: [
           // Chips de filtros activos
@@ -234,10 +245,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Center(child: Text('Error: ${snap.error}'));
                 }
                 final all = snap.data?.docs ?? [];
-                
+
                 // Aplicar filtros
                 var filtered = all;
-                
+
                 // Filtro por país
                 if (_selectedCountry != null) {
                   filtered = filtered.where((d) {
@@ -245,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return country == _selectedCountry;
                   }).toList();
                 }
-                
+
                 // Filtro por ciudad
                 if (_selectedCity != null) {
                   filtered = filtered.where((d) {
@@ -253,12 +264,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     return city == _selectedCity;
                   }).toList();
                 }
-                
+
                 // Filtro por texto de búsqueda
                 final q = _searchCtrl.text.trim().toLowerCase();
                 if (q.isNotEmpty) {
                   filtered = filtered.where((d) {
-                    final name = (d.data()['name'] ?? '').toString().toLowerCase();
+                    final name =
+                        (d.data()['name'] ?? '').toString().toLowerCase();
                     return name.contains(q);
                   }).toList();
                 }
@@ -280,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final city = d['city']?.toString();
                     final country = d['country']?.toString();
                     final imageUrl = d['imageUrl']?.toString();
-                    
+
                     String? subtitle;
                     if (city != null && country != null) {
                       subtitle = '$city, $country';
@@ -296,7 +308,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     final place = _convertToPlace(doc);
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: _PlaceCard(
                         title: name,
                         subtitle: subtitle,
@@ -314,7 +327,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   duration: const Duration(milliseconds: 240),
                                   curve: Curves.easeOut,
                                   padding: EdgeInsets.only(
-                                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                                    bottom: MediaQuery.of(context)
+                                        .viewInsets
+                                        .bottom,
                                   ),
                                   child: FractionallySizedBox(
                                     heightFactor: 0.92,
@@ -332,7 +347,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             debugPrint('Error al convertir lugar: $e');
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Error al cargar detalles de "$name"'),
+                                content:
+                                    Text('Error al cargar detalles de "$name"'),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -347,7 +363,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
       bottomNavigationBar: _BottomNav(
         currentIndex: _currentIndex,
         onChanged: (idx) {
@@ -432,7 +447,8 @@ class _PlaceCardState extends State<_PlaceCard> {
     if (user == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Debes iniciar sesión para guardar lugares')),
+          const SnackBar(
+              content: Text('Debes iniciar sesión para guardar lugares')),
         );
       }
       return;
@@ -454,7 +470,8 @@ class _PlaceCardState extends State<_PlaceCard> {
           // Notificar que el lugar fue eliminado
           _notifier.notifyPlaceChanged(widget.place.id, false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${widget.place.nombre} eliminado de guardados')),
+            SnackBar(
+                content: Text('${widget.place.nombre} eliminado de guardados')),
           );
         }
       } else {
@@ -468,7 +485,9 @@ class _PlaceCardState extends State<_PlaceCard> {
           'mejorMomento': widget.place.mejorMomento,
           'tema': widget.place.badge.tema,
           'badge': widget.place.badge.nombre,
-          'imageUrl': widget.place.imagenes.isNotEmpty ? widget.place.imagenes[0].url : null,
+          'imageUrl': widget.place.imagenes.isNotEmpty
+              ? widget.place.imagenes[0].url
+              : null,
           'lat': widget.place.lat,
           'lng': widget.place.lng,
           'saved_at': FieldValue.serverTimestamp(),
@@ -513,17 +532,20 @@ class _PlaceCardState extends State<_PlaceCard> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                    child: widget.imageUrl != null &&
+                            widget.imageUrl!.isNotEmpty
                         ? Image.network(
                             widget.imageUrl!,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                               color: const Color(0xFFF0F0F0),
                               child: const Center(
-                                child: Icon(Icons.image_not_supported, size: 48, color: Colors.black38),
+                                child: Icon(Icons.image_not_supported,
+                                    size: 48, color: Colors.black38),
                               ),
                             ),
                             loadingBuilder: (context, child, loadingProgress) {
@@ -539,7 +561,8 @@ class _PlaceCardState extends State<_PlaceCard> {
                         : Container(
                             color: const Color(0xFFF0F0F0),
                             child: const Center(
-                              child: Icon(Icons.image, size: 48, color: Colors.black38),
+                              child: Icon(Icons.image,
+                                  size: 48, color: Colors.black38),
                             ),
                           ),
                   ),
@@ -565,12 +588,17 @@ class _PlaceCardState extends State<_PlaceCard> {
                                 child: SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               )
                             : Icon(
-                                _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                                color: _isSaved ? const Color(0xFFC88400) : Colors.black54,
+                                _isSaved
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color: _isSaved
+                                    ? const Color(0xFFC88400)
+                                    : Colors.black54,
                                 size: 24,
                               ),
                       ),
@@ -589,16 +617,19 @@ class _PlaceCardState extends State<_PlaceCard> {
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFB57A00), // similar al dorado de la maqueta
+                      color:
+                          Color(0xFFB57A00), // similar al dorado de la maqueta
                     ),
                   ),
                   if (widget.subtitle != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.place, size: 16, color: Colors.black45),
+                        const Icon(Icons.place,
+                            size: 16, color: Colors.black45),
                         const SizedBox(width: 6),
-                        Text(widget.subtitle!, style: const TextStyle(color: Colors.black54)),
+                        Text(widget.subtitle!,
+                            style: const TextStyle(color: Colors.black54)),
                       ],
                     ),
                   ],
@@ -742,16 +773,59 @@ class _FilterBottomSheet extends StatefulWidget {
 class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   String? _selectedCountry;
   String? _selectedCity;
-  
+
   // Lista de países y ciudades
   final Map<String, List<String>> _countriesAndCities = {
-    'Chile': ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Antofagasta', 'Temuco', 'Viña del Mar'],
-    'Argentina': ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Tucumán'],
+    'Chile': [
+      'Santiago',
+      'Valparaíso',
+      'Concepción',
+      'La Serena',
+      'Antofagasta',
+      'Temuco',
+      'Viña del Mar'
+    ],
+    'Argentina': [
+      'Buenos Aires',
+      'Córdoba',
+      'Rosario',
+      'Mendoza',
+      'La Plata',
+      'Tucumán'
+    ],
     'Perú': ['Lima', 'Cusco', 'Arequipa', 'Trujillo', 'Chiclayo', 'Piura'],
-    'Colombia': ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Cúcuta'],
-    'México': ['Ciudad de México', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'Cancún'],
-    'Brasil': ['São Paulo', 'Río de Janeiro', 'Brasilia', 'Salvador', 'Fortaleza', 'Belo Horizonte'],
-    'España': ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga'],
+    'Colombia': [
+      'Bogotá',
+      'Medellín',
+      'Cali',
+      'Barranquilla',
+      'Cartagena',
+      'Cúcuta'
+    ],
+    'México': [
+      'Ciudad de México',
+      'Guadalajara',
+      'Monterrey',
+      'Puebla',
+      'Tijuana',
+      'Cancún'
+    ],
+    'Brasil': [
+      'São Paulo',
+      'Río de Janeiro',
+      'Brasilia',
+      'Salvador',
+      'Fortaleza',
+      'Belo Horizonte'
+    ],
+    'España': [
+      'Madrid',
+      'Barcelona',
+      'Valencia',
+      'Sevilla',
+      'Zaragoza',
+      'Málaga'
+    ],
   };
 
   @override
@@ -797,7 +871,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             // País
             const Text(
               'País',
@@ -836,7 +910,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                     setState(() {
                       _selectedCountry = value;
                       // Resetear ciudad si cambia el país
-                      if (_selectedCity != null && 
+                      if (_selectedCity != null &&
                           !_availableCities.contains(_selectedCity)) {
                         _selectedCity = null;
                       }
@@ -845,9 +919,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Ciudad
             const Text(
               'Ciudad',
@@ -907,9 +981,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Botones de acción
             Row(
               children: [

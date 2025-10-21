@@ -71,7 +71,7 @@ class SavedPlacesScreen extends StatelessWidget {
 
   Place _convertToPlace(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Convertir imageUrl a lista de PlaceImage
     final imageUrl = data['imageUrl']?.toString();
     final images = <PlaceImage>[];
@@ -81,7 +81,7 @@ class SavedPlacesScreen extends StatelessWidget {
         alt: data['nombre']?.toString() ?? 'Imagen del lugar',
       ));
     }
-    
+
     // Si no hay imagen, usar una por defecto
     if (images.isEmpty) {
       images.add(PlaceImage(
@@ -89,7 +89,7 @@ class SavedPlacesScreen extends StatelessWidget {
         alt: 'Sin imagen',
       ));
     }
-    
+
     return Place(
       id: doc.id,
       nombre: data['nombre'] ?? '',
@@ -282,7 +282,8 @@ class SavedPlacesScreen extends StatelessWidget {
                         // Imagen
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: place.imagenes.isNotEmpty && place.imagenes[0].url != null
+                          child: place.imagenes.isNotEmpty &&
+                                  place.imagenes[0].url != null
                               ? Image.network(
                                   place.imagenes[0].url!,
                                   width: 100,
@@ -321,7 +322,9 @@ class SavedPlacesScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                place.nombre.isEmpty ? 'Sin nombre' : place.nombre,
+                                place.nombre.isEmpty
+                                    ? 'Sin nombre'
+                                    : place.nombre,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,

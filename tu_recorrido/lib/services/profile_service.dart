@@ -27,7 +27,7 @@ class ProfileService {
     try {
       // Convertir a base64
       final base64String = base64Encode(bytes);
-      
+
       // Guardar en Firestore
       await _firestore.collection('users').doc(uid).set({
         'avatarBase64': base64String,
