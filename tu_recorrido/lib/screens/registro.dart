@@ -84,8 +84,8 @@ class RegistroScreenState extends State<RegistroScreen> {
     setState(() => isLoading = true);
 
     try {
-      print('🔄 Iniciando registro con email: ${correo.text.trim()}');
-      print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
+      // print('🔄 Iniciando registro con email: ${correo.text.trim()}');
+      // print('🔄 Firebase App: ${FirebaseAuth.instance.app.name}');
 
       // 1) Crear usuario en Auth
       final userCredential = await AuthService.registerWithEmail(
@@ -118,7 +118,7 @@ class RegistroScreenState extends State<RegistroScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
-      print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
+      // print('🔥 FirebaseAuthException: ${e.code} - ${e.message}');
       switch (e.code) {
         case 'weak-password':
           errorMessage = 'La contraseña es muy débil.';
@@ -148,7 +148,7 @@ class RegistroScreenState extends State<RegistroScreen> {
         );
       }
     } catch (e) {
-      print('🔥 Error general: $e');
+      // print('🔥 Error general: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
