@@ -12,9 +12,7 @@ class MainFab extends StatelessWidget {
         return Transform.scale(
           scale: scale,
           child: FloatingActionButton(
-            onPressed: () {
-           
-            },
+            onPressed: () {},
             backgroundColor: const Color(0xFFFACC15),
             elevation: 7,
             shape: const CircleBorder(),

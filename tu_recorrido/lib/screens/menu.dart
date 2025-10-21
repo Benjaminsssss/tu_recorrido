@@ -399,7 +399,8 @@ class _MapitaState extends State<Mapita> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorVerdeEsmeralda..withAlpha((255 * 0.5).round()),
+                      color: colorVerdeEsmeralda
+                        ..withAlpha((255 * 0.5).round()),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.star,
@@ -815,7 +816,8 @@ class _MapitaState extends State<Mapita> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withAlpha((255 * 0.5).round()),
+                                    color: Colors.black
+                                        .withAlpha((255 * 0.5).round()),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -929,7 +931,8 @@ class _MapitaState extends State<Mapita> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colorVerdeEsmeralda.withAlpha((255 * 0.5).round()),
+                            color: colorVerdeEsmeralda
+                                .withAlpha((255 * 0.5).round()),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(

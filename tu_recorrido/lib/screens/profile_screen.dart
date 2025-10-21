@@ -63,7 +63,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _localBytes = bytes;
       });
-     
     }
   }
 
@@ -183,7 +182,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await context.setLocale(loc);
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.setString('languageCode', loc.languageCode);
-                  
                 },
               ),
               const SizedBox(height: 24),

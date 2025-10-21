@@ -352,7 +352,6 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-            
             },
           ),
           _QuickActionChip(
@@ -361,7 +360,6 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-             
             },
           ),
           _QuickActionChip(
@@ -370,7 +368,6 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-             
             },
           ),
           _QuickActionChip(
@@ -379,7 +376,6 @@ class _QuickActionsRow extends StatelessWidget {
             isDark: isDark,
             onTap: () {
               HapticFeedback.lightImpact();
-             
             },
           ),
         ],
