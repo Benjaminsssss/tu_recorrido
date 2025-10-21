@@ -2,6 +2,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'lugares.dart';
 
 /// Lista fija de lugares marcados manualmente
+/// Vamos!!!!!!!!
 class MarcadoresData {
   static final List<PlaceResult> lugaresMarcados = [
     PlaceResult(
@@ -30,9 +31,9 @@ class MarcadoresData {
     ),
     PlaceResult(
       placeId: 'm5',
-      nombre: 'Mercado Local',
-      ubicacion: const LatLng(-12.0475, -77.0425),
-      rating: 3.8,
+      nombre: 'unimarc',
+      ubicacion: const LatLng(-33.526812908174755, -70.59580173995262),
+      rating: 4.3,
     ),
   ];
 }
