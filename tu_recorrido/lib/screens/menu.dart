@@ -7,8 +7,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:tu_recorrido/models/lugares.dart';
@@ -49,6 +47,13 @@ class _MapitaState extends State<Mapita> {
   LatLng? _currentPosition;
   // ⭐️ NUEVO: Estado de la ruta
   bool _isRouteActive = false;
+
+  // Variables para manejo de llegada
+  double distToDest = 0.0;
+  bool _arrivalHandled = false;
+  static const double _arrivalToleranceMeters = 50.0;
+  LatLng? _currentDestination;
+  PlaceResult? _destinationPlace;
 
   // Inicializamos PolylinePoints SOLO para la función decodePolyline
   PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
@@ -175,7 +180,7 @@ class _MapitaState extends State<Mapita> {
             },
           ),
         );
-        _markers.add(marker);
+        // Línea duplicada eliminada - el marcador ya fue agregado arriba
       }
 
       if (_pageController.hasClients) {
@@ -242,6 +247,9 @@ class _MapitaState extends State<Mapita> {
       (Position position) async {
         if (!mounted) return;
 
+        // Definir newLatLng desde la posición recibida
+        final LatLng newLatLng = LatLng(position.latitude, position.longitude);
+
         _userMarker = Marker(
           markerId: const MarkerId('current_location'),
           position: newLatLng,
@@ -265,6 +273,16 @@ class _MapitaState extends State<Mapita> {
             _markers.removeWhere((m) => m.markerId.value == 'current_location');
             _markers.add(_userMarker!);
           });
+
+          // Calcular distancia al destino si hay ruta activa
+          if (_isRouteActive && _currentDestination != null) {
+            distToDest = Geolocator.distanceBetween(
+              _currentPosition!.latitude,
+              _currentPosition!.longitude,
+              _currentDestination!.latitude,
+              _currentDestination!.longitude,
+            );
+          }
 
           dev.log(
               '📍 Distancia al destino: ${distToDest.toStringAsFixed(1)} m | _arrivalHandled: $_arrivalHandled');
@@ -296,6 +314,10 @@ class _MapitaState extends State<Mapita> {
     setState(() {
       _polylines.clear();
       _isRouteActive = false;
+      _currentDestination = null;
+      _destinationPlace = null;
+      _arrivalHandled = false;
+      distToDest = 0.0;
       _showSnackBar(tr('route_canceled'));
     });
     _showSnackBar('Ruta cancelada.');
@@ -464,7 +486,7 @@ class _MapitaState extends State<Mapita> {
                 }
 
                 // Inicia el trazado de la ruta (función que ya existe)
-                _getRoute(_currentPosition!, place.ubicacion);
+                _getRoute(_currentPosition!, place.ubicacion, place);
               },
             ),
           ],
@@ -514,7 +536,7 @@ class _MapitaState extends State<Mapita> {
                 geodesic: true,
               ),
             );
-            _polylines.add(polyline);
+            // Línea duplicada eliminada - la polilínea ya fue agregada arriba
           });
 
           _fitMapToRoute(origin, destination);
@@ -618,16 +640,17 @@ class _MapitaState extends State<Mapita> {
         backgroundColor: theme.colorScheme.primary,
         actions: [
           // Botón de admin (solo visible para administradores)
-          ConditionalWidget(
-            condition: (permissions) => permissions.canAccessAdmin,
-            child: IconButton(
-              icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
-              onPressed: () {
-                Navigator.pushNamed(context, '/admin');
-              },
-              tooltip: 'Panel de Administración',
-            ),
-          ),
+          // ConditionalWidget comentado - requiere import de RoleProtectedWidget
+          // ConditionalWidget(
+          //   condition: (permissions) => permissions.canAccessAdmin,
+          //   child: IconButton(
+          //     icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
+          //     onPressed: () {
+          //       Navigator.pushNamed(context, '/admin');
+          //     },
+          //     tooltip: 'Panel de Administración',
+          //   ),
+          // ),
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             onPressed: () => Navigator.pushNamed(context, '/perfil'),
