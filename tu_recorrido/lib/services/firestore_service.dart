@@ -77,12 +77,16 @@ class FirestoreService {
     required double lat,
     required double lng,
     String category = 'general',
+    String? country,
+    String? city,
   }) async {
     final ref = await _db.collection('places').add({
       'name': name,
       'lat': lat,
       'lng': lng,
       'category': category,
+      'country': country,
+      'city': city,
       'createdAt': FieldValue.serverTimestamp(),
     });
     return ref.id;

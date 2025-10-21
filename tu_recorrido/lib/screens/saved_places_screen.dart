@@ -1,153 +1,418 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/saved_places_service.dart';
-import '../services/place_service.dart';
 import '../models/place.dart';
-import '../widgets/place_hero_card.dart';
+import '../widgets/place_modal.dart';
+import '../services/saved_places_notifier.dart';
 
-class SavedPlacesScreen extends StatefulWidget {
+class SavedPlacesScreen extends StatelessWidget {
   const SavedPlacesScreen({super.key});
 
-  @override
-  State<SavedPlacesScreen> createState() => _SavedPlacesScreenState();
-}
+  // Paleta solicitada
+  static const Color oliveDark = Color(0xFF3E4C3A); // verde oliva muy oscuro
+  static const Color militaryBrown = Color(0xFF6B5B3E); // marrón militar
+  static const Color terracotta = Color(0xFFB3502D); // rojo óxido / terracota
+  static const Color honeyGold = Color(0xFFC88400); // mostaza/miel dorado
+  static const Color skyBlue = Color(0xFF66B7F0); // celeste claro / azul cielo
 
-class _SavedPlacesScreenState extends State<SavedPlacesScreen> {
-  List<Place> _savedPlaces = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedPlaces();
+  String _formatLocation(Place p) {
+    final parts = <String>[];
+    if (p.comuna.isNotEmpty) parts.add(p.comuna);
+    if (p.region.isNotEmpty) parts.add(p.region);
+    return parts.join(', ');
   }
 
-  Future<void> _loadSavedPlaces() async {
+  Future<void> _deletePlace(BuildContext context, String placeId) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-      return;
-    }
+    if (user == null) return;
 
     try {
-      // Obtener IDs de lugares guardados
-      final savedIds = await SavedPlacesService.getSavedPlaceIds(user.uid);
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('saved_places')
+          .doc(placeId)
+          .delete();
 
-      // Cargar todos los lugares desde JSON
-      final allPlaces = await PlaceService.loadPlacesFromJson();
+      // Notificar que el lugar fue eliminado
+      SavedPlacesNotifier().notifyPlaceChanged(placeId, false);
 
-      // Filtrar solo los lugares guardados
-      final savedPlaces =
-          allPlaces.where((place) => savedIds.contains(place.id)).toList();
-
-      if (mounted) {
-        setState(() {
-          _savedPlaces = savedPlaces;
-          _isLoading = false;
-        });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lugar eliminado de guardados'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
+  }
+
+  void _showPlaceDetails(BuildContext context, Place place) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => PlaceModal(place: place),
+    );
+  }
+
+  Place _convertToPlace(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+
+    // Convertir imageUrl a lista de PlaceImage
+    final imageUrl = data['imageUrl']?.toString();
+    final images = <PlaceImage>[];
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      images.add(PlaceImage(
+        url: imageUrl,
+        alt: data['nombre']?.toString() ?? 'Imagen del lugar',
+      ));
+    }
+
+    // Si no hay imagen, usar una por defecto
+    if (images.isEmpty) {
+      images.add(PlaceImage(
+        url: null,
+        alt: 'Sin imagen',
+      ));
+    }
+
+    return Place(
+      id: doc.id,
+      nombre: data['nombre'] ?? '',
+      region: data['region'] ?? '',
+      comuna: data['comuna'] ?? '',
+      shortDesc: data['shortDesc'] ?? '',
+      descripcion: data['descripcion'] ?? 'Sin descripción disponible.',
+      mejorMomento: data['mejorMomento'] ?? 'Todo el año',
+      badge: PlaceBadge(
+        nombre: data['badge']?.toString() ?? 'General',
+        tema: data['tema']?.toString() ?? 'Cultura',
+      ),
+      imagenes: images,
+      lat: (data['lat'] as num?)?.toDouble(),
+      lng: (data['lng'] as num?)?.toDouble(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Lugares Guardados'),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text('Debes iniciar sesión para ver tus lugares guardados'),
+        ),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBF8),
+      backgroundColor: const Color(0xFFF4F5F2),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        centerTitle: true,
+        title: Text(
+          'Lugares Guardados',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+          ).copyWith(color: oliveDark),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: oliveDark,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Lugares guardados',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        iconTheme: IconThemeData(color: oliveDark),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _savedPlaces.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  itemCount: _savedPlaces.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: PlaceHeroCard(place: _savedPlaces[index]),
-                    );
-                  },
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('saved_places')
+            // Sin orderBy para soportar documentos antiguos con distintos campos
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error: ${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          // Copia mutable para ordenar localmente por saved_at o savedAt (desc)
+          final List<QueryDocumentSnapshot> docs =
+              List<QueryDocumentSnapshot>.from(snapshot.data?.docs ?? []);
+
+          docs.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aTs = (aData['saved_at'] ?? aData['savedAt']);
+            final bTs = (bData['saved_at'] ?? bData['savedAt']);
+            DateTime aDate;
+            DateTime bDate;
+            if (aTs is Timestamp) {
+              aDate = aTs.toDate();
+            } else if (aTs is DateTime) {
+              aDate = aTs;
+            } else {
+              aDate = DateTime.fromMillisecondsSinceEpoch(0);
+            }
+            if (bTs is Timestamp) {
+              bDate = bTs.toDate();
+            } else if (bTs is DateTime) {
+              bDate = bTs;
+            } else {
+              bDate = DateTime.fromMillisecondsSinceEpoch(0);
+            }
+            return bDate.compareTo(aDate); // Descendente
+          });
+
+          if (docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.bookmark_border,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No tienes lugares guardados',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Explora lugares y guarda tus favoritos tocando el icono\nde bookmark',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/home');
+                    },
+                    icon: const Icon(Icons.explore),
+                    label: const Text('Explorar lugares'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2B6B7F),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final doc = docs[index];
+              final place = _convertToPlace(doc);
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: oliveDark.withValues(alpha: 0.08)),
                 ),
+                child: InkWell(
+                  onTap: () => _showPlaceDetails(context, place),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Imagen
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: place.imagenes.isNotEmpty &&
+                                  place.imagenes[0].url != null
+                              ? Image.network(
+                                  place.imagenes[0].url!,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 100,
+                                      height: 100,
+                                      color: const Color(0xFFE9ECE3),
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        color: militaryBrown,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE9ECE3),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.place,
+                                    color: militaryBrown,
+                                    size: 40,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Información
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                place.nombre.isEmpty
+                                    ? 'Sin nombre'
+                                    : place.nombre,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: oliveDark,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    size: 14,
+                                    color: militaryBrown,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      _formatLocation(place),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey[700],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getBadgeColor(place.badge.tema),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  place.badge.tema,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Botón eliminar
+                        IconButton(
+                          icon: const Icon(Icons.bookmark_rounded),
+                          color: honeyGold,
+                          onPressed: () => _deletePlace(context, place.id),
+                          tooltip: 'Eliminar de guardados',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.bookmark_border_rounded,
-                size: 64,
-                color: Colors.grey[400],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No tienes lugares guardados',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Explora lugares y guarda tus favoritos tocando el ícono de bookmark',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.explore),
-              label: const Text('Explorar lugares'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2B6B7F),
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Color _getBadgeColor(String tema) {
+    switch (tema.toLowerCase()) {
+      case 'cultura':
+        return skyBlue; // azul cielo
+      case 'naturaleza':
+        return oliveDark; // oliva
+      case 'aventura':
+        return terracotta; // terracota
+      case 'historia':
+        return militaryBrown; // marrón militar
+      case 'gastronomía':
+      case 'gastronomia':
+        return honeyGold; // miel dorado
+      case 'playa':
+        return skyBlue; // azul cielo
+      default:
+        return Colors.grey;
+    }
   }
 }

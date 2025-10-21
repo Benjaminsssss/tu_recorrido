@@ -24,21 +24,19 @@ dependencies:
   google_maps_flutter: ^2.6.1
   geolocator: ^14.0.0
   google_sign_in: ^6.3.0
-  geolocator_web: ^4.1.3
-  http: ^1.2.1
 
   # UI / utilities
   provider: ^6.1.5+1
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.7
   flutter_polyline_points: ^3.1.0
-  google_fonts: ^6.3.2
-  shared_preferences: ^2.2.2
-
-  # i18n + media picker
-  easy_localization: ^3.0.5
-  image_picker: ^1.0.7
-  image: ^4.5.4
-  flutter_svg: ^2.2.1
+  geolocator_web: ^4.1.3
+  http: ^1.2.1
+  image: ^4.0.0
+  image_picker: ^1.0.0
+  easy_localization: ^3.0.0
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.3.2
 
   # QR Code packages
   qr_flutter: ^4.1.0
@@ -59,9 +57,10 @@ flutter:
 
   assets:
     - assets/img/    #esto importa todas las imágenes de la carpeta img
+    - assets/translations/
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/img/logo.png"  # ⭐ Ruta de tu logo
-  adaptive_icon_foreground: "assets/img/logo.png"  # Para Android adaptativo
+  image_path: assets/img/logo.png
+  adaptive_icon_foreground: assets/img/logo.png
