@@ -1,350 +1,348 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../utils/colores.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart';
+import '../services/profile_service.dart';
+import '../components/bottom_pill_nav.dart';
+import '../widgets/place_search_bar.dart';
+import '../widgets/welcome_banner.dart';
+import './perfil.dart';
+import 'package:provider/provider.dart';
+import '../models/user_state.dart';
+import '../services/place_service.dart';
+import '../models/place.dart';
+import '../widgets/places_showcase.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _tab = 0;
+  bool _userDataLoaded = false;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _headerKey = GlobalKey();
+  double _headerHeight = 0;
+  double _elevT = 0; // 0.0 (top) -> 1.0 (scrolled)
+  List<Place>? _places;
+  List<Place>? _filteredPlaces; // Lugares filtrados por búsqueda
+  bool _loadingPlaces = true;
+  String? _avatarBase64; // Imagen del avatar en base64
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      final o = _scrollController.offset;
+      final t = (o / 48.0).clamp(0.0, 1.0);
+      if ((t - _elevT).abs() > 0.05) {
+        setState(() => _elevT = t);
+      }
+    });
+    // Medir altura del header tras el primer frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _measureHeaderHeight();
+      _loadUserAvatar(); // Cargar avatar al iniciar
+    });
+    // Cargar lugares una sola vez
+    _loadPlaces();
+  }
+
+  Future<void> _loadUserAvatar() async {
+    final user = AuthService.currentUser;
+    if (user != null) {
+      try {
+        final doc = await ProfileService.getUserProfile(user.uid);
+        if (doc != null && doc.exists && mounted) {
+          final data = doc.data();
+          if (data != null) {
+            final base64 = data['photoBase64'] as String?;
+            if (base64 != null && base64.isNotEmpty && mounted) {
+              setState(() {
+                _avatarBase64 = base64;
+              });
+            }
+          }
+        }
+      } catch (e) {
+        // Error silencioso, el avatar mostrará el ícono por defecto
+      }
+    }
+  }
+
+  Future<void> _loadPlaces() async {
+    try {
+      final places = await PlaceService.loadPlacesFromJson();
+      if (mounted) {
+        setState(() {
+          _places = places;
+          _filteredPlaces = places; // Inicialmente mostrar todos
+          _loadingPlaces = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _places = [];
+          _filteredPlaces = [];
+          _loadingPlaces = false;
+        });
+      }
+    }
+  }
+
+  void _handlePlaceSearch(Place? selectedPlace) {
+    setState(() {
+      if (selectedPlace == null) {
+        // Mostrar todos los lugares
+        _filteredPlaces = _places;
+      } else {
+        // Mostrar solo el lugar seleccionado
+        _filteredPlaces = [selectedPlace];
+      }
+    });
+    // Scroll al top para ver el resultado
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _handleSearchChanged(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        // Mostrar todos los lugares cuando se limpia la búsqueda
+        _filteredPlaces = _places;
+      } else {
+        // Filtrar lugares en tiempo real mientras se escribe
+        _filteredPlaces = _places
+            ?.where((place) =>
+                place.nombre.toLowerCase().contains(query.toLowerCase()) ||
+                place.comuna.toLowerCase().contains(query.toLowerCase()) ||
+                place.region.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _measureHeaderHeight() {
+    final ctx = _headerKey.currentContext;
+    if (ctx != null) {
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box != null) {
+        final h = box.size.height;
+        if (h > 0 && (_headerHeight - h).abs() > 0.5) {
+          setState(() => _headerHeight = h + 12); // margen superior más pequeño
+        }
+      }
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Re-medimos cuando cambian dependencias por si cambian textos/estilos
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeaderHeight());
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Fondo con gradiente y patrones
-          Container(
-            decoration: const BoxDecoration(
-              gradient: Coloressito.backgroundGradient,
-            ),
-          ),
+    return StreamBuilder<User?>(
+      stream: AuthService.authStateChanges,
+      builder: (context, snap) {
+        final user = snap.data;
+        final userState = Provider.of<UserState>(context);
+        final nombre = userState.nombre;
+        final uid = user?.uid ?? '';
+        final double headerSpace =
+            _headerHeight > 0 ? _headerHeight : 110; // espacio según medida
 
-          // Elementos decorativos flotantes
-          Positioned(
-            top: 100,
-            right: 30,
-            child: _FloatingElement(
-              icon: Icons.location_on,
-              color: Coloressito.badgeRed,
-              size: 40,
-            ),
-          ),
-          Positioned(
-            top: 180,
-            left: 50,
-            child: _FloatingElement(
-              icon: Icons.stars,
-              color: Coloressito.badgeYellow,
-              size: 35,
-            ),
-          ),
-          Positioned(
-            top: 280,
-            right: 80,
-            child: _FloatingElement(
-              icon: Icons.camera_alt,
-              color: Coloressito.badgeGreen,
-              size: 30,
-            ),
-          ),
+        // Cargar datos del usuario desde Firestore solo una vez
+        if (user != null && !_userDataLoaded) {
+          _userDataLoaded = true;
+          ProfileService.getUserProfile(user.uid).then((doc) async {
+            if (doc != null && doc.exists && mounted) {
+              final data = doc.data();
+              if (data != null) {
+                // Actualizar nombre desde Firestore
+                final firestoreName = data['displayName'] as String?;
+                if (firestoreName != null && firestoreName.isNotEmpty) {
+                  await userState.setNombre(firestoreName);
+                } else if (user.displayName != null &&
+                    user.displayName!.isNotEmpty) {
+                  await userState.setNombre(user.displayName!);
+                }
 
-          // Contenido principal
-          SafeArea(
-            child: Column(
+                // Cargar avatar desde Firestore (por si acaso no se cargó en initState)
+                final base64 = data['photoBase64'] as String?;
+                if (base64 != null && base64.isNotEmpty && mounted) {
+                  if (_avatarBase64 != base64) {
+                    setState(() {
+                      _avatarBase64 = base64;
+                    });
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        // Resetear flag si el usuario cierra sesión
+        if (user == null && _userDataLoaded) {
+          _userDataLoaded = false;
+          if (_avatarBase64 != null) {
+            setState(() {
+              _avatarBase64 = null;
+            });
+          }
+        }
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFFAFBF8), // Fondo claro #FAFBF8
+          body: SafeArea(
+            child: Stack(
               children: [
-                // Header con logo y botones
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Contenido scrolleable bajo el header fijo
+                ScrollConfiguration(
+                  behavior: const ScrollBehavior()
+                      .copyWith(overscroll: false, scrollbars: false),
+                  child: ListView(
+                    controller: _scrollController,
+                    padding: EdgeInsets.fromLTRB(16, headerSpace, 16, 100),
+                    physics: const ClampingScrollPhysics(),
                     children: [
-                      // Logo
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Coloressito.surfaceLight,
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Coloressito.borderLight),
-                        ),
-                        child: const Icon(
-                          Icons.map,
-                          color: Coloressito.textPrimary,
-                          size: 24,
-                        ),
+                      WelcomeBanner(
+                        nombre: nombre,
+                        uid: uid,
                       ),
-
-                      // Botón login
-                      GestureDetector(
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/auth/login'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Coloressito.surfaceLight,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Coloressito.borderLight),
-                          ),
-                          child: const Text(
-                            'Iniciar sesión',
-                            style: TextStyle(
-                              color: Coloressito.textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // contindo principala
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // parte del avatare
-                      Container(
-                        width: 150,
-                        height: 150,
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              Coloressito.surfaceLight,
-                              Coloressito.surfaceDark,
-                            ],
-                          ),
-                          border: Border.all(
-                              color: Coloressito.borderLight, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Coloressito.shadowColor,
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.explore,
-                          size: 80,
-                          color: Coloressito.textPrimary,
-                        ),
-                      ),
-
-                      // Título
-                      const Text(
-                        'RECORRIDO',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: Coloressito.textPrimary,
-                          letterSpacing: 2,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                              color: Coloressito.shadowColor,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Subtítulo
-                      const Text(
-                        'Colecciona el mundo',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Coloressito.textSecondary,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Stats o preview de funcionalidades
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _StatCard(
-                            icon: Icons.location_on,
-                            title: 'Lugares',
-                            subtitle: '500+',
-                            color: Coloressito.badgeRed,
-                          ),
-                          _StatCard(
-                            icon: Icons.emoji_events,
-                            title: 'Insignias',
-                            subtitle: '200+',
-                            color: Coloressito.badgeYellow,
-                          ),
-                          _StatCard(
-                            icon: Icons.people,
-                            title: 'Exploradores',
-                            subtitle: '10K+',
-                            color: Coloressito.badgeGreen,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Botón principal de inicio
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      // Botón principal
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/auth'),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          decoration: BoxDecoration(
-                            gradient: Coloressito.buttonGradient,
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Coloressito.glowColor,
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                      const SizedBox(height: 16),
+                      if (_loadingPlaces)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_filteredPlaces == null ||
+                          _filteredPlaces!.isEmpty)
+                        Center(
+                          child: Column(
                             children: [
+                              const SizedBox(height: 40),
                               Icon(
-                                Icons.rocket_launch,
-                                color: Coloressito.textPrimary,
-                                size: 24,
+                                Icons.search_off,
+                                size: 64,
+                                color: Colors.grey.shade400,
                               ),
-                              SizedBox(width: 12),
+                              const SizedBox(height: 16),
                               Text(
-                                'COMENZAR AVENTURA',
+                                'No se encontraron lugares',
                                 style: TextStyle(
-                                  color: Coloressito.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Texto adicional
-                      const Text(
-                        'Crea tu pasaporte digital y descubre\nlugares increíbles cerca de ti',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Coloressito.textSecondary,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                      ),
+                        )
+                      else
+                        PlacesShowcase(places: _filteredPlaces!),
                     ],
+                  ),
+                ),
+                // Header flotante: solo Row, sin fondo, padding horizontal 16, altura 80
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 12,
+                  child: RepaintBoundary(
+                    key: _headerKey,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      height: 80,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Barra de búsqueda expandida
+                          Expanded(
+                            child: PlaceSearchBar(
+                              allPlaces: _places ?? [],
+                              onPlaceSelected: _handlePlaceSearch,
+                              onSearchChanged: _handleSearchChanged,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Avatar: círculo blanco 48px con imagen o ícono, borde verde
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => SizedBox(
+                                  height: MediaQuery.of(context).size.height,
+                                  child: Perfil(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFF2F6B5F), // verde soporte
+                                  width: 2,
+                                ),
+                                image: _avatarBase64 != null &&
+                                        _avatarBase64!.isNotEmpty
+                                    ? DecorationImage(
+                                        image: MemoryImage(
+                                            base64Decode(_avatarBase64!)),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              alignment: Alignment.center,
+                              child: _avatarBase64 == null ||
+                                      _avatarBase64!.isEmpty
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 26,
+                                      color: Color(0xFF66B7F0), // celeste
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FloatingElement extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final double size;
-
-  const _FloatingElement({
-    required this.icon,
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(size * 0.2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Icon(
-        icon,
-        color: color,
-        size: size * 0.6,
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Coloressito.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Coloressito.borderLight),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
+          // SIN FAB: se elimina el floatingActionButton
+          bottomNavigationBar: BottomPillNav(
+            currentIndex: _tab,
+            onTap: (i) async {
+              setState(() => _tab = i);
+              if (i == 1) {
+                await Navigator.pushNamed(context, '/mapa');
+                // Al regresar del mapa, volver a poner el tab en Inicio
+                setState(() => _tab = 0);
+              }
+            },
           ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: Coloressito.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Coloressito.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

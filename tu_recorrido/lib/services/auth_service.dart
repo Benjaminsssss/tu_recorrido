@@ -34,10 +34,13 @@ class AuthService {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    await _db.collection('users').doc(user.uid).set({
-      'createdAt': FieldValue.serverTimestamp(),
-      ...data,
-    }, SetOptions(merge: true));
+    await _db.collection('users').doc(user.uid).set(
+      {
+        'createdAt': FieldValue.serverTimestamp(),
+        ...data,
+      },
+      SetOptions(merge: true),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -56,26 +59,25 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(
-        credential,
-      );
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
 
       // upsert de perfil mínimo en Firestore
       await _upsertUserProfile(userCredential.user!);
 
       if (kDebugMode) {
-        debugPrint('Usuario autenticado: ${userCredential.user?.displayName}');
-        debugPrint('Email: ${userCredential.user?.email}');
+        print('Usuario autenticado: ${userCredential.user?.displayName}');
+        print('Email: ${userCredential.user?.email}');
       }
       return userCredential;
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        debugPrint('Error de Firebase Auth: ${e.code} - ${e.message}');
+        print('Error de Firebase Auth: ${e.code} - ${e.message}');
       }
       throw _handleFirebaseAuthError(e);
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error general en Google Sign In: $e');
+        print('Error general en Google Sign In: $e');
       }
       throw 'Error inesperado durante la autenticación con Google';
     }
@@ -105,17 +107,17 @@ class AuthService {
       if (!(uc.user?.emailVerified ?? false)) {
         await uc.user?.sendEmailVerification();
         if (kDebugMode) {
-          debugPrint('Email de verificación enviado a: ${uc.user?.email}');
+          print('📧 Email de verificación enviado a: ${uc.user?.email}');
         }
       }
 
       if (kDebugMode) {
-        debugPrint('Usuario registrado: ${uc.user?.displayName}');
+        print('Usuario registrado: ${uc.user?.displayName}');
       }
       return uc;
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        debugPrint('Error de registro: ${e.code} - ${e.message}');
+        print('Error de registro: ${e.code} - ${e.message}');
       }
       throw _handleFirebaseAuthError(e);
     }
@@ -130,14 +132,14 @@ class AuthService {
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
         if (kDebugMode) {
-          debugPrint('Email de verificación reenviado a: ${user.email}');
+          print('📧 Email de verificación reenviado a: ${user.email}');
         }
       } else {
         throw 'No hay usuario o ya está verificado';
       }
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        debugPrint('Error al reenviar verificación: ${e.code} - ${e.message}');
+        print('Error al reenviar verificación: ${e.code} - ${e.message}');
       }
       throw _handleFirebaseAuthError(e);
     }
@@ -151,21 +153,22 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final UserCredential userCredential = await _auth
-          .signInWithEmailAndPassword(email: email, password: password);
+      final UserCredential userCredential =
+          await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       // mantener perfil fresco (no afecta tus campos extra)
       await _upsertUserProfile(userCredential.user!);
 
       if (kDebugMode) {
-        debugPrint(
-          'Usuario inició sesión: ${userCredential.user?.displayName}',
-        );
+        print('Usuario inició sesión: ${userCredential.user?.displayName}');
       }
       return userCredential;
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        debugPrint('Error de inicio de sesión: ${e.code} - ${e.message}');
+        print('Error de inicio de sesión: ${e.code} - ${e.message}');
       }
       throw _handleFirebaseAuthError(e);
     }
@@ -176,13 +179,16 @@ class AuthService {
   // ---------------------------------------------------------------------------
   static Future<void> signOut() async {
     try {
-      await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+      await Future.wait([
+        _auth.signOut(),
+        _googleSignIn.signOut(),
+      ]);
       if (kDebugMode) {
-        debugPrint('Usuario cerró sesión');
+        print('Usuario cerró sesión');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error al cerrar sesión: $e');
+        print('Error al cerrar sesión: $e');
       }
       throw 'Error al cerrar sesión';
     }
@@ -203,13 +209,12 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email.trim());
 
       if (kDebugMode) {
-        debugPrint('Email de restablecimiento enviado a: ${email.trim()}');
+        print('Email de restablecimiento enviado a: ${email.trim()}');
       }
     } on FirebaseAuthException catch (e) {
       if (kDebugMode) {
-        debugPrint(
-          'Error al enviar email de restablecimiento: ${e.code} - ${e.message}',
-        );
+        print(
+            'Error al enviar email de restablecimiento: ${e.code} - ${e.message}');
       }
 
       // Manejar errores específicos de Firebase Auth

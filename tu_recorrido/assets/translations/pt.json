@@ -1,0 +1,30 @@
+{
+  "app_title": "Seu Percurso",
+  "home_hero_title": "Colecione o mundo",
+  "profile": "Perfil",
+  "edit_profile": "Editar perfil",
+  "display_name": "Nome de usuário",
+  "email": "E-mail",
+  "language": "Idioma",
+  "save": "Salvar",
+  "sign_out": "Sair",
+  "pick_photo": "Editar foto"
+  ,
+  "route_canceled": "Rota cancelada.",
+  "poi_title": "Pontos de Interesse",
+  "scan_qr": "Escanear QR"
+  ,
+  "collect_world": "Colecione o mundo",
+  "home_hero_subtitle": "Crie seu passaporte digital e descubra lugares incríveis perto de você.",
+  "discover": "Descubra",
+  "explore": "Explore",
+  "collect": "Colecione",
+  "nearby": "Perto de você",
+  "featured_place": "Lugar em destaque {n}",
+  "distance_meters_abbrev": "A {m} m",
+  "open_until": "Aberto até {time}",
+  "latest_badges": "Últimas medalhas",
+  "badge": "Medalha {n}",
+  "hello_name": "Olá, {name} 👋",
+  "welcome_activate_location": "Bem-vindo ao Seu Percurso. Ative sua localização para ver lugares próximos."
+}
