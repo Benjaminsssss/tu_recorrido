@@ -192,10 +192,9 @@ class RegistroScreenState extends State<RegistroScreen> {
       'activo': true,
       // createdAt/updatedAt los maneja FirestoreService.upsertUser()
     };
-
-    print('📁 Guardando datos completos del usuario en Firestore...');
+    // print('📁 Guardando datos completos del usuario en Firestore...');
     await FirestoreService.instance.upsertUser(uid: uid, data: userData);
-    print('✅ Datos guardados exitosamente en Firestore: $userData');
+    // print('✅ Datos guardados exitosamente en Firestore: $userData');
   }
 
   void _limpiarFormulario() {
