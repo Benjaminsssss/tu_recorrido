@@ -244,7 +244,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                 sigmaY: _blurAnim.value,
               ),
               child: Container(
-                color: Colors.black.withOpacity(_dimAnim.value),
+                color: Color.fromARGB((_dimAnim.value * 255).round(), 0, 0, 0),
               ),
             );
           },
@@ -293,8 +293,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
                         width: 48,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFBCA177)
-                              .withOpacity(0.35), // marrón claro
+                          color: Color.fromARGB((0.35 * 255).round(), 188, 161,
+                              119), // marrón claro
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -410,35 +410,35 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFBCA177).withOpacity(0.18)),
+            color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
         const SizedBox(height: 14),
         _buildProgressCard(),
         const SizedBox(height: 10),
         Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFBCA177).withOpacity(0.18)),
+            color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
         const SizedBox(height: 14),
         _buildSavedPlacesCard(),
         const SizedBox(height: 10),
         Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFBCA177).withOpacity(0.18)),
+            color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
         const SizedBox(height: 14),
         _buildStampsCard(),
         const SizedBox(height: 10),
         Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFBCA177).withOpacity(0.18)),
+            color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
         const SizedBox(height: 14),
         _buildStreakCard(),
         const SizedBox(height: 10),
         Divider(
             height: 1,
             thickness: 1,
-            color: Color(0xFFBCA177).withOpacity(0.18)),
+            color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
         const SizedBox(height: 14),
         _buildFriendsCard(),
       ],
@@ -514,7 +514,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               if (_saving)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withAlpha((0.7 * 255).round()),
                     child: const Center(
                       child: CircularProgressIndicator(),
                     ),
@@ -987,7 +987,7 @@ class _QuickAction extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFBCA177).withOpacity(0.13),
+                  color: Color.fromARGB((0.13 * 255).round(), 188, 161, 119),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),

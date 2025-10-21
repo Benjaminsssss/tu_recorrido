@@ -99,13 +99,13 @@ class _HomeHeaderState extends State<HomeHeader>
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color:
-              const Color(0xFF5D4E37).withOpacity(0.15), // marrón tierra sutil
+          color: Color.fromARGB(
+              (0.15 * 255).round(), 93, 78, 55), // marrón tierra sutil
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5D4E37).withOpacity(0.08),
+            color: Color.fromARGB((0.08 * 255).round(), 93, 78, 55),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -153,13 +153,14 @@ class _HomeHeaderState extends State<HomeHeader>
                           color: _isPressed
                               ? const Color(
                                   0xFF4A7C59) // verde bosque al presionar
-                              : const Color(0xFF5D4E37)
-                                  .withOpacity(0.3), // marrón claro
+                              : Color.fromARGB((0.3 * 255).round(), 93, 78,
+                                  55), // marrón claro con 30% opacidad
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF5D4E37).withOpacity(0.12),
+                            color: Color.fromARGB((0.12 * 255).round(), 93, 78,
+                                55), // marrón claro con 12% opacidad
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),

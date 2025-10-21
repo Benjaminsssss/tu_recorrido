@@ -27,7 +27,7 @@ class BadgePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: getThemeColor().withOpacity(0.12),
+        color: getThemeColor().withAlpha((0.12 * 255).round()),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: getThemeColor(), width: 1.5),
       ),
