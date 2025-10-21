@@ -87,7 +87,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                   tr('welcome_activate_location'),
                   style: TextStyle(
                     fontSize: 13,
-                    color: _onPrimary.withOpacity(0.6),
+                    color: _onPrimary.withAlpha((0.6 * 255).round()),
                   ),
                   semanticsLabel: 'Subtítulo bienvenida',
                 ),

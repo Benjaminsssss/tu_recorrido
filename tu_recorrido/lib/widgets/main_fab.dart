@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MainFab extends StatelessWidget {
-  const MainFab();
+  const MainFab({super.key});
 
   @override
   Widget build(BuildContext context) {
