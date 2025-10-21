@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
-
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -11,7 +9,6 @@ import 'package:http/http.dart' as http;
 
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
-// Navegación a perfil se hará por ruta '/perfil'
 
 class Mapita extends StatefulWidget {
   const Mapita({super.key});
@@ -24,56 +21,52 @@ class _MapitaState extends State<Mapita> {
   static const String googleApiKeyInline =
       "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
 
+  // ⭐ Paleta de colores personalizada
+  static const Color colorAmarillo = Color(0xFFF7DF3E);
+  static const Color colorVerdeOliva = Color(0xFFA2AD4E);
+  static const Color colorVerdeEsmeralda = Color(0xFF43A78A);
+  static const Color colorAzulPetroleo = Color(0xFF264E59);
+  static const Color colorGrisCarbon = Color(0xFF2E2F32);
+
   final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
 
-  // Constantes
-  static const double _cardHeight = 100;
-  static const double _cardWidth = 300;
-  static const double _imageWidth = 80;
+  static const double _cardHeight = 140;
+  static const double _cardWidth = 350;
 
-  // Manejo del Carrusel
-  final PageController _pageController = PageController(viewportFraction: 0.85);
+  final PageController _pageController = PageController(viewportFraction: 0.90);
   int _currentPage = 0;
 
-  // Datos del Mapa y Lugares
   CameraPosition? _initialCameraPosition;
   Marker? _userMarker;
   List<PlaceResult> _lugares = [];
   final Set<Marker> _markers = {};
 
-  // Variables para la Ruta
   final Set<Polyline> _polylines = {};
   LatLng? _currentPosition;
-  // ⭐️ NUEVO: Estado de la ruta
-  bool _isRouteActive = false;
-
-  // Variables para manejo de llegada
-  double distToDest = 0.0;
-  bool _arrivalHandled = false;
-  static const double _arrivalToleranceMeters = 50.0;
   LatLng? _currentDestination;
+
+  static const double _arrivalToleranceMeters = 50.0;
+  bool _isRouteActive = false;
+  bool _arrivalHandled = false;
+
   PlaceResult? _destinationPlace;
 
-  // Inicializamos PolylinePoints SOLO para la función decodePolyline
   PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
 
-  // Configuración de Geolocator
   final LocationSettings _locationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
-    distanceFilter: 10,
+    accuracy: LocationAccuracy.bestForNavigation,
+    distanceFilter: 3,
   );
 
   final LocationSettings _oneTimeLocationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
+    accuracy: LocationAccuracy.best,
   );
 
   @override
   void initState() {
     super.initState();
-
     _determinePositionAndStartListening();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pageController.hasClients) {
         _pageController.addListener(_pageControllerListener);
@@ -89,66 +82,56 @@ class _MapitaState extends State<Mapita> {
     super.dispose();
   }
 
-  // --- Lógica de Filtrado y Geolocalización ---
-
   void _pageControllerListener() {
     if (_pageController.page != null) {
       int next = _pageController.page!.round();
       if (_currentPage != next) {
         setState(() {
           _currentPage = next;
-          // Limpiar polilíneas al deslizar, a menos que ya estés en una ruta
-          if (!_isRouteActive) {
-            _polylines.clear();
-          }
+          if (!_isRouteActive) _polylines.clear();
         });
-
         if (next >= 0 && next < _lugares.length) {
-          final targetPosition = _lugares[next].ubicacion;
-          _goToPosition(targetPosition, zoom: 17.0);
+          _goToPosition(_lugares[next].ubicacion, zoom: 17.0);
         }
       }
     }
   }
 
   void _filterPlacesByDistance() {
-    if (_currentPosition == null) {
-      return;
-    }
+    if (_currentPosition == null) return;
 
     const double maxDistanceMeters = 5000;
     final List<PlaceResult> allPlaces = MarcadoresData.lugaresMarcados;
 
     final List<PlaceResult> nearbyPlaces = allPlaces.where((place) {
-      double distance = Geolocator.distanceBetween(
+      final d = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
         place.ubicacion.latitude,
         place.ubicacion.longitude,
       );
-      return distance <= maxDistanceMeters;
+      return d <= maxDistanceMeters;
     }).toList();
 
     nearbyPlaces.sort((a, b) {
-      double distA = Geolocator.distanceBetween(
-          _currentPosition!.latitude,
-          _currentPosition!.longitude,
-          a.ubicacion.latitude,
-          a.ubicacion.longitude);
-      double distB = Geolocator.distanceBetween(
-          _currentPosition!.latitude,
-          _currentPosition!.longitude,
-          b.ubicacion.latitude,
-          b.ubicacion.longitude);
-      return distA.compareTo(distB);
+      final da = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        a.ubicacion.latitude,
+        a.ubicacion.longitude,
+      );
+      final db = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        b.ubicacion.latitude,
+        b.ubicacion.longitude,
+      );
+      return da.compareTo(db);
     });
 
     setState(() {
       _lugares = nearbyPlaces;
       _markers.clear();
-      if (_userMarker != null) {
-        _markers.add(_userMarker!);
-      }
 
       if (_userMarker != null) _markers.add(_userMarker!);
 
@@ -157,8 +140,8 @@ class _MapitaState extends State<Mapita> {
           Marker(
             markerId: MarkerId(place.placeId),
             position: place.ubicacion,
-            icon:
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueGreen),
             infoWindow: InfoWindow(
               title: place.nombre,
               snippet: place.rating != null
@@ -180,41 +163,46 @@ class _MapitaState extends State<Mapita> {
             },
           ),
         );
-        // Línea duplicada eliminada - el marcador ya fue agregado arriba
       }
 
       if (_pageController.hasClients) {
-        // Mantiene la página si el índice sigue siendo válido
-        int newPage = _currentPage < _lugares.length ? _currentPage : 0;
+        final newPage = _currentPage < _lugares.length ? _currentPage : 0;
         _pageController.jumpToPage(newPage);
         _currentPage = newPage;
       }
     });
-
-    _showSnackBar(
-        'Lugares cercanos actualizados: ${_lugares.length} encontrados en 5 km.');
   }
 
   Future<void> _determinePositionAndStartListening() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      _showSnackBar('Los servicios de ubicación están deshabilitados.');
+      _showSnackBar('⚠️ Los servicios de ubicación están deshabilitados.');
+      return;
     }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        _showSnackBar('Los permisos de ubicación fueron denegados.');
+        _showSnackBar('❌ Los permisos de ubicación fueron denegados.');
+        return;
       }
     }
 
+    if (permission == LocationPermission.deniedForever) {
+      _showSnackBar(
+          '❌ Permisos denegados permanentemente. Actívalos en Configuración.');
+      return;
+    }
+
     try {
-      Position initialPosition = await Geolocator.getCurrentPosition(
+      final initialPosition = await Geolocator.getCurrentPosition(
         locationSettings: _oneTimeLocationSettings,
-      ).timeout(const Duration(seconds: 10),
-          onTimeout: () => throw TimeoutException(
-              'No se pudo obtener la ubicación a tiempo.'));
+      ).timeout(const Duration(seconds: 10), onTimeout: () {
+        throw TimeoutException('No se pudo obtener la ubicación a tiempo.');
+      });
+
+      if (!mounted) return;
 
       setState(() {
         _currentPosition =
@@ -226,14 +214,15 @@ class _MapitaState extends State<Mapita> {
       _filterPlacesByDistance();
       _listenForRealTimeUpdates();
     } catch (e) {
-      dev.log("Error al obtener la ubicación inicial: $e");
+      dev.log("❌ Error al obtener la ubicación inicial: $e");
       if (mounted &&
           _initialCameraPosition == null &&
           MarcadoresData.lugaresMarcados.isNotEmpty) {
         setState(() {
           _initialCameraPosition = CameraPosition(
-              target: MarcadoresData.lugaresMarcados.first.ubicacion,
-              zoom: 14.0);
+            target: MarcadoresData.lugaresMarcados.first.ubicacion,
+            zoom: 14.0,
+          );
         });
       }
       _showSnackBar(
@@ -244,55 +233,52 @@ class _MapitaState extends State<Mapita> {
   void _listenForRealTimeUpdates() {
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: _locationSettings,
-    ).listen(
-      (Position position) async {
-        if (!mounted) return;
+    ).listen((Position position) async {
+      if (!mounted) return;
 
-        // Definir newLatLng desde la posición recibida
-        final LatLng newLatLng = LatLng(position.latitude, position.longitude);
+      if (position.accuracy > 20.0) {
+        dev.log(
+            '⚠️ Precisión baja (${position.accuracy.toStringAsFixed(1)}m), ignorando lectura.');
+        return;
+      }
 
-        _userMarker = Marker(
-          markerId: const MarkerId('current_location'),
-          position: newLatLng,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'Tú Estás Aquí'),
-        );
+      final newLatLng = LatLng(position.latitude, position.longitude);
 
-        if (_currentPosition?.latitude != newLatLng.latitude ||
-            _currentPosition?.longitude != newLatLng.longitude) {
-          setState(() {
-            _currentPosition = newLatLng;
+      if (_currentPosition?.latitude != newLatLng.latitude ||
+          _currentPosition?.longitude != newLatLng.longitude) {
+        setState(() {
+          _currentPosition = newLatLng;
 
-            _userMarker = Marker(
-              markerId: const MarkerId('current_location'),
-              position: newLatLng,
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueBlue),
-              infoWindow: const InfoWindow(title: 'Tú Estás Aquí'),
-            );
+          _userMarker = Marker(
+            markerId: const MarkerId('current_location'),
+            position: newLatLng,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueAzure),
+            infoWindow: const InfoWindow(title: '📍 Tú Estás Aquí'),
+          );
 
-            _markers.removeWhere((m) => m.markerId.value == 'current_location');
-            _markers.add(_userMarker!);
-          });
+          _markers.removeWhere((m) => m.markerId.value == 'current_location');
+          _markers.add(_userMarker!);
+        });
 
-          // Calcular distancia al destino si hay ruta activa
-          if (_isRouteActive && _currentDestination != null) {
-            distToDest = Geolocator.distanceBetween(
-              _currentPosition!.latitude,
-              _currentPosition!.longitude,
-              _currentDestination!.latitude,
-              _currentDestination!.longitude,
-            );
-          }
+        _filterPlacesByDistance();
+
+        if (_isRouteActive && _currentDestination != null) {
+          final distToDest = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            _currentDestination!.latitude,
+            _currentDestination!.longitude,
+          );
 
           dev.log(
-              '📍 Distancia al destino: ${distToDest.toStringAsFixed(1)} m | _arrivalHandled: $_arrivalHandled');
+              '📍 Distancia: ${distToDest.toStringAsFixed(1)}m | Precisión: ${position.accuracy.toStringAsFixed(1)}m | _arrivalHandled: $_arrivalHandled');
 
           if (distToDest <= _arrivalToleranceMeters && !_arrivalHandled) {
-            dev.log('🎉 ACTIVANDO MODAL DE LLEGADA');
+            dev.log(
+                '🎉 LLEGADA CONFIRMADA (dentro de ${_arrivalToleranceMeters}m)');
             _arrivalHandled = true;
 
-            // ⭐ Future.delayed para asegurar que el modal se muestre
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
                 _onArrivedAtDestination();
@@ -300,17 +286,13 @@ class _MapitaState extends State<Mapita> {
             });
           }
         }
-      },
-      onError: (e) {
-        dev.log("Error en el stream de ubicación: $e");
-        _showSnackBar('No se puede actualizar la ubicación en tiempo real.');
-      },
-    );
+      }
+    }, onError: (e) {
+      dev.log("❌ Error en el stream de ubicación: $e");
+      _showSnackBar('❌ No se puede actualizar la ubicación en tiempo real.');
+    });
   }
 
-  // --- Lógica de Rutas, Navegación y Cancelación ---
-
-  // ⭐️ FUNCIÓN: Cancela la ruta y limpia el mapa
   void _cancelRoute() {
     setState(() {
       _polylines.clear();
@@ -318,13 +300,10 @@ class _MapitaState extends State<Mapita> {
       _currentDestination = null;
       _destinationPlace = null;
       _arrivalHandled = false;
-      distToDest = 0.0;
-      _showSnackBar(tr('route_canceled'));
     });
-    _showSnackBar('Ruta cancelada.');
+    _showSnackBar('🚫 Ruta cancelada.');
   }
 
-  // ⭐ Modal automático de llegada CORREGIDO
   void _onArrivedAtDestination() {
     if (!mounted) return;
 
@@ -341,22 +320,53 @@ class _MapitaState extends State<Mapita> {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text(
-            '¡Felicidades!',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: colorVerdeEsmeralda,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle,
+                    color: Colors.white, size: 48),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¡Felicidades!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: colorGrisCarbon,
+                ),
+              ),
+            ],
           ),
           content: const Text(
-            'Has llegado al lugar.',
+            'Has llegado al lugar de destino.',
             textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: colorAzulPetroleo),
           ),
           actions: [
             Center(
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorAmarillo,
+                  foregroundColor: colorGrisCarbon,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25)),
+                ),
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
                 },
-                child: const Text('Aceptar'),
+                child: const Text('Aceptar',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -365,7 +375,6 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
-  // ⭐ Modal de evaluación CORREGIDO (sin overflow)
   void _showRatingDialog(PlaceResult place) {
     int selectedRating = 0;
 
@@ -376,10 +385,30 @@ class _MapitaState extends State<Mapita> {
         return StatefulBuilder(
           builder: (_, setStateDialog) {
             return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-              title: Text(
-                'Evalúa ${place.nombre}',
-                style: const TextStyle(fontSize: 18),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorVerdeEsmeralda.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.star,
+                        color: colorVerdeEsmeralda, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Evalúa ${place.nombre}',
+                      style:
+                          const TextStyle(fontSize: 18, color: colorGrisCarbon),
+                    ),
+                  ),
+                ],
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -387,15 +416,15 @@ class _MapitaState extends State<Mapita> {
                   children: [
                     const Text(
                       '¿Cómo calificarías tu experiencia?',
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14, color: colorAzulPetroleo),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (i) {
                         final starValue = i + 1;
                         return IconButton(
-                          iconSize: 32,
+                          iconSize: 36,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           icon: Icon(
@@ -403,8 +432,8 @@ class _MapitaState extends State<Mapita> {
                                 ? Icons.star
                                 : Icons.star_border,
                             color: selectedRating >= starValue
-                                ? Colors.amber
-                                : Colors.grey,
+                                ? colorAmarillo
+                                : Colors.grey.shade400,
                           ),
                           onPressed: () =>
                               setStateDialog(() => selectedRating = starValue),
@@ -413,10 +442,20 @@ class _MapitaState extends State<Mapita> {
                     ),
                     const SizedBox(height: 8),
                     if (selectedRating > 0)
-                      Text(
-                        '$selectedRating de 5 estrellas',
-                        style: const TextStyle(
-                            fontSize: 12, color: Colors.black54),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: colorAmarillo.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$selectedRating de 5 estrellas',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: colorGrisCarbon,
+                              fontWeight: FontWeight.w600),
+                        ),
                       ),
                   ],
                 ),
@@ -426,10 +465,21 @@ class _MapitaState extends State<Mapita> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     TextButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: colorGrisCarbon,
+                      ),
                       onPressed: () => Navigator.of(dialogContext).pop(),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedRating > 0
+                            ? colorVerdeEsmeralda
+                            : Colors.grey,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
+                      ),
                       onPressed: selectedRating > 0
                           ? () {
                               MarcadoresData.updatePlaceRating(
@@ -441,7 +491,7 @@ class _MapitaState extends State<Mapita> {
                                 _filterPlacesByDistance();
                               });
                               _showSnackBar(
-                                  'Gracias por evaluar ${place.nombre}.');
+                                  '✅ Gracias por evaluar ${place.nombre}.');
                             }
                           : null,
                       child: const Text('Enviar'),
@@ -456,39 +506,61 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
-  // ⭐️ FUNCIÓN: Muestra el modal de confirmación antes de trazar la ruta
   void _showStartTripConfirmation(PlaceResult place) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (_) {
         return AlertDialog(
-          title: Text('Iniciar Viaje a ${place.nombre}'),
-          content: const Text('¿Deseas trazar la ruta en el mapa?'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorAzulPetroleo.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.navigation, color: colorAzulPetroleo),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Viaje a ${place.nombre}',
+                  style: const TextStyle(fontSize: 18, color: colorGrisCarbon),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            '¿Deseas trazar la ruta en el mapa?',
+            style: TextStyle(color: colorAzulPetroleo),
+          ),
           actions: <Widget>[
-            // Botón NO (Cerrar modal)
             TextButton(
-              child: const Text('No', style: TextStyle(color: Colors.red)),
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el modal
-              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('No'),
             ),
-            // Botón SÍ (Trazar ruta)
-            TextButton(
-              child: const Text('Sí, Iniciar',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorVerdeEsmeralda,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+              ),
               onPressed: () {
-                Navigator.of(context).pop(); // Cierra el modal primero
-
+                Navigator.of(context).pop();
                 if (_currentPosition == null) {
                   _showSnackBar(
-                      'Obteniendo tu ubicación para trazar la ruta...');
+                      '📍 Obteniendo tu ubicación para trazar la ruta...');
                   _goToPosition(place.ubicacion, zoom: 17.0);
                   return;
                 }
-
-                // Inicia el trazado de la ruta (función que ya existe)
                 _getRoute(_currentPosition!, place.ubicacion, place);
               },
+              child: const Text('Sí, Iniciar',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -498,19 +570,15 @@ class _MapitaState extends State<Mapita> {
 
   Future<void> _getRoute(
       LatLng origin, LatLng destination, PlaceResult place) async {
-    _showSnackBar('Trazando ruta con la API directa...');
+    _showSnackBar('🗺️ Trazando ruta...');
 
-    final String apiKey = googleApiKeyInline;
-
-    String url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey';
+    final String url =
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$googleApiKeyInline';
 
     try {
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
         if (data['routes'] != null && data['routes'].isNotEmpty) {
           final points = data['routes'][0]['overview_polyline']['points'];
           final decoded = PolylinePoints.decodePolyline(points);
@@ -519,7 +587,6 @@ class _MapitaState extends State<Mapita> {
 
           setState(() {
             _polylines.clear();
-            // ⭐️ CAMBIO: Activar el estado de ruta
             _isRouteActive = true;
             _arrivalHandled = false;
             _currentDestination = destination;
@@ -531,26 +598,24 @@ class _MapitaState extends State<Mapita> {
             _polylines.add(
               Polyline(
                 polylineId: const PolylineId('http_route_to_poi'),
-                color: Theme.of(context).colorScheme.primary,
+                color: colorVerdeEsmeralda,
                 points: coords,
-                width: 5,
+                width: 6,
                 geodesic: true,
               ),
             );
-            // Línea duplicada eliminada - la polilínea ya fue agregada arriba
           });
 
           _fitMapToRoute(origin, destination);
         } else {
-          _showSnackBar('No se encontró ninguna ruta.');
+          _showSnackBar('❌ No se encontró ninguna ruta.');
         }
       } else {
-        _showSnackBar(
-            'Error de conexión a la API de Google: ${response.statusCode}');
+        _showSnackBar('❌ Error de conexión: ${response.statusCode}');
       }
     } catch (e) {
-      dev.log("Error al obtener la ruta por HTTP: $e");
-      _showSnackBar('Error al trazar la ruta. Verifica tu conexión.');
+      dev.log("❌ Error al obtener la ruta: $e");
+      _showSnackBar('❌ Error al trazar la ruta. Verifica tu conexión.');
     }
   }
 
@@ -580,19 +645,17 @@ class _MapitaState extends State<Mapita> {
 
   Future<void> _goToPosition(LatLng position, {double zoom = 16.0}) async {
     final GoogleMapController controller = await _controller.future;
-    await controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-          CameraPosition(target: position, zoom: zoom)),
-    );
+    await controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: position, zoom: zoom)));
   }
 
   Future<void> _goToTheUserLocation() async {
     try {
-      Position currentPosition = await Geolocator.getCurrentPosition(
+      final currentPosition = await Geolocator.getCurrentPosition(
         locationSettings: _oneTimeLocationSettings,
-      ).timeout(const Duration(seconds: 5),
-          onTimeout: () => throw TimeoutException(
-              'No se pudo obtener la ubicación a tiempo.'));
+      ).timeout(const Duration(seconds: 5), onTimeout: () {
+        throw TimeoutException('No se pudo obtener la ubicación a tiempo.');
+      });
 
       await _goToPosition(
           LatLng(currentPosition.latitude, currentPosition.longitude),
@@ -600,27 +663,40 @@ class _MapitaState extends State<Mapita> {
     } catch (e) {
       dev.log("❌ Error en el botón Mi ubicación: $e");
       _showSnackBar(
-          'No se pudo obtener la ubicación. Verifica permisos y GPS.');
+          '❌ No se pudo obtener la ubicación. Verifica permisos y GPS.');
     }
   }
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: colorAzulPetroleo,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
-
-  // --- Construcción de la UI ---
 
   @override
   Widget build(BuildContext context) {
     if (_initialCameraPosition == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: colorVerdeEsmeralda),
+              const SizedBox(height: 16),
+              const Text('Obteniendo ubicación...',
+                  style: TextStyle(color: colorGrisCarbon)),
+            ],
+          ),
+        ),
       );
     }
-
-    final theme = Theme.of(context);
 
     bool canShowFlagBtn = false;
     if (_isRouteActive &&
@@ -636,161 +712,208 @@ class _MapitaState extends State<Mapita> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('poi_title')),
-        backgroundColor: theme.colorScheme.primary,
-        actions: [
-          // Botón de admin (solo visible para administradores)
-          // ConditionalWidget comentado - requiere import de RoleProtectedWidget
-          // ConditionalWidget(
-          //   condition: (permissions) => permissions.canAccessAdmin,
-          //   child: IconButton(
-          //     icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
-          //     onPressed: () {
-          //       Navigator.pushNamed(context, '/admin');
-          //     },
-          //     tooltip: 'Panel de Administración',
-          //   ),
-          // ),
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () => Navigator.pushNamed(context, '/perfil'),
-          ),
-        ],
-      ),
       body: Stack(
         children: [
-          // MAPA
           GoogleMap(
             mapType: MapType.normal,
             initialCameraPosition: _initialCameraPosition!,
             onMapCreated: (GoogleMapController controller) =>
                 _controller.complete(controller),
             myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+            myLocationButtonEnabled: false,
             markers: _markers,
             polylines: _polylines,
             zoomControlsEnabled: false,
           ),
+
+          // ⭐ Botón Mi ubicación (esquina superior derecha)
           Positioned(
-            top: 16,
+            top: 60,
             right: 16,
-            child: FloatingActionButton(
-              onPressed: _goToTheUserLocation,
-              heroTag: 'miUbicacionBtn',
-              backgroundColor: Colors.amber,
-              tooltip: 'Mi ubicación',
-              child: const Icon(Icons.my_location),
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              color: colorVerdeOliva,
+              child: InkWell(
+                onTap: _goToTheUserLocation,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.my_location,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
             ),
           ),
+
+          // ⭐ Botón QR (esquina superior izquierda)
+          Positioned(
+            top: 60,
+            left: 16,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              color: colorVerdeOliva,
+              child: InkWell(
+                onTap: () => _showSnackBar('📷 Escaneando QR...'),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ⭐ Botón cancelar ruta
           if (_isRouteActive)
             Positioned(
-              top: 85,
+              top: 125,
               right: 16,
-              child: FloatingActionButton(
-                onPressed: _cancelRoute,
-                heroTag: 'cancelRouteBtn',
-                backgroundColor: Colors.redAccent,
-                tooltip: 'Cancelar Ruta',
-                mini: true,
-                child: const Icon(Icons.close),
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.redAccent,
+                child: InkWell(
+                  onTap: _cancelRoute,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 45,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
               ),
             ),
+
+          // ⭐ Botón evaluar lugar
           if (canShowFlagBtn && _destinationPlace != null)
             Positioned(
-              top: 140,
+              top: 185,
               right: 16,
-              child: FloatingActionButton(
-                onPressed: () => _showRatingDialog(_destinationPlace!),
-                heroTag: 'nearArrivalBtn',
-                backgroundColor: Colors.green,
-                tooltip: 'Evaluar ${_destinationPlace!.nombre}',
-                mini: true,
-                child: const Icon(Icons.flag),
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                color: colorVerdeEsmeralda,
+                child: InkWell(
+                  onTap: () => _showRatingDialog(_destinationPlace!),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 45,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.star,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
               ),
             ),
+
+          // ⭐ Carrusel de cards en la parte inferior
           Positioned(
-            top: 16,
-            left: 16,
-            child: FloatingActionButton(
-              onPressed: () => _showSnackBar('Escaneando QR...'),
-              heroTag: 'qrBtn',
-              backgroundColor: Colors.amber,
-              tooltip: tr('scan_qr'),
-              child: const Icon(Icons.qr_code_scanner),
-            ),
-          ),
-          Positioned(
-            bottom: 16,
+            bottom: 20,
             left: 0,
             right: 0,
-            child: ClipRect(
-              child: SizedBox(
-                height: _cardHeight + 16,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: _cardHeight,
-                      child: _lugares.isEmpty && _currentPosition != null
-                          ? Container(
-                              width: double.infinity,
-                              height: _cardHeight,
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color:
-                                    Colors.white.withAlpha((0.9 * 255).round()),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  "No hay lugares en un radio de 5 km",
-                                  style: TextStyle(
-                                      color: Colors.black54,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            )
-                          : PageView(
-                              controller: _pageController,
-                              physics: const ClampingScrollPhysics(),
-                              children: _lugares.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final place = entry.value;
-
-                                return _buildCard(
-                                  'assets/img/insignia.png',
-                                  place.nombre,
-                                  'Rating: ${place.rating?.toStringAsFixed(1) ?? 'Sin calificar'}',
-                                  index + 1,
-                                );
-                              }).toList(),
-                            ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Indicadores de página
-                    if (_lugares.isNotEmpty)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          _lugares.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                            width: _currentPage == index ? 12 : 8,
-                            height: 8,
+            child: SizedBox(
+              height: _cardHeight + 30,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: _cardHeight,
+                    child: _lugares.isEmpty && _currentPosition != null
+                        ? Container(
+                            width: _cardWidth,
+                            height: _cardHeight,
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _currentPage == index
-                                  ? theme.colorScheme.primary
-                                  : Colors.grey.withValues(alpha: 0.5),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
+                            child: const Center(
+                              child: Text(
+                                "🔍 No hay lugares en un radio de 5 km",
+                                style: TextStyle(
+                                  color: colorGrisCarbon,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          )
+                        : PageView(
+                            controller: _pageController,
+                            physics: const ClampingScrollPhysics(),
+                            children: _lugares.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final place = entry.value;
+
+                              return _buildCard(
+                                place.nombre,
+                                'Rating: ${place.rating?.toStringAsFixed(1) ?? 'Sin calificar'}',
+                                index + 1,
+                              );
+                            }).toList(),
+                          ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ⭐ Indicadores de página (dots alargados)
+                  if (_lugares.isNotEmpty)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _lugares.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                          width: _currentPage == index ? 24 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: _currentPage == index
+                                ? colorVerdeOliva
+                                : Colors.grey.withOpacity(0.4),
                           ),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -799,92 +922,90 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
-  // Método para construir cada tarjeta
-  Widget _buildCard(
-      String imagePath, String title, String subtitle, int cardNumber) {
-    // Buscamos el lugar por índice dentro de la lista _lugares (filtrada)
+  Widget _buildCard(String title, String subtitle, int cardNumber) {
     final place = _lugares[cardNumber - 1];
     final bool isDisabled = _isRouteActive;
 
+    final displayRating = place.rating != null
+        ? '${place.rating!.toStringAsFixed(1)}'
+        : 'Sin calificar';
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Center(
         child: SizedBox(
           width: _cardWidth,
           height: _cardHeight,
           child: Card(
-            elevation: 4.0,
-            // ⭐️ Color gris si está deshabilitada para indicar el bloqueo
-            color: isDisabled ? Colors.grey[200] : Colors.white,
+            elevation: 6,
+            shadowColor: Colors.black.withOpacity(0.2),
+            color: Colors.white,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0)),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: InkWell(
               onTap: isDisabled
                   ? () => _showSnackBar(
-                      'Cancela la ruta actual (botón X) antes de iniciar una nueva.')
+                      '⚠️ Cancela la ruta actual (botón X) antes de iniciar una nueva.')
                   : () => _showStartTripConfirmation(place),
-              borderRadius: BorderRadius.circular(12.0),
-              splashColor: Colors.amber.withAlpha((255 * 0.3).round()),
+              borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: _imageWidth,
-                      height: _cardHeight - 16,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: Colors.grey[300],
-                            alignment: Alignment.center,
-                            child: const Icon(Icons.image_not_supported),
-                          ),
-                        ),
+                    // ⭐ Icono circular verde a la izquierda
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: colorVerdeOliva.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.place,
+                        color: colorVerdeOliva,
+                        size: 32,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
+
+                    // ⭐ Contenido del card
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          // Título del lugar
                           Text(
                             title,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: isDisabled ? Colors.black38 : Colors.black,
+                              color: colorGrisCarbon,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          if (place.rating != null)
-                            Row(
-                              children: List.generate(
-                                5,
-                                (index) => Icon(
-                                  index < place.rating!.round()
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  size: 14,
-                                  color: Colors.amber,
+                          const SizedBox(height: 8),
+
+                          // Rating con estrella amarilla
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star,
+                                size: 20,
+                                color: colorAmarillo,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                displayRating,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color:
-                                  isDisabled ? Colors.black38 : Colors.black54,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            ],
                           ),
                         ],
                       ),

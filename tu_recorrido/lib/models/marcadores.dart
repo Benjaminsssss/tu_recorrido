@@ -21,13 +21,13 @@ class MarcadoresData {
     PlaceResult(
       placeId: 'm3',
       nombre: 'Parque Principal',
-      ubicacion: const LatLng(-12.0502, -77.0452),
+      ubicacion: const LatLng(-33.53059455031133, -70.5939209465826),
       rating: 4.0,
     ),
     PlaceResult(
       placeId: 'm4',
       nombre: 'Mirador',
-      ubicacion: const LatLng(-12.0531, -77.0509),
+      ubicacion: const LatLng(-33.53045784773835, -70.5933411879206),
       rating: 4.7,
     ),
     PlaceResult(
@@ -35,6 +35,12 @@ class MarcadoresData {
       nombre: 'unimarc',
       ubicacion: const LatLng(-33.526812908174755, -70.59580173995262),
       rating: 4.3,
+    ),
+    PlaceResult(
+      placeId: 'm7',
+      nombre: 'Duoc Uc San Joaquin',
+      ubicacion: const LatLng(-33.50010306659869, -70.6164537364426),
+      rating: null,
     ),
   ];
 

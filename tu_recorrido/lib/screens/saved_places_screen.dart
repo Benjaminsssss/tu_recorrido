@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/place.dart';
 import '../widgets/place_modal.dart';
+import '../services/saved_places_notifier.dart';
 
 class SavedPlacesScreen extends StatelessWidget {
   const SavedPlacesScreen({super.key});
@@ -32,6 +33,9 @@ class SavedPlacesScreen extends StatelessWidget {
           .collection('saved_places')
           .doc(placeId)
           .delete();
+
+      // Notificar que el lugar fue eliminado
+      SavedPlacesNotifier().notifyPlaceChanged(placeId, false);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

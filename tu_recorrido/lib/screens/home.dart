@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../models/place.dart';
 import '../widgets/place_modal.dart';
+import '../services/saved_places_notifier.dart';
 
 /// Nuevo Home: buscador, avatar, lista/carrusel de lugares y barra inferior.
 class HomeScreen extends StatefulWidget {
@@ -290,16 +292,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       subtitle = category;
                     }
 
+                    // Convertir documento Firestore a Place
+                    final place = _convertToPlace(doc);
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: _PlaceCard(
                         title: name,
                         subtitle: subtitle,
                         imageUrl: imageUrl,
+                        place: place,
                         onDetails: () {
-                          // Convertir documento Firestore a Place
+                          // Mostrar modal con detalles
                           try {
-                            final place = _convertToPlace(doc);
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
@@ -358,18 +363,138 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _PlaceCard extends StatelessWidget {
+class _PlaceCard extends StatefulWidget {
   final String title;
   final String? subtitle;
   final String? imageUrl;
   final VoidCallback onDetails;
+  final Place place;
 
   const _PlaceCard({
     required this.title,
     this.subtitle,
     this.imageUrl,
     required this.onDetails,
+    required this.place,
   });
+
+  @override
+  State<_PlaceCard> createState() => _PlaceCardState();
+}
+
+class _PlaceCardState extends State<_PlaceCard> {
+  bool _isSaved = false;
+  bool _isLoading = false;
+  final _notifier = SavedPlacesNotifier();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfSaved();
+    _notifier.addListener(_onSavedPlacesChanged);
+  }
+
+  @override
+  void dispose() {
+    _notifier.removeListener(_onSavedPlacesChanged);
+    super.dispose();
+  }
+
+  void _onSavedPlacesChanged() {
+    // Re-verificar si el lugar está guardado cuando hay cambios
+    _checkIfSaved();
+  }
+
+  Future<void> _checkIfSaved() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('saved_places')
+          .doc(widget.place.id)
+          .get();
+
+      if (mounted) {
+        setState(() {
+          _isSaved = doc.exists;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking if place is saved: $e');
+    }
+  }
+
+  Future<void> _toggleSave() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Debes iniciar sesión para guardar lugares')),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('saved_places')
+          .doc(widget.place.id);
+
+      if (_isSaved) {
+        await docRef.delete();
+        if (mounted) {
+          setState(() => _isSaved = false);
+          // Notificar que el lugar fue eliminado
+          _notifier.notifyPlaceChanged(widget.place.id, false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${widget.place.nombre} eliminado de guardados')),
+          );
+        }
+      } else {
+        await docRef.set({
+          'placeId': widget.place.id,
+          'nombre': widget.place.nombre,
+          'comuna': widget.place.comuna,
+          'region': widget.place.region,
+          'shortDesc': widget.place.shortDesc,
+          'descripcion': widget.place.descripcion,
+          'mejorMomento': widget.place.mejorMomento,
+          'tema': widget.place.badge.tema,
+          'badge': widget.place.badge.nombre,
+          'imageUrl': widget.place.imagenes.isNotEmpty ? widget.place.imagenes[0].url : null,
+          'lat': widget.place.lat,
+          'lng': widget.place.lng,
+          'saved_at': FieldValue.serverTimestamp(),
+        });
+        if (mounted) {
+          setState(() => _isSaved = true);
+          // Notificar que el lugar fue guardado
+          _notifier.notifyPlaceChanged(widget.place.id, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${widget.place.nombre} guardado')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error toggling save: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al guardar el lugar')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -384,38 +509,75 @@ class _PlaceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen superior
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: imageUrl != null && imageUrl!.isNotEmpty
-                    ? Image.network(
-                        imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: const Color(0xFFF0F0F0),
-                          child: const Center(
-                            child: Icon(Icons.image_not_supported, size: 48, color: Colors.black38),
-                          ),
-                        ),
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
+            // Imagen superior con botón de guardar
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            widget.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: const Color(0xFFF0F0F0),
+                              child: const Center(
+                                child: Icon(Icons.image_not_supported, size: 48, color: Colors.black38),
+                              ),
+                            ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: const Color(0xFFF0F0F0),
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
                             color: const Color(0xFFF0F0F0),
                             child: const Center(
-                              child: CircularProgressIndicator(),
+                              child: Icon(Icons.image, size: 48, color: Colors.black38),
                             ),
-                          );
-                        },
-                      )
-                    : Container(
-                        color: const Color(0xFFF0F0F0),
-                        child: const Center(
-                          child: Icon(Icons.image, size: 48, color: Colors.black38),
+                          ),
+                  ),
+                ),
+                // Botón de guardar en la esquina superior derecha
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Material(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      onTap: _isLoading ? null : _toggleSave,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
                         ),
+                        child: _isLoading
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : Icon(
+                                _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                                color: _isSaved ? const Color(0xFFC88400) : Colors.black54,
+                                size: 24,
+                              ),
                       ),
-              ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -423,20 +585,20 @@ class _PlaceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFFB57A00), // similar al dorado de la maqueta
                     ),
                   ),
-                  if (subtitle != null) ...[
+                  if (widget.subtitle != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         const Icon(Icons.place, size: 16, color: Colors.black45),
                         const SizedBox(width: 6),
-                        Text(subtitle!, style: const TextStyle(color: Colors.black54)),
+                        Text(widget.subtitle!, style: const TextStyle(color: Colors.black54)),
                       ],
                     ),
                   ],
@@ -444,7 +606,7 @@ class _PlaceCard extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton.icon(
-                      onPressed: onDetails,
+                      onPressed: widget.onDetails,
                       icon: const Icon(Icons.arrow_forward),
                       label: const Text('Ver detalles'),
                       style: ElevatedButton.styleFrom(
