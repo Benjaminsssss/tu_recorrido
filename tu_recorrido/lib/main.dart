@@ -49,16 +49,21 @@ Future<void> main() async {
             builder: (context) {
               // Hidratar avatar desde SharedPreferences si existe, antes de construir la app
               WidgetsBinding.instance.addPostFrameCallback((_) async {
+                // Acceder a Provider antes de await para evitar usar BuildContext tras una espera
+                UserState? userState;
+                try {
+                  userState = context.read<UserState>();
+                } catch (_) {
+                  userState = null;
+                }
+
                 final prefs = await SharedPreferences.getInstance();
                 final savedUrl = prefs.getString('user_avatarUrl');
-                if (savedUrl != null && savedUrl.isNotEmpty) {
-                  try {
-                    final userState = context.read<UserState>();
-                    if (userState.avatarUrl != savedUrl) {
-                      await userState.setAvatarUrl(savedUrl);
-                    }
-                  } catch (_) {
-                    // Provider no disponible aún; ignorar silenciosamente
+                if (savedUrl != null &&
+                    savedUrl.isNotEmpty &&
+                    userState != null) {
+                  if (userState.avatarUrl != savedUrl) {
+                    await userState.setAvatarUrl(savedUrl);
                   }
                 }
               });

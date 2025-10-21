@@ -206,13 +206,14 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         if (_modo == PerfilModo.editar) {
           setState(() => _modo = PerfilModo.hub);
         }
-        // Cerrar el modal si está abierto
-        Future.microtask(() {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
-          }
-        });
-        // Mostrar confirmación
+        // Cerrar el modal si está abierto (asegurando mounted tras el await)
+        if (!mounted) return;
+        final navigator = Navigator.of(context);
+        if (navigator.canPop()) {
+          navigator.pop();
+        }
+        // Mostrar confirmación (reverificar mounted por seguridad)
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Perfil actualizado')),
         );
@@ -691,23 +692,37 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RadioListTile<Locale>(
+            ListTile(
               title: const Text('Español'),
-              value: const Locale('es'),
-              groupValue: _selectedLocale,
-              onChanged: (v) {
+              leading: Icon(
+                _selectedLocale == const Locale('es')
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off,
+                color: _selectedLocale == const Locale('es')
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).disabledColor,
+              ),
+              onTap: () {
+                final v = const Locale('es');
                 setState(() => _selectedLocale = v);
-                if (v != null) context.setLocale(v);
+                context.setLocale(v);
                 Navigator.pop(context);
               },
             ),
-            RadioListTile<Locale>(
+            ListTile(
               title: const Text('English'),
-              value: const Locale('en'),
-              groupValue: _selectedLocale,
-              onChanged: (v) {
+              leading: Icon(
+                _selectedLocale == const Locale('en')
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_off,
+                color: _selectedLocale == const Locale('en')
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).disabledColor,
+              ),
+              onTap: () {
+                final v = const Locale('en');
                 setState(() => _selectedLocale = v);
-                if (v != null) context.setLocale(v);
+                context.setLocale(v);
                 Navigator.pop(context);
               },
             ),

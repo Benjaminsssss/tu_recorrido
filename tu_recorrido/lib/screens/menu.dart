@@ -197,8 +197,9 @@ class _MapitaState extends State<Mapita> {
 
   Future<void> _determinePositionAndStartListening() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled)
+    if (!serviceEnabled) {
       _showSnackBar('Los servicios de ubicación están deshabilitados.');
+    }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
