@@ -23,7 +23,7 @@ Future<void> main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
   };
-
+//  prueba
   runApp(
     MaterialApp(
       // Delegates de localización
