@@ -26,15 +26,19 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
   }
 
   Future<void> _cargarEstaciones() async {
+    if (!mounted) return;
+    
     try {
       final estaciones = await EstacionService.obtenerEstacionesActivas();
-      setState(() {
-        _estaciones = estaciones;
-        _cargando = false;
-      });
-    } catch (e) {
-      setState(() => _cargando = false);
       if (mounted) {
+        setState(() {
+          _estaciones = estaciones;
+          _cargando = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargando = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al cargar estaciones: $e'),
@@ -88,133 +92,139 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
       ],
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Header con información
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Coloressito.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.admin_panel_settings,
-                          color: Coloressito.primary),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Panel de Administrador',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+          : SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header con información
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Coloressito.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.admin_panel_settings,
+                            color: Coloressito.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Panel de Administrador',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            Text(
-                              'Total estaciones: ${_estaciones.length}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
+                              Text(
+                                'Total estaciones: ${_estaciones.length}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
 
-                // Lista de estaciones
-                Expanded(
-                  flex: 1,
-                  child: _buildListaEstaciones(),
-                ),
+                  // Lista de estaciones
+                  _buildListaEstaciones(),
 
-                // Mostrar QR seleccionado
-                if (_estacionSeleccionada != null)
-                  Expanded(
-                    flex: 1,
-                    child: _buildVistaQR(_estacionSeleccionada!),
-                  ),
-              ],
+                  // Mostrar QR seleccionado
+                  if (_estacionSeleccionada != null)
+                    _buildVistaQR(_estacionSeleccionada!),
+                ],
+              ),
             ),
     );
   }
 
   Widget _buildListaEstaciones() {
     if (_estaciones.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.location_off, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No hay estaciones disponibles',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
+      return Container(
+        height: 200,
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.location_off, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'No hay estaciones disponibles',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      itemCount: _estaciones.length,
-      itemBuilder: (context, index) {
-        final estacion = _estaciones[index];
-        final tieneQR = estacion.codigoQR.isNotEmpty;
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: _estacionSeleccionada != null ? 300 : 500,
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: _estaciones.length,
+        itemBuilder: (context, index) {
+          final estacion = _estaciones[index];
+          final tieneQR = estacion.codigoQR.isNotEmpty;
 
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: tieneQR
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                tieneQR ? Icons.qr_code : Icons.qr_code_scanner,
-                color: tieneQR ? Colors.green : Colors.orange,
-              ),
-            ),
-            title: Text(
-              estacion.nombre,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tieneQR ? 'QR: ${estacion.codigoQR}' : 'Sin código QR',
-                  style: TextStyle(
-                    color: tieneQR ? Colors.black54 : Colors.orange,
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                  ),
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: tieneQR
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'ID: ${estacion.codigo}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
+                child: Icon(
+                  tieneQR ? Icons.qr_code : Icons.qr_code_scanner,
+                  color: tieneQR ? Colors.green : Colors.orange,
                 ),
-              ],
+              ),
+              title: Text(
+                estacion.nombre,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tieneQR ? 'QR: ${estacion.codigoQR}' : 'Sin código QR',
+                    style: TextStyle(
+                      color: tieneQR ? Colors.black54 : Colors.orange,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'ID: ${estacion.codigo}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+              trailing: tieneQR
+                  ? const Icon(Icons.visibility, color: Colors.blue)
+                  : const Icon(Icons.warning, color: Colors.orange),
+              onTap: tieneQR
+                  ? () => setState(() => _estacionSeleccionada = estacion)
+                  : null,
             ),
-            trailing: tieneQR
-                ? const Icon(Icons.visibility, color: Colors.blue)
-                : const Icon(Icons.warning, color: Colors.orange),
-            onTap: tieneQR
-                ? () => setState(() => _estacionSeleccionada = estacion)
-                : null,
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -257,43 +267,42 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
           const SizedBox(height: 16),
 
           // Código QR
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: QrImageView(
-                  data: estacion.codigoQR,
-                  version: QrVersions.auto,
-                  size: 250.0,
-                  gapless: false,
-                  backgroundColor: Colors.white,
-                  errorStateBuilder: (cxt, err) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error, size: 48, color: Colors.red),
-                          SizedBox(height: 8),
-                          Text(
-                            'Error al generar QR',
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+          Container(
+            height: 250,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
+              ],
+            ),
+            child: Center(
+              child: QrImageView(
+                data: estacion.codigoQR,
+                version: QrVersions.auto,
+                size: 200.0,
+                gapless: false,
+                backgroundColor: Colors.white,
+                errorStateBuilder: (cxt, err) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, size: 48, color: Colors.red),
+                        SizedBox(height: 8),
+                        Text(
+                          'Error al generar QR',
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),

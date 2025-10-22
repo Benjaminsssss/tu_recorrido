@@ -10,6 +10,7 @@ import 'screens/escanerqr.dart';
 import 'screens/menu.dart';
 import 'screens/perfil.dart';
 import 'screens/saved_places_screen.dart';
+import 'screens/coleccion.dart';
 
 // Admin screens
 import 'admin/screens/admin_screen.dart';
@@ -43,8 +44,10 @@ class MyApp extends StatelessWidget {
         '/auth/registro': (_) => const RegistroScreen(),
         '/escaner': (_) => const EscanerQRScreen(),
         '/mapa': (_) => const Mapita(),
+        '/menu': (_) => const Mapita(),
         '/perfil': (_) => const Perfil(),
         '/saved-places': (_) => const SavedPlacesScreen(),
+        '/coleccion': (_) => const ColeccionScreen(),
 
         // Admin routes
         '/admin': (_) => const AdminScreen(),

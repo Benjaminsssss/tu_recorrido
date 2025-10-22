@@ -41,6 +41,7 @@ dependencies:
   # QR Code packages
   qr_flutter: ^4.1.0
   mobile_scanner: ^3.5.7
+  permission_handler: ^11.0.0
   crypto: ^3.0.3
   logger: ^2.0.2+1
 

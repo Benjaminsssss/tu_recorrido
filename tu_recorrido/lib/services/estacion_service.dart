@@ -48,10 +48,11 @@ class EstacionService {
         return null;
       }
 
+      // Optimizar consulta: usar índice compuesto (activa, codigoQR)
       final query = await _firestore
           .collection(_collection)
-          .where('codigoQR', isEqualTo: codigoQR)
           .where('activa', isEqualTo: true)
+          .where('codigoQR', isEqualTo: codigoQR)
           .limit(1)
           .get();
 
@@ -73,11 +74,11 @@ class EstacionService {
         return await obtenerPorCodigoQR(codigo);
       }
 
-      // Buscar por código legacy
+      // Buscar por código legacy - optimizar orden de filtros
       final query = await _firestore
           .collection(_collection)
-          .where('codigo', isEqualTo: codigo)
           .where('activa', isEqualTo: true)
+          .where('codigo', isEqualTo: codigo)
           .limit(1)
           .get();
 

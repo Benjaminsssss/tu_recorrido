@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/estacion.dart';
 import '../models/estacion_visitada.dart';
+import 'auth_local_service.dart';
 
 /// Servicio para manejar la colección de estaciones visitadas por el usuario
 /// Ahora usa subcolecciones: users/{userId}/estaciones_visitadas/{estacionId}
@@ -12,20 +13,40 @@ class ColeccionService {
   static const String _estacionesVisitadasSubcollection =
       'estaciones_visitadas';
 
+  /// Obtener el ID del usuario actual
+  static Future<String?> _obtenerUserId() async {
+    // Intentar obtener usuario de Firebase
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      return firebaseUser.uid;
+    }
+
+    // Si no hay usuario de Firebase, verificar si hay uno local
+    final localUser = await AuthLocalService.obtenerUsuarioActual();
+    if (localUser != null) {
+      return localUser['id'];
+    }
+
+    // Si no hay usuario local, inicializar uno por defecto para desarrollo
+    await AuthLocalService.inicializarUsuarioPorDefecto();
+    final nuevoUsuario = await AuthLocalService.obtenerUsuarioActual();
+    return nuevoUsuario?['id'];
+  }
+
   /// Marca una estación como visitada por el usuario actual
   static Future<void> marcarComoVisitada(
     Estacion estacion, {
     double? latitudUsuario,
     double? longitudUsuario,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userId = await _obtenerUserId();
+    if (userId == null) {
       throw Exception('Usuario no autenticado');
     }
 
     try {
       // Verifica si ya fue visitada
-      final yaVisitada = await _yaFueVisitada(user.uid, estacion.id);
+      final yaVisitada = await _yaFueVisitada(userId, estacion.id);
       if (yaVisitada) {
         throw Exception('Esta estación ya fue visitada anteriormente');
       }
@@ -44,7 +65,7 @@ class ColeccionService {
       // Guarda en la subcolección del usuario
       await _firestore
           .collection(_usersCollection)
-          .doc(user.uid)
+          .doc(userId)
           .collection(_estacionesVisitadasSubcollection)
           .doc(estacion.id) // Usar el ID de la estación como ID del documento
           .set(visita.toFirestore());
@@ -55,15 +76,15 @@ class ColeccionService {
 
   /// Obtiene todas las estaciones visitadas por el usuario actual
   static Future<List<EstacionVisitada>> obtenerEstacionesVisitadas() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userId = await _obtenerUserId();
+    if (userId == null) {
       return [];
     }
 
     try {
       final query = await _firestore
           .collection(_usersCollection)
-          .doc(user.uid)
+          .doc(userId)
           .collection(_estacionesVisitadasSubcollection)
           .orderBy('fechaVisita', descending: true)
           .get();
@@ -78,8 +99,8 @@ class ColeccionService {
 
   /// Obtiene las estadísticas del progreso del usuario
   static Future<Map<String, int>> obtenerEstadisticas() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userId = await _obtenerUserId();
+    if (userId == null) {
       return {'visitadas': 0, 'total': 0, 'porcentaje': 0};
     }
 
@@ -87,7 +108,7 @@ class ColeccionService {
       // Cuenta las estaciones visitadas en la subcolección del usuario
       final visitadasQuery = await _firestore
           .collection(_usersCollection)
-          .doc(user.uid)
+          .doc(userId)
           .collection(_estacionesVisitadasSubcollection)
           .get();
 
@@ -109,10 +130,10 @@ class ColeccionService {
 
   /// Verifica si una estación ya fue visitada por el usuario
   static Future<bool> yaFueVisitada(String estacionId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return false;
+    final userId = await _obtenerUserId();
+    if (userId == null) return false;
 
-    return await _yaFueVisitada(user.uid, estacionId);
+    return await _yaFueVisitada(userId, estacionId);
   }
 
   /// Método para verificar visita - ahora más eficiente con subcolección
@@ -133,13 +154,13 @@ class ColeccionService {
     DateTime? desde,
     DateTime? hasta,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return [];
+    final userId = await _obtenerUserId();
+    if (userId == null) return [];
 
     try {
       Query query = _firestore
           .collection(_usersCollection)
-          .doc(user.uid)
+          .doc(userId)
           .collection(_estacionesVisitadasSubcollection);
 
       if (desde != null) {
