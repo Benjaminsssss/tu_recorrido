@@ -21,185 +21,31 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
   static const Color colorGrisCarbon = Color(0xFF2E2F32);
 
   final _codigoController = TextEditingController();
-  
+  bool _escaneando = false;
   bool _validando = false;
   Estacion? _estacionEncontrada;
-  String? _mensajeError;
+  late AnimationController _animationController;
+  late Animation<double> _pulseAnimation;
 
   @override
-  Widget build(BuildContext context) {
-    return PantallaBase(
-      titulo: 'Escanear QR',
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            // Instrucciones
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(color: Colors.blue),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text(
-                        'Instrucciones',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Ingresa manualmente el código QR de la estación que quieres visitar.',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Campo de entrada de código QR
-            TextField(
-              controller: _codigoController,
-              decoration: InputDecoration(
-                labelText: 'Código QR',
-                hintText: 'Ingresa el código QR aquí',
-                prefixIcon: const Icon(Icons.qr_code),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                errorText: _mensajeError,
-              ),
-              onChanged: (value) {
-                if (_mensajeError != null) {
-                  setState(() {
-                    _mensajeError = null;
-                  });
-                }
-              },
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Botón de validación
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _validando ? null : _validarCodigoQR,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                child: _validando
-                    ? const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Text('Validando...'),
-                        ],
-                      )
-                    : const Text(
-                        'Validar Código QR',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Información de la estación encontrada
-            if (_estacionEncontrada != null) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: Colors.green),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.green),
-                        SizedBox(width: 8),
-                        Text(
-                          'Estación Encontrada',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Nombre: ${_estacionEncontrada!.nombre}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    if (_estacionEncontrada!.descripcion.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text('Descripción: ${_estacionEncontrada!.descripcion}'),
-                    ],
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => _registrarVisita(_estacionEncontrada!),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Registrar Visita'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
     );
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.repeat(reverse: true);
   }
 
-  Future<void> _validarCodigoQR() async {
-    final codigo = _codigoController.text.trim();
-    
-    if (codigo.isEmpty) {
-      setState(() {
-        _mensajeError = 'Ingresa un código QR';
-      });
-      return;
-    }
+  @override
+  void dispose() {
+    _codigoController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
 
   /// ⭐ Abre el escáner de QR real con la cámara (SIN botón de galería)
   Future<void> _abrirEscanerQR() async {
@@ -460,17 +306,17 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
           _mostrarMensaje('❌ Código no válido o estación inactiva', Colors.redAccent);
         }
       }
-
-      // Por ahora solo mostrar éxito sin registrar en Firestore
+    } catch (e) {
       if (mounted) {
         _mostrarMensaje('❌ Error al validar: $e', Colors.redAccent);
       }
-    } catch (e) {
-      _mostrarError('Error al registrar visita: $e');
+    } finally {
+      if (mounted) setState(() => _validando = false);
     }
   }
 
-  void _mostrarExito(Estacion estacion) {
+  /// Mostrar información de estación encontrada
+  void _mostrarEstacionEncontrada(Estacion estacion) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

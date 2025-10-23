@@ -27,7 +27,7 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
 
   Future<void> _cargarEstaciones() async {
     if (!mounted) return;
-    
+
     try {
       final estaciones = await EstacionService.obtenerEstacionesActivas();
       if (mounted) {
