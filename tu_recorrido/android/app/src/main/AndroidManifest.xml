@@ -10,7 +10,11 @@
     <!-- Permisos para seleccionar imágenes de galería (image_picker) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.camera" android:required="false"/>
 
+    
+    
     <application
         android:label="tu_recorrido"
         android:name="${applicationName}"
