@@ -8,8 +8,13 @@ import 'screens/login.dart';
 import 'screens/registro.dart';
 import 'screens/escanerqr.dart';
 import 'screens/menu.dart';
-import 'screens/profile_screen.dart';
+import 'screens/perfil.dart';
 import 'screens/saved_places_screen.dart';
+import 'screens/coleccion.dart';
+
+// Admin screens
+import 'admin/screens/admin_screen.dart';
+import 'admin/screens/generador_qr_screen.dart';
 
 // AuthGate & Protection
 import 'widgets/auth_gate.dart';
@@ -39,8 +44,14 @@ class MyApp extends StatelessWidget {
         '/auth/registro': (_) => const RegistroScreen(),
         '/escaner': (_) => const EscanerQRScreen(),
         '/mapa': (_) => const Mapita(),
-        '/perfil': (_) => const ProfileScreen(),
+        '/menu': (_) => const Mapita(),
+        '/perfil': (_) => const Perfil(),
         '/saved-places': (_) => const SavedPlacesScreen(),
+        '/coleccion': (_) => const ColeccionScreen(),
+
+        // Admin routes
+        '/admin': (_) => const AdminScreen(),
+        '/admin/generador-qr': (_) => const GeneradorQRScreen(),
 
         // Si ya tienes una pantalla de lugares, descomenta:
         // '/places': (_) => const PlacesScreen(),

@@ -38,6 +38,36 @@ service cloud.firestore {
                     && (request.resource.data.createdAt == resource.data.createdAt);
 
       allow read, delete: if request.auth != null && request.auth.uid == uid;
+
+      // ----- ESTACIONES VISITADAS (subcollection) -----
+      match /estaciones_visitadas/{estacionVisitadaId} {
+        // Solo el dueño puede leer/escribir sus estaciones visitadas
+        allow read, create, update, delete: if request.auth != null && request.auth.uid == uid;
+
+        // Validación de esquema para estaciones visitadas
+        function isValidEstacionVisitada(data) {
+          return
+            (data.keys().hasOnly([
+              'id', 'estacionId', 'estacionCodigo', 'estacionNombre',
+              'fechaVisita', 'latitudVisita', 'longitudVisita'
+            ])) &&
+            (data.id is string) &&
+            (data.estacionId is string) &&
+            (data.estacionCodigo is string) &&
+            (data.estacionNombre is string) &&
+            (data.fechaVisita is timestamp) &&
+            (data.latitudVisita is number || data.latitudVisita == null) &&
+            (data.longitudVisita is number || data.longitudVisita == null);
+        }
+
+        allow create: if request.auth != null 
+                      && request.auth.uid == uid 
+                      && isValidEstacionVisitada(request.resource.data);
+        
+        allow update: if request.auth != null 
+                      && request.auth.uid == uid 
+                      && isValidEstacionVisitada(request.resource.data);
+      }
     }
 
     // ----- PLACES -----
@@ -45,6 +75,40 @@ service cloud.firestore {
     match /places/{placeId} {
       allow read: if true; // público (puedes cambiarlo si quieres)
       allow create, update, delete: if request.auth != null;
+    }
+
+    // ----- ESTACIONES -----
+    // Estaciones patrimoniales para escaneo QR
+    match /estaciones/{estacionId} {
+      // Lectura pública para usuarios autenticados (escaneo QR)
+      allow read: if request.auth != null;
+      
+      // Solo usuarios autenticados pueden crear/actualizar estaciones
+      // En producción, esto debería restringirse solo a administradores
+      allow create, update: if request.auth != null;
+      
+      // Solo administradores pueden eliminar (implementar role-based después)
+      allow delete: if request.auth != null;
+
+      // Validación de esquema para estaciones
+      function isValidEstacion(data) {
+        return
+          (data.keys().hasOnly([
+            'codigo', 'codigoQR', 'nombre', 'descripcion', 
+            'latitud', 'longitud', 'fechaCreacion', 'activa'
+          ])) &&
+          (data.codigo is string) &&
+          (data.codigoQR is string) &&
+          (data.nombre is string) &&
+          (data.descripcion is string) &&
+          (data.latitud is number) &&
+          (data.longitud is number) &&
+          (data.fechaCreacion is timestamp) &&
+          (data.activa is bool);
+      }
+
+      allow create: if request.auth != null && isValidEstacion(request.resource.data);
+      allow update: if request.auth != null && isValidEstacion(request.resource.data);
     }
   }
 }

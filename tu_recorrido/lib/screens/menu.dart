@@ -394,7 +394,7 @@ class _MapitaState extends State<Mapita> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorVerdeEsmeralda.withOpacity(0.2),
+                      color: colorVerdeEsmeralda.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.star,
@@ -446,7 +446,7 @@ class _MapitaState extends State<Mapita> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colorAmarillo.withOpacity(0.2),
+                          color: colorAmarillo.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -518,7 +518,7 @@ class _MapitaState extends State<Mapita> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: colorAzulPetroleo.withOpacity(0.2),
+                  color: colorAzulPetroleo.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.navigation, color: colorAzulPetroleo),
@@ -762,7 +762,7 @@ class _MapitaState extends State<Mapita> {
               borderRadius: BorderRadius.circular(12),
               color: colorVerdeOliva,
               child: InkWell(
-                onTap: () => _showSnackBar('📷 Escaneando QR...'),
+                onTap: () => Navigator.pushNamed(context, '/escaner'),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: 50,
@@ -858,7 +858,7 @@ class _MapitaState extends State<Mapita> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withValues(alpha: 0.2),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -908,7 +908,7 @@ class _MapitaState extends State<Mapita> {
                             borderRadius: BorderRadius.circular(4),
                             color: _currentPage == index
                                 ? colorVerdeOliva
-                                : Colors.grey.withOpacity(0.4),
+                                : Colors.grey.withValues(alpha: 0.4),
                           ),
                         ),
                       ),
@@ -927,7 +927,7 @@ class _MapitaState extends State<Mapita> {
     final bool isDisabled = _isRouteActive;
 
     final displayRating = place.rating != null
-        ? '${place.rating!.toStringAsFixed(1)}'
+        ? place.rating!.toStringAsFixed(1)
         : 'Sin calificar';
 
     return Padding(
@@ -938,7 +938,7 @@ class _MapitaState extends State<Mapita> {
           height: _cardHeight,
           child: Card(
             elevation: 6,
-            shadowColor: Colors.black.withOpacity(0.2),
+            shadowColor: Colors.black.withValues(alpha: 0.2),
             color: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -958,7 +958,7 @@ class _MapitaState extends State<Mapita> {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: colorVerdeOliva.withOpacity(0.2),
+                        color: colorVerdeOliva.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
