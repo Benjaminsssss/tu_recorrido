@@ -40,6 +40,7 @@ dependencies:
   image: ^4.5.4
   flutter_svg: ^2.2.1
   mobile_scanner: ^5.2.3 
+  qr_flutter: ^4.1.0
   # NOTA: Si necesitas la librería 'js' que se mencionó como eliminada, agrégala aquí con la versión correcta.
 
 dev_dependencies:
