@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/estacion.dart';
 import '../services/estacion_service.dart';
+import '../services/coleccion_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// vista para escanear códigos QR de estaciones patrimoniales
 class EscanerQRScreen extends StatefulWidget {
@@ -90,7 +92,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   }
 
                   await Future.delayed(const Duration(milliseconds: 250));
-                  
+
                   if (mounted) {
                     try {
                       await _validarCodigo(code);
@@ -417,7 +419,43 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
 
   /// Marcar estación como visitada
   Future<void> _marcarComoVisitada(Estacion estacion) async {
-    _mostrarMensaje('✅ Estación ${estacion.nombre} marcada como visitada', colorVerdeEsmeralda);
+    if (!mounted) return;
+
+    setState(() => _validando = true);
+
+    double? lat;
+    double? lon;
+
+    // Intentar obtener la posición actual (opcional)
+    try {
+      final hasPermission = await Geolocator.checkPermission();
+      if (hasPermission == LocationPermission.denied) {
+        final req = await Geolocator.requestPermission();
+        if (req == LocationPermission.denied || req == LocationPermission.deniedForever) {
+          // no hay permiso, continuar sin coordenadas
+        }
+      }
+
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium).timeout(const Duration(seconds: 5));
+      lat = pos.latitude;
+      lon = pos.longitude;
+    } catch (_) {
+      // ignorar errores de geolocalización y continuar
+    }
+
+    try {
+      await ColeccionService.marcarComoVisitada(estacion, latitudUsuario: lat, longitudUsuario: lon);
+      if (mounted) {
+        setState(() => _estacionEncontrada = estacion);
+        _mostrarMensaje('✅ Estación ${estacion.nombre} marcada como visitada', colorVerdeEsmeralda);
+      }
+    } catch (e) {
+      if (mounted) {
+        _mostrarMensaje('Error al marcar visitada: ${e.toString()}', Colors.redAccent);
+      }
+    } finally {
+      if (mounted) setState(() => _validando = false);
+    }
   }
 
   /// Mostrar SnackBar
