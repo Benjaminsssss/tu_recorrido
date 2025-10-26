@@ -23,6 +23,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
   final _codigoController = TextEditingController();
   bool _escaneando = false;
   bool _validando = false;
+  bool _handlingScan = false;
   Estacion? _estacionEncontrada;
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
@@ -73,12 +74,29 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   detectionSpeed: DetectionSpeed.noDuplicates,
                   facing: CameraFacing.back,
                 ),
-                onDetect: (BarcodeCapture capture) {
-                  final String? code = capture.barcodes.first.rawValue;
-                  if (code != null && code.isNotEmpty) {
-                    debugPrint("📷 Código QR detectado: $code");
-                    Navigator.of(context).pop();
-                    _validarCodigo(code);
+                onDetect: (BarcodeCapture capture) async {
+                  if (_handlingScan) return;
+                  final String? code = capture.barcodes.isNotEmpty ? capture.barcodes.first.rawValue : null;
+                  if (code == null || code.isEmpty) return;
+
+                  _handlingScan = true;
+                  debugPrint("📷 Código QR detectado: $code");
+
+                  // Cerrar la pantalla del escáner de forma segura
+                  try {
+                    if (Navigator.canPop(context)) Navigator.of(context).pop();
+                  } catch (e) {
+                    debugPrint('Error al cerrar el escáner: $e');
+                  }
+
+                  await Future.delayed(const Duration(milliseconds: 250));
+                  
+                  if (mounted) {
+                    try {
+                      await _validarCodigo(code);
+                    } catch (e) {
+                      debugPrint('Error validando código: $e');
+                    }
                   }
                 },
               ),
