@@ -5,6 +5,7 @@ import '../../utils/qr_management_helper.dart';
 import '../../widgets/role_protected_widget.dart';
 import 'crear_estacion.dart';
 import 'generador_qr_screen.dart';
+import 'user_management_screen.dart';
 
 /// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
@@ -316,10 +317,14 @@ class AdminScreen extends StatelessWidget {
               Expanded(
                 child: _buildBotonAccion(
                   context: context,
-                  icono: Icons.list_alt,
-                  texto: 'Estado\nQR',
+                  icono: Icons.people,
+                  texto: 'Gestionar\nUsuarios',
                   color: Coloressito.badgeGreen,
-                  onTap: () => _mostrarEstadoQR(context),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const UserManagementScreen(),
+                    ),
+                  ),
                 ),
               ),
             ],

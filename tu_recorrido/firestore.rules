@@ -3,17 +3,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Función para verificar si un usuario es administrador
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // ----- USERS -----
     match /users/{uid} {
-      // Solo el dueño puede leer/escribir su documento
-      allow read, create, update, delete: if request.auth != null && request.auth.uid == uid;
+      // El dueño puede leer/escribir su documento
+      // Los administradores pueden leer todos los usuarios y modificar roles
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow delete: if request.auth != null && request.auth.uid == uid;
 
       // Validación simple de esquema (evita tipos raros)
       function isValidUser(data) {
         return
           (data.keys().hasOnly([
             'uid','email','displayName','photoURL','nombre','apodo',
-            'fechaNacimiento','region','comuna','activo','createdAt','updatedAt'
+            'fechaNacimiento','region','comuna','activo','createdAt','updatedAt','role'
           ])) &&
           (data.uid is string) &&
           (data.email is string) &&
@@ -24,7 +35,8 @@ service cloud.firestore {
           (data.fechaNacimiento is string || data.fechaNacimiento == null) &&
           (data.region is string || data.region == null) &&
           (data.comuna is string || data.comuna == null) &&
-          (data.activo is bool || data.activo == null);
+          (data.activo is bool || data.activo == null) &&
+          (data.role is string || data.role == null);
       }
 
       allow create: if request.auth != null
@@ -32,12 +44,16 @@ service cloud.firestore {
                     && isValidUser(request.resource.data);
 
       allow update: if request.auth != null
-                    && request.auth.uid == uid
                     && isValidUser(request.resource.data)
+                    && (
+                      // El usuario puede actualizar su propio perfil (excepto role)
+                      (request.auth.uid == uid && 
+                       (request.resource.data.role == resource.data.role || request.resource.data.role == null)) ||
+                      // Los administradores pueden cambiar cualquier rol
+                      isAdmin()
+                    )
                     // No permitir que el cliente cambie createdAt
                     && (request.resource.data.createdAt == resource.data.createdAt);
-
-      allow read, delete: if request.auth != null && request.auth.uid == uid;
 
       // ----- ESTACIONES VISITADAS (subcollection) -----
       match /estaciones_visitadas/{estacionVisitadaId} {
