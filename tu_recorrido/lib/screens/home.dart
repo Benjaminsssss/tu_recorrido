@@ -698,6 +698,7 @@ class _BottomNav extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _BottomItem(
               icon: Icons.home,
@@ -705,12 +706,20 @@ class _BottomNav extends StatelessWidget {
               selected: currentIndex == 0,
               onTap: () => onChanged(0),
             ),
-            const Spacer(),
+
+            // Botón central: Colección
+            _BottomItem(
+              icon: Icons.photo_album,
+              label: 'Colección',
+              selected: currentIndex == 1,
+              onTap: () => onChanged(1),
+            ),
+
             _BottomItem(
               icon: Icons.my_location,
               label: 'Mapa',
-              selected: currentIndex == 1,
-              onTap: () => onChanged(1),
+              selected: currentIndex == 2,
+              onTap: () => onChanged(2),
             ),
           ],
         ),
