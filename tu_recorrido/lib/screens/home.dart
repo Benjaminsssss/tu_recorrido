@@ -6,6 +6,7 @@ import '../models/place.dart';
 import '../widgets/place_modal.dart';
 import '../services/saved_places_notifier.dart';
 import 'album.dart';
+import '../components/bottom_nav_bar.dart';
 
 /// Nuevo Home: buscador, avatar, lista/carrusel de lugares y barra inferior.
 class HomeScreen extends StatefulWidget {
@@ -364,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _BottomNav(
+      bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onChanged: (idx) {
           if (idx == 2) {
@@ -668,104 +669,7 @@ class _PlaceCardState extends State<_PlaceCard> {
   }
 }
 
-class _BottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onChanged;
-
-  const _BottomNav({
-    required this.currentIndex,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF156A79),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _BottomItem(
-              icon: Icons.home,
-              label: 'Inicio',
-              selected: currentIndex == 0,
-              onTap: () => onChanged(0),
-            ),
-
-            // Botón central: Colección
-            _BottomItem(
-              icon: Icons.photo_album,
-              label: 'Colección',
-              selected: currentIndex == 1,
-              onTap: () => onChanged(1),
-            ),
-
-            _BottomItem(
-              icon: Icons.my_location,
-              label: 'Mapa',
-              selected: currentIndex == 2,
-              onTap: () => onChanged(2),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _BottomItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// Replaced the local private BottomNav with the reusable `BottomNavBar`
 
 // Widget del BottomSheet de filtros
 class _FilterBottomSheet extends StatefulWidget {
