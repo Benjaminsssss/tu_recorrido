@@ -111,57 +111,6 @@ class AdminScreen extends StatelessWidget {
     }
   }
 
-  /// Mostrar estado actual de códigos QR
-  Future<void> _mostrarEstadoQR(BuildContext context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Coloressito.surfaceDark,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Coloressito.badgeBlue,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Verificando estado de QR...',
-              style: TextStyle(color: Coloressito.textPrimary),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      await QRManagementHelper.verificarEstadoQR();
-
-      if (!context.mounted) return;
-      Navigator.of(context).pop(); // Cerrar diálogo de progreso
-
-      // Mostrar información (en consola por ahora)
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Estado verificado. Revisa la consola de debug para más detalles.'),
-          backgroundColor: Coloressito.badgeBlue,
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      Navigator.of(context).pop(); // Cerrar diálogo de progreso
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Coloressito.badgeRed,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
