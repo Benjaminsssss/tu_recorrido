@@ -5,6 +5,7 @@ import '../services/firestore_service.dart';
 import '../models/place.dart';
 import '../widgets/place_modal.dart';
 import '../services/saved_places_notifier.dart';
+import 'album.dart';
 
 /// Nuevo Home: buscador, avatar, lista/carrusel de lugares y barra inferior.
 class HomeScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
-  int _currentIndex = 0; // 0: Inicio, 1: Mapa
+  int _currentIndex = 0; // 0: Inicio, 1: Colección, 2: Mapa
 
   // Filtros
   String? _selectedCountry;
@@ -366,9 +367,12 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: _BottomNav(
         currentIndex: _currentIndex,
         onChanged: (idx) {
-          if (idx == 1) {
+          if (idx == 2) {
             // ir a Mapa (manteniendo el estado del Home en el stack)
             Navigator.pushNamed(context, '/menu');
+          } else if (idx == 1) {
+            // abrir Colección (Album)
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const AlbumScreen()));
           } else {
             setState(() => _currentIndex = idx);
           }
