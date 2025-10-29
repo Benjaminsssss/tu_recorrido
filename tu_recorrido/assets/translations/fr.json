@@ -1,0 +1,30 @@
+{
+  "app_title": "Ton Parcours",
+  "home_hero_title": "Collectionne le monde",
+  "profile": "Profil",
+  "edit_profile": "Modifier le profil",
+  "display_name": "Nom d'utilisateur",
+  "email": "Email",
+  "language": "Langue",
+  "save": "Enregistrer",
+  "sign_out": "Se déconnecter",
+  "pick_photo": "Modifier la photo"
+  ,
+  "route_canceled": "Itinéraire annulé.",
+  "poi_title": "Points d'intérêt",
+  "scan_qr": "Scanner le QR"
+  ,
+  "collect_world": "Collectionne le monde",
+  "home_hero_subtitle": "Crée ton passeport numérique et découvre des lieux incroyables près de toi.",
+  "discover": "Découvre",
+  "explore": "Explore",
+  "collect": "Collectionne",
+  "nearby": "Près de toi",
+  "featured_place": "Lieu en vedette {n}",
+  "distance_meters_abbrev": "À {m} m",
+  "open_until": "Ouvert jusqu'à {time}",
+  "latest_badges": "Derniers badges",
+  "badge": "Badge {n}",
+  "hello_name": "Salut, {name} 👋",
+  "welcome_activate_location": "Bienvenue sur Ton Parcours. Active ta localisation pour voir les lieux à proximité."
+}

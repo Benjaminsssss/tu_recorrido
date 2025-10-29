@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "353758540384",
+    "project_id": "tu-recorrido-dev",
+    "storage_bucket": "tu-recorrido-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353758540384:android:0e10d1bda79accd55b8905",
+        "android_client_info": {
+          "package_name": "com.turecorrido.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtDltcgsW58yciMfkVSskO5yWNK-vu8X8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
