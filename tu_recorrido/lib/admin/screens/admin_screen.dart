@@ -6,6 +6,7 @@ import '../../widgets/role_protected_widget.dart';
 import 'crear_estacion.dart';
 import 'generador_qr_screen.dart';
 import 'user_management_screen.dart';
+import 'insignias_admin_screen.dart';
 
 /// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
@@ -323,6 +324,27 @@ class AdminScreen extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const UserManagementScreen(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Botón para gestión de insignias
+          Row(
+            children: [
+              Expanded(
+                child: _buildBotonAccion(
+                  context: context,
+                  icono: Icons.emoji_events,
+                  texto: 'Gestionar\nInsignias',
+                  color: Coloressito.badgeBlue,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const InsigniasAdminScreen(),
                     ),
                   ),
                 ),

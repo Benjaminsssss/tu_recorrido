@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Cada estación representa un lugar histórico de Santiago
 class Estacion {
   final String id; // ID único en Firestore
+  final DocumentReference? insigniaID; // Referencia a documento en `insignias` (nullable)
   final String codigo; // Código para QR (ej: "PLAZA_ARMAS_001")
   final String
       codigoQR; // Código QR único generado (ej: "TR_ABC123_1640995200")
@@ -16,6 +17,7 @@ class Estacion {
 
   const Estacion({
     required this.id,
+    this.insigniaID,
     required this.codigo,
     required this.codigoQR,
     required this.nombre,
@@ -32,6 +34,7 @@ class Estacion {
 
     return Estacion(
       id: doc.id,
+      insigniaID: data['insigniaID'] as DocumentReference?,
       codigo: data['codigo'] ?? '',
       codigoQR: data['codigoQR'] ?? '',
       nombre: data['nombre'] ?? '',
@@ -47,6 +50,7 @@ class Estacion {
   /// Convertir a Map para guardar en Firestore
   Map<String, dynamic> toFirestore() {
     return {
+      'insigniaID': insigniaID,
       'codigo': codigo,
       'codigoQR': codigoQR,
       'nombre': nombre,
@@ -61,6 +65,7 @@ class Estacion {
   /// Crear copia con cambios
   Estacion copyWith({
     String? id,
+    DocumentReference? insigniaID,
     String? codigo,
     String? codigoQR,
     String? nombre,
@@ -72,6 +77,7 @@ class Estacion {
   }) {
     return Estacion(
       id: id ?? this.id,
+      insigniaID: insigniaID ?? this.insigniaID,
       codigo: codigo ?? this.codigo,
       codigoQR: codigoQR ?? this.codigoQR,
       nombre: nombre ?? this.nombre,
