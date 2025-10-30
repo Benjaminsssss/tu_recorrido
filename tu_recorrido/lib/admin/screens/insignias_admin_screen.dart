@@ -9,6 +9,7 @@ import 'package:tu_recorrido/models/estacion.dart';
 import 'package:tu_recorrido/services/insignia_service.dart';
 import 'package:tu_recorrido/services/estacion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:tu_recorrido/utils/admin_utils.dart';
 
 /// Pantalla básica de administración de insignias.
@@ -23,8 +24,8 @@ class InsigniasAdminScreen extends StatefulWidget {
 class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   List<Insignia> _insignias = [];
   bool _loading = true;
-  // Mapa para saber, por insigniaId, la estación que la tiene asignada (si existe)
-  final Map<String, dynamic> _estacionPorInsignia = {};
+  // Mapa para saber por insigniaId qué estación la tiene asignada
+  final Map<String, Estacion> _estacionPorInsignia = {};
 
   @override
   void initState() {
@@ -101,22 +102,19 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     setState(() => _loading = true);
     try {
       _insignias = await InsigniaService.obtenerTodas();
-      // También cargamos estaciones para saber si alguna tiene una insignia asignada
+      // Cargar estaciones y mapear por insigniaID
       try {
         final estaciones = await EstacionService.obtenerEstacionesActivas();
         _estacionPorInsignia.clear();
         for (final e in estaciones) {
           final ref = e.insigniaID;
           if (ref != null) {
-            // ref.id corresponde al id del documento en `insignias`
             _estacionPorInsignia[ref.id] = e;
           }
         }
       } catch (e) {
-        // Si falla la carga de estaciones no detenemos la carga de insignias
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Advertencia: no se pudieron cargar estaciones: $e')));
-        }
+        // ignore: avoid_print
+        print('No se pudieron cargar estaciones: $e');
       }
     } on FirebaseException catch (e) {
       // Handle Firestore permission errors or other Firebase exceptions
@@ -191,7 +189,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   }
 
   Future<void> _asignarInsignia(String insigniaId) async {
-    // Cargar estaciones disponibles: sólo aquellas que no tienen insignia asignada
+    // Cargar estaciones disponibles: sólo las que no tienen insignia asignada
     final todas = await EstacionService.obtenerEstacionesActivas();
     final estaciones = todas.where((e) => e.insigniaID == null).toList();
 
@@ -348,24 +346,20 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                         children: [
                           Text(ins.descripcion),
                           const SizedBox(height: 6),
-                          // Si esta insignia está asignada a una estación, mostrarla aquí
                           if (_estacionPorInsignia.containsKey(ins.id))
-                            Builder(builder: (ctx) {
-                              final Estacion e = _estacionPorInsignia[ins.id] as Estacion;
-                              return Row(
-                                children: [
-                                  const Icon(Icons.place, size: 14, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Text('Asignada a: ${e.nombre}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                                ],
-                              );
-                            }),
+                            Row(
+                              children: [
+                                const Icon(Icons.place, size: 14, color: Colors.grey),
+                                const SizedBox(width: 6),
+                                Text('Asignada a: ${_estacionPorInsignia[ins.id]!.nombre}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                              ],
+                            ),
                         ],
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Si la insignia ya tiene una estación asignada, ocultamos el botón de asignar
+                          // Mostrar botón de asignar sólo si la insignia no está ya asignada
                           if (!_estacionPorInsignia.containsKey(ins.id))
                             IconButton(
                               icon: const Icon(Icons.link),
