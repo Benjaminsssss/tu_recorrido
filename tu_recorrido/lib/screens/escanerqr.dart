@@ -23,7 +23,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
   static const Color colorGrisCarbon = Color(0xFF2E2F32);
 
   final _codigoController = TextEditingController();
-  bool _escaneando = false;
+  final bool _escaneando = false;
   bool _validando = false;
   bool _handlingScan = false;
   Estacion? _estacionEncontrada;
@@ -131,7 +131,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        colorAzulPetroleo.withOpacity(0.95),
+                          colorAzulPetroleo.withValues(alpha: 0.95),
                       ],
                     ),
                   ),
@@ -153,7 +153,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                       Text(
                         'El escaneo se realizará automáticamente',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 14,
                         ),
                         textAlign: TextAlign.center,
@@ -205,7 +205,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: colorVerdeEsmeralda.withOpacity(0.15),
+                  color: colorVerdeEsmeralda.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.qr_code_scanner, color: colorVerdeEsmeralda, size: 28),
@@ -223,7 +223,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: colorVerdeOliva.withOpacity(0.15),
+                  color: colorVerdeOliva.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.keyboard, color: colorVerdeOliva, size: 28),
@@ -255,7 +255,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorVerdeOliva.withOpacity(0.15),
+                color: colorVerdeOliva.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.vpn_key, color: colorVerdeOliva),
@@ -346,7 +346,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: colorVerdeEsmeralda.withOpacity(0.15),
+                color: colorVerdeEsmeralda.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check_circle, color: colorVerdeEsmeralda, size: 28),
@@ -367,9 +367,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorAmarillo.withOpacity(0.15),
+                color: colorAmarillo.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colorAmarillo.withOpacity(0.3)),
+                border: Border.all(color: colorAmarillo.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -436,7 +436,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
         }
       }
 
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium).timeout(const Duration(seconds: 5));
+  final pos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium)).timeout(const Duration(seconds: 5));
       lat = pos.latitude;
       lon = pos.longitude;
     } catch (_) {
@@ -487,7 +487,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              colorAzulPetroleo.withOpacity(0.05),
+              colorAzulPetroleo.withValues(alpha: 0.05),
               Colors.white,
             ],
           ),
@@ -505,13 +505,13 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                     height: 250,
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: _escaneando ? colorVerdeEsmeralda : colorVerdeOliva.withOpacity(0.5),
+                        color: _escaneando ? colorVerdeEsmeralda : colorVerdeOliva.withValues(alpha: 0.5),
                         width: 4,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: (_escaneando ? colorVerdeEsmeralda : colorVerdeOliva).withOpacity(0.2),
+                          color: (_escaneando ? colorVerdeEsmeralda : colorVerdeOliva).withValues(alpha: 0.2),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -561,7 +561,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     elevation: 4,
-                    shadowColor: colorVerdeEsmeralda.withOpacity(0.5),
+                    shadowColor: colorVerdeEsmeralda.withValues(alpha: 0.5),
                   ),
                 ),
                 if (_estacionEncontrada != null) ...[
@@ -569,9 +569,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: colorVerdeEsmeralda.withOpacity(0.1),
+                      color: colorVerdeEsmeralda.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colorVerdeEsmeralda.withOpacity(0.3), width: 2),
+                      border: Border.all(color: colorVerdeEsmeralda.withValues(alpha: 0.3), width: 2),
                     ),
                     child: Column(
                       children: [
