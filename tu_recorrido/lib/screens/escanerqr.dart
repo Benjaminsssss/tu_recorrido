@@ -3,6 +3,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/estacion.dart';
 import '../services/estacion_service.dart';
 import '../services/coleccion_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/insignia_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// vista para escanear códigos QR de estaciones patrimoniales
@@ -448,6 +450,33 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
       if (mounted) {
         setState(() => _estacionEncontrada = estacion);
         _mostrarMensaje('✅ Estación ${estacion.nombre} marcada como visitada', colorVerdeEsmeralda);
+      }
+      // ----- Chequear insignia asignada a la estación y otorgarla -----
+      try {
+        if (estacion.insigniaID != null) {
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (currentUser != null) {
+            final uid = currentUser.uid;
+            final insigniaId = estacion.insigniaID!.id;
+
+            // Evitar duplicados: comprobar si el usuario ya tiene la insignia
+            final tiene = await InsigniaService.usuarioTieneInsignia(userId: uid, insigniaId: insigniaId);
+            if (tiene) {
+              if (mounted) _mostrarMensaje('ℹYa tienes la insignia de esta estación', Colors.blueGrey);
+            } else {
+              await InsigniaService.otorgarInsigniaAUsuario(userId: uid, insigniaId: insigniaId, estacionId: estacion.id);
+              if (mounted) _mostrarMensaje('¡Has obtenido la insignia "${estacion.nombre}"!', colorAmarillo);
+            }
+          } else {
+            // Usuario no autenticado: no se puede otorgar ahora
+            if (mounted) _mostrarMensaje('ℹInicia sesión para recibir insignias', Colors.orange);
+          }
+        } else {
+          // No hay insignia asignada a la estación
+        }
+      } catch (e) {
+        // Si falla (p.ej. offline), avisar y no bloquear la UX. Podríamos encolar para reintento.
+        if (mounted) _mostrarMensaje('No se pudo otorgar la insignia ahora: $e', Colors.orange);
       }
     } catch (e) {
       if (mounted) {

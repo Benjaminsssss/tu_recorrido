@@ -134,4 +134,19 @@ class InsigniaService {
 
     await userInsRef.set(data);
   }
+
+  /// Comprueba si el usuario ya tiene la insignia (evitar duplicados)
+  static Future<bool> usuarioTieneInsignia({
+    required String userId,
+    required String insigniaId,
+  }) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('insignias')
+        .doc(insigniaId)
+        .get();
+
+    return doc.exists;
+  }
 }
