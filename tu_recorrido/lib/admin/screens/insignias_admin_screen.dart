@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 // dart:typed_data not required here
 import 'package:tu_recorrido/models/insignia.dart';
+import 'package:tu_recorrido/models/estacion.dart';
 import 'package:tu_recorrido/services/insignia_service.dart';
 import 'package:tu_recorrido/services/estacion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,6 +23,8 @@ class InsigniasAdminScreen extends StatefulWidget {
 class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   List<Insignia> _insignias = [];
   bool _loading = true;
+  // Mapa para saber, por insigniaId, la estación que la tiene asignada (si existe)
+  final Map<String, dynamic> _estacionPorInsignia = {};
 
   @override
   void initState() {
@@ -98,6 +101,23 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     setState(() => _loading = true);
     try {
       _insignias = await InsigniaService.obtenerTodas();
+      // También cargamos estaciones para saber si alguna tiene una insignia asignada
+      try {
+        final estaciones = await EstacionService.obtenerEstacionesActivas();
+        _estacionPorInsignia.clear();
+        for (final e in estaciones) {
+          final ref = e.insigniaID;
+          if (ref != null) {
+            // ref.id corresponde al id del documento en `insignias`
+            _estacionPorInsignia[ref.id] = e;
+          }
+        }
+      } catch (e) {
+        // Si falla la carga de estaciones no detenemos la carga de insignias
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Advertencia: no se pudieron cargar estaciones: $e')));
+        }
+      }
     } on FirebaseException catch (e) {
       // Handle Firestore permission errors or other Firebase exceptions
       _insignias = [];
@@ -171,8 +191,22 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   }
 
   Future<void> _asignarInsignia(String insigniaId) async {
-    // Cargar estaciones disponibles
-    final estaciones = await EstacionService.obtenerEstacionesActivas();
+    // Cargar estaciones disponibles: sólo aquellas que no tienen insignia asignada
+    final todas = await EstacionService.obtenerEstacionesActivas();
+    final estaciones = todas.where((e) => e.insigniaID == null).toList();
+
+    // Si no hay estaciones libres, informar al admin
+    if (estaciones.isEmpty) {
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Asignar insignia a estación'),
+          content: const Text('No hay estaciones disponibles sin una insignia asignada.'),
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Aceptar'))],
+        ),
+      );
+      return;
+    }
 
     String? estacionSeleccionadaId;
 
@@ -246,7 +280,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                       leading: SizedBox(
                         width: 56,
                         height: 56,
-                        child: ClipRRect(
+                          child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
                             ins.imagenUrl,
@@ -256,7 +290,41 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                             // If image fails (CORS or network), show a gray placeholder instead
                             errorBuilder: (context, error, stackTrace) => Container(
                               color: Colors.grey.shade200,
-                              child: const Icon(Icons.broken_image, color: Colors.grey, size: 28),
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.broken_image, color: Colors.grey, size: 28),
+                                    const SizedBox(height: 6),
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.open_in_new, size: 16),
+                                      label: const Text('Abrir URL'),
+                                      onPressed: () {
+                                        // Mostrar diálogo con la URL y opción de copiar
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => AlertDialog(
+                                            title: const Text('URL de la imagen'),
+                                            content: SelectableText(ins.imagenUrl),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () {
+                                                    Clipboard.setData(ClipboardData(text: ins.imagenUrl));
+                                                    Navigator.of(context).pop();
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL copiada al portapapeles')));
+                                                    }
+                                                  },
+                                                  child: const Text('Copiar')),
+                                              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar')),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
@@ -275,17 +343,37 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                         ),
                       ),
                       title: Text(ins.nombre),
-                      subtitle: Text(ins.descripcion),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(ins.descripcion),
+                          const SizedBox(height: 6),
+                          // Si esta insignia está asignada a una estación, mostrarla aquí
+                          if (_estacionPorInsignia.containsKey(ins.id))
+                            Builder(builder: (ctx) {
+                              final Estacion e = _estacionPorInsignia[ins.id] as Estacion;
+                              return Row(
+                                children: [
+                                  const Icon(Icons.place, size: 14, color: Colors.grey),
+                                  const SizedBox(width: 6),
+                                  Text('Asignada a: ${e.nombre}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                                ],
+                              );
+                            }),
+                        ],
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.link),
-                            tooltip: 'Asignar a estación',
-                            onPressed: () async {
-                              await _asignarInsignia(ins.id);
-                            },
-                          ),
+                          // Si la insignia ya tiene una estación asignada, ocultamos el botón de asignar
+                          if (!_estacionPorInsignia.containsKey(ins.id))
+                            IconButton(
+                              icon: const Icon(Icons.link),
+                              tooltip: 'Asignar a estación',
+                              onPressed: () async {
+                                await _asignarInsignia(ins.id);
+                              },
+                            ),
                           IconButton(
                             icon: const Icon(Icons.emoji_events),
                             tooltip: 'Otorgar a usuario',
