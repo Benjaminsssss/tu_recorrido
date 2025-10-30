@@ -145,7 +145,7 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
 
   Widget _buildListaEstaciones() {
     if (_estaciones.isEmpty) {
-      return Container(
+      return SizedBox(
         height: 200,
         child: const Center(
           child: Column(
