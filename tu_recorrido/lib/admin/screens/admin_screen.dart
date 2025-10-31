@@ -6,6 +6,8 @@ import '../../widgets/role_protected_widget.dart';
 import 'crear_estacion.dart';
 import 'generador_qr_screen.dart';
 import 'user_management_screen.dart';
+import 'manage_places_screen.dart';
+import 'crear_lugar.dart';
 
 /// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
@@ -323,6 +325,38 @@ class AdminScreen extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const UserManagementScreen(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildBotonAccion(
+                  context: context,
+                  icono: Icons.add_box,
+                  texto: 'Crear\nLugar',
+                  color: Coloressito.adventureGreen,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const CrearLugarScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBotonAccion(
+                  context: context,
+                  icono: Icons.photo_library,
+                  texto: 'Gestionar\nLugares',
+                  color: Coloressito.badgeBlue,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ManagePlacesScreen(),
                     ),
                   ),
                 ),

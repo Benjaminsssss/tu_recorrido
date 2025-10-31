@@ -41,22 +41,32 @@ class _HomeScreenState extends State<HomeScreen> {
   Place _convertToPlace(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data();
 
-    // Convertir imageUrl a lista de PlaceImage
-    final imageUrl = d['imageUrl']?.toString();
+    // Preferir la lista 'imagenes' si existe (admin uploads)
     final images = <PlaceImage>[];
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      images.add(PlaceImage(
-        url: imageUrl,
-        alt: d['name']?.toString() ?? 'Imagen del lugar',
-      ));
+    final imgsRaw = d['imagenes'] as List<dynamic>?;
+    if (imgsRaw != null && imgsRaw.isNotEmpty) {
+      try {
+        for (final e in imgsRaw) {
+          if (e is Map<String, dynamic>) {
+            images.add(PlaceImage.fromJson(e));
+          } else if (e is Map) {
+            images.add(PlaceImage.fromJson(Map<String, dynamic>.from(e)));
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Fallback a imageUrl (legacy) si no hay 'imagenes'
+    if (images.isEmpty) {
+      final imageUrl = d['imageUrl']?.toString();
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        images.add(PlaceImage(url: imageUrl, alt: d['name']?.toString() ?? 'Imagen del lugar'));
+      }
     }
 
     // Si no hay imagen, usar una por defecto
     if (images.isEmpty) {
-      images.add(PlaceImage(
-        url: null,
-        alt: 'Sin imagen',
-      ));
+      images.add(PlaceImage(url: null, alt: 'Sin imagen'));
     }
 
     return Place(
@@ -381,6 +391,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+ 
 }
 
 class _PlaceCard extends StatefulWidget {
@@ -406,17 +418,21 @@ class _PlaceCardState extends State<_PlaceCard> {
   bool _isSaved = false;
   bool _isLoading = false;
   final _notifier = SavedPlacesNotifier();
+  late PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
     _checkIfSaved();
     _notifier.addListener(_onSavedPlacesChanged);
+    _pageController = PageController();
   }
 
   @override
   void dispose() {
     _notifier.removeListener(_onSavedPlacesChanged);
+    try { _pageController.dispose(); } catch (_) {}
     super.dispose();
   }
 
@@ -520,6 +536,15 @@ class _PlaceCardState extends State<_PlaceCard> {
     }
   }
 
+  // Muestra un visor a pantalla completa que permite deslizar entre imágenes y hacer zoom.
+  void _showImageViewer(BuildContext context, List<PlaceImage> images, {int initialIndex = 0}) {
+    Navigator.of(context).push(PageRouteBuilder(
+      opaque: false,
+      pageBuilder: (_, __, ___) => _FullScreenImageViewer(images: images, initialIndex: initialIndex),
+      transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -540,36 +565,63 @@ class _PlaceCardState extends State<_PlaceCard> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(16)),
                   child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: widget.imageUrl != null &&
-                            widget.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            widget.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                      aspectRatio: 16 / 9,
+                      child: widget.place.imagenes.isNotEmpty
+                          ? Stack(
+                              children: [
+                                PageView.builder(
+                                  controller: _pageController,
+                                  itemCount: widget.place.imagenes.length,
+                                  onPageChanged: (p) => setState(() => _currentPage = p),
+                                  itemBuilder: (context, idx) {
+                                    final img = widget.place.imagenes[idx];
+                                    final provider = img.imageProvider();
+                                    return GestureDetector(
+                                      onTap: () => _showImageViewer(context, widget.place.imagenes, initialIndex: idx),
+                                      child: Image(
+                                        image: provider,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: const Color(0xFFF0F0F0),
+                                          child: const Center(
+                                            child: Icon(Icons.image_not_supported, size: 48, color: Colors.black38),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                if (widget.place.imagenes.length > 1)
+                                  Positioned(
+                                    bottom: 8,
+                                    left: 0,
+                                    right: 0,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: List.generate(widget.place.imagenes.length, (i) {
+                                        final active = i == _currentPage;
+                                        return Container(
+                                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                                          width: active ? 10 : 6,
+                                          height: active ? 10 : 6,
+                                          decoration: BoxDecoration(
+                                            color: active ? Colors.white : Colors.white54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                  ),
+                              ],
+                            )
+                          : Container(
                               color: const Color(0xFFF0F0F0),
                               child: const Center(
-                                child: Icon(Icons.image_not_supported,
-                                    size: 48, color: Colors.black38),
+                                child: Icon(Icons.image, size: 48, color: Colors.black38),
                               ),
                             ),
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                color: const Color(0xFFF0F0F0),
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: const Color(0xFFF0F0F0),
-                            child: const Center(
-                              child: Icon(Icons.image,
-                                  size: 48, color: Colors.black38),
-                            ),
-                          ),
                   ),
                 ),
                 // Botón de guardar en la esquina superior derecha
@@ -610,6 +662,7 @@ class _PlaceCardState extends State<_PlaceCard> {
                     ),
                   ),
                 ),
+                // (badge overlay removed per UX request) top-left area reserved for admin images only
               ],
             ),
             Padding(
@@ -670,6 +723,99 @@ class _PlaceCardState extends State<_PlaceCard> {
 }
 
 // Replaced the local private BottomNav with the reusable `BottomNavBar`
+
+class _FullScreenImageViewer extends StatefulWidget {
+  final List<PlaceImage> images;
+  final int initialIndex;
+
+  const _FullScreenImageViewer({required this.images, this.initialIndex = 0});
+
+  @override
+  State<_FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
+  late PageController _controller;
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _controller = PageController(initialPage: _current);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _controller,
+              itemCount: widget.images.length,
+              onPageChanged: (p) => setState(() => _current = p),
+              itemBuilder: (context, idx) {
+                final img = widget.images[idx];
+                final provider = img.imageProvider();
+                return Center(
+                  child: InteractiveViewer(
+                    panEnabled: true,
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: Image(
+                      image: provider,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 120, color: Colors.grey),
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Close button
+            Positioned(
+              top: 12,
+              right: 12,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            // Page indicator
+            if (widget.images.length > 1)
+              Positioned(
+                bottom: 24,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(widget.images.length, (i) {
+                    final active = i == _current;
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: active ? 10 : 6,
+                      height: active ? 10 : 6,
+                      decoration: BoxDecoration(
+                        color: active ? Colors.white : Colors.white54,
+                        shape: BoxShape.circle,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // Widget del BottomSheet de filtros
 class _FilterBottomSheet extends StatefulWidget {

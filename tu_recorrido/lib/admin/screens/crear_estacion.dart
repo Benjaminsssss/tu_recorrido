@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import '../../services/storage_service.dart';
 import '../../models/estacion.dart';
 import '../../services/estacion_service.dart';
 import '../../utils/colores.dart';
@@ -23,6 +28,10 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
   bool _cargando = false;
   Position? _ubicacionActual;
+  final ImagePicker _picker = ImagePicker();
+  XFile? _pickedBadge;
+  Uint8List? _pickedBadgeBytes;
+  // Nota: la subida de imágenes para el card se gestiona en otra vista.
 
   @override
   void initState() {
@@ -83,7 +92,25 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         fechaCreacion: DateTime.now(),
       );
 
-      await EstacionService.crearEstacion(estacion);
+      // Crear estación y obtener el id generado
+      final newId = await EstacionService.crearEstacion(estacion);
+
+      // Si el admin escogió una insignia, subirla y enlazarla al doc
+      if (_pickedBadge != null) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final ext = kIsWeb ? _getExt(_pickedBadge!.name) : _getExt(_pickedBadge!.path);
+        final path = 'insignias/$newId/badge_$ts$ext';
+        String url;
+        if (kIsWeb && _pickedBadgeBytes != null) {
+          url = await StorageService.instance.uploadBytes(_pickedBadgeBytes!, path, contentType: 'image/jpeg');
+        } else {
+          final file = File(_pickedBadge!.path);
+          url = await StorageService.instance.uploadFile(file, path, contentType: 'image/jpeg');
+        }
+        await EstacionService.setBadgeImage(newId, {'url': url, 'path': path, 'alt': _nombreController.text.trim()});
+      }
+
+      // La subida de imágenes para el card se realiza desde la pantalla de gestión de lugares.
 
       if (mounted) {
         _mostrarExito('Estación creada con código: $codigo');
@@ -98,6 +125,11 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         setState(() => _cargando = false);
       }
     }
+  }
+
+  String _getExt(String path) {
+    final idx = path.lastIndexOf('.');
+    return idx >= 0 ? path.substring(idx) : '.jpg';
   }
 
   void _limpiarFormulario() {
@@ -161,6 +193,45 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 12),
+              // Selector de insignia (badge)
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final XFile? picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                        if (picked == null) return;
+                        if (kIsWeb) {
+                          final bytes = await picked.readAsBytes();
+                          setState(() {
+                            _pickedBadge = picked;
+                            _pickedBadgeBytes = bytes;
+                          });
+                        } else {
+                          setState(() {
+                            _pickedBadge = picked;
+                            _pickedBadgeBytes = null;
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.emoji_events),
+                      label: const Text('Subir insignia (badge)'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  if (_pickedBadge != null)
+                    SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: kIsWeb && _pickedBadgeBytes != null
+                          ? Image.memory(_pickedBadgeBytes!, fit: BoxFit.cover)
+                          : Image.file(File(_pickedBadge!.path), fit: BoxFit.cover),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Las imágenes para el card se gestionan desde la pantalla de gestión de lugares.
               const SizedBox(height: 16),
               InfoUbicacion(ubicacion: _ubicacionActual),
               const SizedBox(height: 32),

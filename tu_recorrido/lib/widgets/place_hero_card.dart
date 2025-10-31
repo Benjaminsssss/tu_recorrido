@@ -85,7 +85,11 @@ class PlaceHeroCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        place.comuna,
+                        // Mostrar región + comuna (dirección breve). Si falta alguno, mostrar lo disponible.
+                        ( (place.region.isNotEmpty ? place.region : '') +
+                          (place.region.isNotEmpty && place.comuna.isNotEmpty ? ', ' : '') +
+                          (place.comuna.isNotEmpty ? place.comuna : (place.shortDesc.isNotEmpty ? place.shortDesc : 'Sin ubicación'))
+                        ),
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF7B8063), // oliva grisado

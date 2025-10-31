@@ -63,7 +63,11 @@ class PlaceModal extends StatelessWidget {
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            place.comuna,
+                            // Mostrar región + comuna si están presentes
+                            ( (place.region.isNotEmpty ? place.region : '') +
+                              (place.region.isNotEmpty && place.comuna.isNotEmpty ? ', ' : '') +
+                              (place.comuna.isNotEmpty ? place.comuna : (place.shortDesc.isNotEmpty ? place.shortDesc : 'Sin ubicación'))
+                            ),
                             style: const TextStyle(
                               fontSize: 15,
                               color: Color(0xFF7B8063), // oliva
@@ -112,19 +116,7 @@ class PlaceModal extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Descripción corta
-                if (place.shortDesc.isNotEmpty) ...[
-                  Text(
-                    place.shortDesc,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                      color: Color(0xFF4B5563),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                // (Se muestra solamente la sección 'Descripción' completa)
 
                 // Descripción completa
                 const Text(
@@ -146,56 +138,6 @@ class PlaceModal extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
-
-                // Mejor momento para visitar
-                if (place.mejorMomento.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF9E6), // amarillo suave
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFC88400).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.wb_sunny_outlined,
-                          color: Color(0xFFC88400),
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Mejor momento para visitar',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1A4D5C),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                place.mejorMomento,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                  color: Color(0xFF4B5563),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
 
                 // Botón de cerrar
                 SizedBox(
