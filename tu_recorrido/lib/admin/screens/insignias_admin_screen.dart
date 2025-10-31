@@ -51,16 +51,16 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                 decoration:
                     const InputDecoration(labelText: 'Email (opcional)')),
             const SizedBox(height: 8),
-      Text('O ingresa UID si no tienes email',
-        style: Theme.of(dialogContext).textTheme.bodySmall),
+            Text('O ingresa UID si no tienes email',
+                style: Theme.of(dialogContext).textTheme.bodySmall),
             TextField(
                 controller: uidController,
                 decoration: const InputDecoration(labelText: 'UID (opcional)')),
           ],
         ),
         actions: [
-      TextButton(
-        onPressed: () => Navigator.of(dialogContext).pop(),
+          TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
@@ -90,17 +90,17 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                 targetUid = query.docs.first.id;
               }
 
-                try {
-                  await InsigniaService.otorgarInsigniaAUsuario(
-                      userId: targetUid!, insigniaId: insigniaId);
-          if (!mounted) return;
-          messenger.showSnackBar(
-            const SnackBar(content: Text('Insignia otorgada')));
-                } catch (e) {
-          if (!mounted) return;
-          messenger.showSnackBar(
-            SnackBar(content: Text('Error al otorgar insignia: $e')));
-                }
+              try {
+                await InsigniaService.otorgarInsigniaAUsuario(
+                    userId: targetUid!, insigniaId: insigniaId);
+                if (!mounted) return;
+                messenger.showSnackBar(
+                    const SnackBar(content: Text('Insignia otorgada')));
+              } catch (e) {
+                if (!mounted) return;
+                messenger.showSnackBar(
+                    SnackBar(content: Text('Error al otorgar insignia: $e')));
+              }
             },
             child: const Text('Otorgar'),
           ),
@@ -133,16 +133,16 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     } on FirebaseException catch (e) {
       // Handle Firestore permission errors or other Firebase exceptions
       _insignias = [];
-  if (mounted) {
-    messenger.showSnackBar(
-    SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
-  }
+      if (mounted) {
+        messenger.showSnackBar(
+            SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
+      }
     } catch (e) {
       _insignias = [];
-  if (mounted) {
-    messenger.showSnackBar(SnackBar(
-    content: Text('Error inesperado al cargar insignias: $e')));
-  }
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(
+            content: Text('Error inesperado al cargar insignias: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -172,8 +172,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           ],
         ),
         actions: [
-      TextButton(
-        onPressed: () => Navigator.of(dialogContext).pop(),
+          TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
@@ -257,8 +257,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           ),
         ),
         actions: [
-      TextButton(
-        onPressed: () => Navigator.of(dialogContext).pop(),
+          TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
@@ -327,49 +327,54 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                                     const Icon(Icons.broken_image,
                                         color: Colors.grey, size: 28),
                                     const SizedBox(height: 6),
-                                              TextButton.icon(
-                                        icon: const Icon(Icons.open_in_new,
-                                            size: 16),
-                                        label: const Text('Abrir URL'),
-                                        onPressed: () {
-                                          // Mostrar diálogo con la URL y opción de copiar
-                                          final messenger = ScaffoldMessenger.of(context);
-                                          showDialog(
-                      context: context,
-                      builder: (dialogContext) => AlertDialog(
-                        title:
-                          const Text('URL de la imagen'),
-                        content:
-                          SelectableText(ins.imagenUrl),
-                        actions: [
-                        TextButton(
-                          onPressed: () async {
-                              // Capture navigator before the async gap to avoid using
-                              // the dialog BuildContext after an await.
-                              final navigator = Navigator.of(dialogContext);
-                              await Clipboard.setData(
-                                ClipboardData(
-                                  text: ins.imagenUrl,
-                                ),
-                              );
-                              navigator.pop();
-                              if (!mounted) return;
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text('URL copiada al portapapeles'),
-                                ),
-                              );
-                            },
-                          child: const Text('Copiar')),
-                        TextButton(
-                          onPressed: () =>
-                            Navigator.of(dialogContext)
-                              .pop(),
-                          child: const Text('Cerrar')),
-                        ],
-                      ),
-                      );
-                                        },
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.open_in_new,
+                                          size: 16),
+                                      label: const Text('Abrir URL'),
+                                      onPressed: () {
+                                        // Mostrar diálogo con la URL y opción de copiar
+                                        final messenger =
+                                            ScaffoldMessenger.of(context);
+                                        showDialog(
+                                          context: context,
+                                          builder: (dialogContext) =>
+                                              AlertDialog(
+                                            title:
+                                                const Text('URL de la imagen'),
+                                            content:
+                                                SelectableText(ins.imagenUrl),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () async {
+                                                    // Capture navigator before the async gap to avoid using
+                                                    // the dialog BuildContext after an await.
+                                                    final navigator =
+                                                        Navigator.of(
+                                                            dialogContext);
+                                                    await Clipboard.setData(
+                                                      ClipboardData(
+                                                        text: ins.imagenUrl,
+                                                      ),
+                                                    );
+                                                    navigator.pop();
+                                                    if (!mounted) return;
+                                                    messenger.showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                            'URL copiada al portapapeles'),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: const Text('Copiar')),
+                                              TextButton(
+                                                  onPressed: () => Navigator.of(
+                                                          dialogContext)
+                                                      .pop(),
+                                                  child: const Text('Cerrar')),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
