@@ -479,31 +479,35 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             final tiene = await InsigniaService.usuarioTieneInsignia(
                 userId: uid, insigniaId: insigniaId);
             if (tiene) {
-              if (mounted)
+              if (mounted) {
                 _mostrarMensaje(
-                    'ℹYa tienes la insignia de esta estación', Colors.blueGrey);
+                    'Ya tienes la insignia de esta estación', Colors.blueGrey);
+              }
             } else {
               await InsigniaService.otorgarInsigniaAUsuario(
                   userId: uid, insigniaId: insigniaId, estacionId: estacion.id);
-              if (mounted)
+              if (mounted) {
                 _mostrarMensaje(
                     '¡Has obtenido la insignia "${estacion.nombre}"!',
                     colorAmarillo);
+              }
             }
           } else {
             // Usuario no autenticado: no se puede otorgar ahora
-            if (mounted)
+            if (mounted) {
               _mostrarMensaje(
-                  'ℹInicia sesión para recibir insignias', Colors.orange);
+                  'Inicia sesión para recibir insignias', Colors.orange);
+            }
           }
         } else {
           // No hay insignia asignada a la estación
         }
       } catch (e) {
         // Si falla (p.ej. offline), avisar y no bloquear la UX. Podríamos encolar para reintento.
-        if (mounted)
+        if (mounted) {
           _mostrarMensaje(
               'No se pudo otorgar la insignia ahora: $e', Colors.orange);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -511,7 +515,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             'Error al marcar visitada: ${e.toString()}', Colors.redAccent);
       }
     } finally {
-      if (mounted) setState(() => _validando = false);
+      if (mounted) {
+        setState(() => _validando = false);
+      }
     }
   }
 

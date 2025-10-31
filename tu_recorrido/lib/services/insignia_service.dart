@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:tu_recorrido/models/insignia.dart';
-import 'package:tu_recorrido/services/estacion_service.dart';
 
 /// Servicio para CRUD básico de insignias y helper para subir imagen a Storage.
 class InsigniaService {
@@ -43,8 +42,9 @@ class InsigniaService {
       imageUrl = await snapshot.ref.getDownloadURL();
     } else {
       // Mobile/desktop: usar putFile
-      if (imageFile == null)
+      if (imageFile == null) {
         throw Exception('imageFile is required for non-web upload');
+      }
       final ext = imageFile.path.split('.').last;
       final storageRef = _storage.ref().child('insignias/${docRef.id}.$ext');
       final uploadTask = storageRef.putFile(imageFile);

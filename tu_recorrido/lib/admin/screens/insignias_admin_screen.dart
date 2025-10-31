@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,7 +12,6 @@ import 'package:tu_recorrido/services/insignia_service.dart';
 import 'package:tu_recorrido/services/estacion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
-import 'package:tu_recorrido/utils/admin_utils.dart';
 
 /// Pantalla básica de administración de insignias.
 /// Esta pantalla provee un listado y un formulario simple para crear insignias.
@@ -34,12 +35,13 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   }
 
   Future<void> _otorgarInsignia(String insigniaId) async {
+    final messenger = ScaffoldMessenger.of(context);
     final emailController = TextEditingController();
     final uidController = TextEditingController();
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Otorgar insignia a usuario'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -49,16 +51,16 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                 decoration:
                     const InputDecoration(labelText: 'Email (opcional)')),
             const SizedBox(height: 8),
-            Text('O ingresa UID si no tienes email',
-                style: Theme.of(context).textTheme.bodySmall),
+      Text('O ingresa UID si no tienes email',
+        style: Theme.of(dialogContext).textTheme.bodySmall),
             TextField(
                 controller: uidController,
                 decoration: const InputDecoration(labelText: 'UID (opcional)')),
           ],
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+      TextButton(
+        onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
@@ -66,7 +68,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
               final uid = uidController.text.trim();
               if (email.isEmpty && uid.isEmpty) return;
 
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
 
               String? targetUid = uid.isNotEmpty ? uid : null;
 
@@ -79,29 +81,26 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                     .get();
 
                 if (query.docs.isEmpty) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Usuario no encontrado por email')));
-                  }
+                  if (!mounted) return;
+                  messenger.showSnackBar(const SnackBar(
+                      content: Text('Usuario no encontrado por email')));
                   return;
                 }
 
                 targetUid = query.docs.first.id;
               }
 
-              try {
-                await InsigniaService.otorgarInsigniaAUsuario(
-                    userId: targetUid!, insigniaId: insigniaId);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Insignia otorgada')));
+                try {
+                  await InsigniaService.otorgarInsigniaAUsuario(
+                      userId: targetUid!, insigniaId: insigniaId);
+          if (!mounted) return;
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Insignia otorgada')));
+                } catch (e) {
+          if (!mounted) return;
+          messenger.showSnackBar(
+            SnackBar(content: Text('Error al otorgar insignia: $e')));
                 }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al otorgar insignia: $e')));
-                }
-              }
             },
             child: const Text('Otorgar'),
           ),
@@ -112,6 +111,9 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
+    // Capture ScaffoldMessenger before any await to avoid using BuildContext
+    // after async gaps (prevents use_build_context_synchronously info).
+    final messenger = ScaffoldMessenger.of(context);
     try {
       _insignias = await InsigniaService.obtenerTodas();
       // Cargar estaciones y mapear por insigniaID
@@ -131,16 +133,16 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     } on FirebaseException catch (e) {
       // Handle Firestore permission errors or other Firebase exceptions
       _insignias = [];
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
-      }
+  if (mounted) {
+    messenger.showSnackBar(
+    SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
+  }
     } catch (e) {
       _insignias = [];
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error inesperado al cargar insignias: $e')));
-      }
+  if (mounted) {
+    messenger.showSnackBar(SnackBar(
+    content: Text('Error inesperado al cargar insignias: $e')));
+  }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -156,7 +158,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Crear insignia'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -170,8 +172,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           ],
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+      TextButton(
+        onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
@@ -179,7 +181,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
               final descripcion = descripcionController.text.trim();
               if (nombre.isEmpty || descripcion.isEmpty) return;
 
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
 
               // En web usamos bytes; en mobile/desktop usamos File
               if (kIsWeb) {
@@ -217,13 +219,13 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     if (estaciones.isEmpty) {
       await showDialog(
         context: context,
-        builder: (_) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           title: const Text('Asignar insignia a estación'),
           content: const Text(
               'No hay estaciones disponibles sin una insignia asignada.'),
           actions: [
             TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('Aceptar'))
           ],
         ),
@@ -235,7 +237,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Asignar insignia a estación'),
         content: SizedBox(
           width: double.maxFinite,
@@ -255,13 +257,13 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+      TextButton(
+        onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
               if (estacionSeleccionadaId == null) return;
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               // Actualizar estación con referencia a la insignia
               await InsigniaService.assignInsigniaToEstacion(
                   insigniaId: insigniaId, estacionId: estacionSeleccionadaId!);
@@ -325,46 +327,49 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                                     const Icon(Icons.broken_image,
                                         color: Colors.grey, size: 28),
                                     const SizedBox(height: 6),
-                                    TextButton.icon(
-                                      icon: const Icon(Icons.open_in_new,
-                                          size: 16),
-                                      label: const Text('Abrir URL'),
-                                      onPressed: () {
-                                        // Mostrar diálogo con la URL y opción de copiar
-                                        showDialog(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title:
-                                                const Text('URL de la imagen'),
-                                            content:
-                                                SelectableText(ins.imagenUrl),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Clipboard.setData(
-                                                        ClipboardData(
-                                                            text:
-                                                                ins.imagenUrl));
-                                                    Navigator.of(context).pop();
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                              context)
-                                                          .showSnackBar(
-                                                              const SnackBar(
-                                                                  content: Text(
-                                                                      'URL copiada al portapapeles')));
-                                                    }
-                                                  },
-                                                  child: const Text('Copiar')),
-                                              TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(context)
-                                                          .pop(),
-                                                  child: const Text('Cerrar')),
-                                            ],
-                                          ),
-                                        );
-                                      },
+                                              TextButton.icon(
+                                        icon: const Icon(Icons.open_in_new,
+                                            size: 16),
+                                        label: const Text('Abrir URL'),
+                                        onPressed: () {
+                                          // Mostrar diálogo con la URL y opción de copiar
+                                          final messenger = ScaffoldMessenger.of(context);
+                                          showDialog(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title:
+                          const Text('URL de la imagen'),
+                        content:
+                          SelectableText(ins.imagenUrl),
+                        actions: [
+                        TextButton(
+                          onPressed: () async {
+                              // Capture navigator before the async gap to avoid using
+                              // the dialog BuildContext after an await.
+                              final navigator = Navigator.of(dialogContext);
+                              await Clipboard.setData(
+                                ClipboardData(
+                                  text: ins.imagenUrl,
+                                ),
+                              );
+                              navigator.pop();
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('URL copiada al portapapeles'),
+                                ),
+                              );
+                            },
+                          child: const Text('Copiar')),
+                        TextButton(
+                          onPressed: () =>
+                            Navigator.of(dialogContext)
+                              .pop(),
+                          child: const Text('Cerrar')),
+                        ],
+                      ),
+                      );
+                                        },
                                     ),
                                   ],
                                 ),
