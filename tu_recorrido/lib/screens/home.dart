@@ -373,7 +373,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.pushNamed(context, '/menu');
           } else if (idx == 1) {
             // abrir Colección (Album)
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const AlbumScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AlbumScreen()));
           } else {
             setState(() => _currentIndex = idx);
           }

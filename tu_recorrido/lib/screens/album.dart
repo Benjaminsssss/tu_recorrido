@@ -52,7 +52,9 @@ class AlbumItem {
   static AlbumItem fromJson(Map<String, dynamic> j) {
     return AlbumItem(
       id: j['id'] ?? UniqueKey().toString(),
-      type: j['type'] == 'AlbumItemType.photo' ? AlbumItemType.photo : AlbumItemType.badge,
+      type: j['type'] == 'AlbumItemType.photo'
+          ? AlbumItemType.photo
+          : AlbumItemType.badge,
       title: j['title'] ?? 'Item',
       parentId: j['parentId'],
       imagePath: j['imagePath'],
@@ -95,16 +97,19 @@ class _AlbumScreenState extends State<AlbumScreen> {
     await _prefs.setStringList('album_items', raw);
   }
 
-  int _totalPhotosCount() => _items.where((e) => e.type == AlbumItemType.photo).length;
+  int _totalPhotosCount() =>
+      _items.where((e) => e.type == AlbumItemType.photo).length;
 
   Future<void> _addPhotoFor(String parentId) async {
     if (_totalPhotosCount() >= 10) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Has alcanzado el límite de 10 fotos')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Has alcanzado el límite de 10 fotos')));
       return;
     }
 
-    final XFile? file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final XFile? file =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null) return;
 
     final newItem = AlbumItem(
@@ -121,7 +126,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
     await _saveItems();
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('📸 Foto agregada al álbum')));
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('📸 Foto agregada al álbum')));
   }
 
   void _openDetail(AlbumItem item) async {
@@ -129,9 +135,11 @@ class _AlbumScreenState extends State<AlbumScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        final TextEditingController descCtrl = TextEditingController(text: item.description ?? '');
+        final TextEditingController descCtrl =
+            TextEditingController(text: item.description ?? '');
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -141,8 +149,13 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text(item.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-                      IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                      Expanded(
+                          child: Text(item.title,
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold))),
+                      IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -153,19 +166,24 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Fecha: ${item.date.toLocal().toString().split('.').first}'),
-                  if (item.location != null) Text('Ubicación: ${item.location}'),
+                  Text(
+                      'Fecha: ${item.date.toLocal().toString().split('.').first}'),
+                  if (item.location != null)
+                    Text('Ubicación: ${item.location}'),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descCtrl,
                     maxLines: 3,
-                    decoration: const InputDecoration(labelText: 'Descripción personal'),
+                    decoration: const InputDecoration(
+                        labelText: 'Descripción personal'),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cerrar')),
                       ElevatedButton(
                         onPressed: () {
                           item.description = descCtrl.text.trim();
@@ -204,7 +222,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
       width: width ?? 120,
       height: height ?? 90,
       color: Colors.grey.shade200,
-      child: const Center(child: Icon(Icons.verified, size: 40, color: Colors.grey)),
+      child: const Center(
+          child: Icon(Icons.verified, size: 40, color: Colors.grey)),
     );
   }
 
@@ -230,9 +249,12 @@ class _AlbumScreenState extends State<AlbumScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(12),
-              child: _items.where((e) => e.type == AlbumItemType.badge).isEmpty ? _buildEmptyStateNoBadges(theme) : _buildBadgesList(context),
+              child: _items.where((e) => e.type == AlbumItemType.badge).isEmpty
+                  ? _buildEmptyStateNoBadges(theme)
+                  : _buildBadgesList(context),
             ),
-      bottomNavigationBar: BottomNavBar(currentIndex: _currentIndex, onChanged: _onNavChanged),
+      bottomNavigationBar:
+          BottomNavBar(currentIndex: _currentIndex, onChanged: _onNavChanged),
     );
   }
 
@@ -247,12 +269,17 @@ class _AlbumScreenState extends State<AlbumScreen> {
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)
+              ],
             ),
             child: const Icon(Icons.photo_album, size: 56, color: Colors.grey),
           ),
           const SizedBox(height: 20),
-          Text('Aún no has desbloqueado insignias', style: theme.textTheme.titleMedium?.copyWith(color: Colors.black54)),
+          Text('Aún no has desbloqueado insignias',
+              style:
+                  theme.textTheme.titleMedium?.copyWith(color: Colors.black54)),
           const SizedBox(height: 8),
           const Text(
             'Escanea códigos QR en las estaciones para desbloquear insignias.\nMientras no tengas insignias, no podrás agregar fotos al álbum.',
@@ -271,10 +298,14 @@ class _AlbumScreenState extends State<AlbumScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final badge = badges[index];
-        final photos = _items.where((i) => i.type == AlbumItemType.photo && i.parentId == badge.id).toList();
+        final photos = _items
+            .where(
+                (i) => i.type == AlbumItemType.photo && i.parentId == badge.id)
+            .toList();
         final canAdd = _totalPhotosCount() < 10;
         return Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -283,9 +314,18 @@ class _AlbumScreenState extends State<AlbumScreen> {
               children: [
                 Row(
                   children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(8), child: SizedBox(width: 72, height: 72, child: _buildItemImage(badge, width: 72, height: 72))),
+                    ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                            width: 72,
+                            height: 72,
+                            child:
+                                _buildItemImage(badge, width: 72, height: 72))),
                     const SizedBox(width: 12),
-                    Expanded(child: Text(badge.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                    Expanded(
+                        child: Text(badge.title,
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold))),
                     if (canAdd)
                       IconButton(
                         onPressed: () => _addPhotoFor(badge.id),
@@ -298,7 +338,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 SizedBox(
                   height: 96,
                   child: photos.isEmpty
-                      ? Center(child: Text('No hay fotos para esta insignia', style: TextStyle(color: Colors.grey.shade600)))
+                      ? Center(
+                          child: Text('No hay fotos para esta insignia',
+                              style: TextStyle(color: Colors.grey.shade600)))
                       : ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: photos.length,
@@ -307,7 +349,13 @@ class _AlbumScreenState extends State<AlbumScreen> {
                             final p = photos[i];
                             return GestureDetector(
                               onTap: () => _openDetail(p),
-                              child: ClipRRect(borderRadius: BorderRadius.circular(8), child: SizedBox(width: 140, height: 96, child: _buildItemImage(p, width: 140, height: 96))),
+                              child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: SizedBox(
+                                      width: 140,
+                                      height: 96,
+                                      child: _buildItemImage(p,
+                                          width: 140, height: 96))),
                             );
                           },
                         ),
@@ -320,5 +368,3 @@ class _AlbumScreenState extends State<AlbumScreen> {
     );
   }
 }
-
-

@@ -3,6 +3,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/estacion.dart';
 import '../services/estacion_service.dart';
 import '../services/coleccion_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/insignia_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// vista para escanear códigos QR de estaciones patrimoniales
@@ -78,7 +80,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                 ),
                 onDetect: (BarcodeCapture capture) async {
                   if (_handlingScan) return;
-                  final String? code = capture.barcodes.isNotEmpty ? capture.barcodes.first.rawValue : null;
+                  final String? code = capture.barcodes.isNotEmpty
+                      ? capture.barcodes.first.rawValue
+                      : null;
                   if (code == null || code.isEmpty) return;
 
                   _handlingScan = true;
@@ -102,7 +106,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   }
                 },
               ),
-              
+
               // ⭐ Marco de escaneo personalizado
               Center(
                 child: Container(
@@ -117,7 +121,7 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   ),
                 ),
               ),
-              
+
               // ⭐ Instrucciones en la parte inferior
               Positioned(
                 bottom: 0,
@@ -131,14 +135,15 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                          colorAzulPetroleo.withValues(alpha: 0.95),
+                        colorAzulPetroleo.withValues(alpha: 0.95),
                       ],
                     ),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.qr_code_scanner, color: colorAmarillo, size: 48),
+                      Icon(Icons.qr_code_scanner,
+                          color: colorAmarillo, size: 48),
                       const SizedBox(height: 12),
                       const Text(
                         'Coloca el código QR en el marco',
@@ -208,9 +213,11 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                   color: colorVerdeEsmeralda.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.qr_code_scanner, color: colorVerdeEsmeralda, size: 28),
+                child: Icon(Icons.qr_code_scanner,
+                    color: colorVerdeEsmeralda, size: 28),
               ),
-              title: const Text('Escanear con cámara', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text('Escanear con cámara',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: const Text('Usa la cámara para escanear el código QR'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
@@ -228,7 +235,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                 ),
                 child: Icon(Icons.keyboard, color: colorVerdeOliva, size: 28),
               ),
-              title: const Text('Ingresar código manualmente', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text('Ingresar código manualmente',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: const Text('Escribe el código de la estación'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
@@ -294,7 +302,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: colorVerdeEsmeralda,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -323,7 +332,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
         if (estacion != null) {
           _mostrarEstacionEncontrada(estacion);
         } else {
-          _mostrarMensaje('❌ Código no válido o estación inactiva', Colors.redAccent);
+          _mostrarMensaje(
+              '❌ Código no válido o estación inactiva', Colors.redAccent);
         }
       }
     } catch (e) {
@@ -349,7 +359,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                 color: colorVerdeEsmeralda.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.check_circle, color: colorVerdeEsmeralda, size: 28),
+              child: Icon(Icons.check_circle,
+                  color: colorVerdeEsmeralda, size: 28),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -403,7 +414,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: colorVerdeEsmeralda,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -431,12 +443,16 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
       final hasPermission = await Geolocator.checkPermission();
       if (hasPermission == LocationPermission.denied) {
         final req = await Geolocator.requestPermission();
-        if (req == LocationPermission.denied || req == LocationPermission.deniedForever) {
+        if (req == LocationPermission.denied ||
+            req == LocationPermission.deniedForever) {
           // no hay permiso, continuar sin coordenadas
         }
       }
 
-  final pos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium)).timeout(const Duration(seconds: 5));
+      final pos = await Geolocator.getCurrentPosition(
+              locationSettings:
+                  const LocationSettings(accuracy: LocationAccuracy.medium))
+          .timeout(const Duration(seconds: 5));
       lat = pos.latitude;
       lon = pos.longitude;
     } catch (_) {
@@ -444,17 +460,64 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
     }
 
     try {
-      await ColeccionService.marcarComoVisitada(estacion, latitudUsuario: lat, longitudUsuario: lon);
+      await ColeccionService.marcarComoVisitada(estacion,
+          latitudUsuario: lat, longitudUsuario: lon);
       if (mounted) {
         setState(() => _estacionEncontrada = estacion);
-        _mostrarMensaje('✅ Estación ${estacion.nombre} marcada como visitada', colorVerdeEsmeralda);
+        _mostrarMensaje('✅ Estación ${estacion.nombre} marcada como visitada',
+            colorVerdeEsmeralda);
+      }
+      // ----- Chequear insignia asignada a la estación y otorgarla -----
+      try {
+        if (estacion.insigniaID != null) {
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (currentUser != null) {
+            final uid = currentUser.uid;
+            final insigniaId = estacion.insigniaID!.id;
+
+            // Evitar duplicados: comprobar si el usuario ya tiene la insignia
+            final tiene = await InsigniaService.usuarioTieneInsignia(
+                userId: uid, insigniaId: insigniaId);
+            if (tiene) {
+              if (mounted) {
+                _mostrarMensaje(
+                    'Ya tienes la insignia de esta estación', Colors.blueGrey);
+              }
+            } else {
+              await InsigniaService.otorgarInsigniaAUsuario(
+                  userId: uid, insigniaId: insigniaId, estacionId: estacion.id);
+              if (mounted) {
+                _mostrarMensaje(
+                    '¡Has obtenido la insignia "${estacion.nombre}"!',
+                    colorAmarillo);
+              }
+            }
+          } else {
+            // Usuario no autenticado: no se puede otorgar ahora
+            if (mounted) {
+              _mostrarMensaje(
+                  'Inicia sesión para recibir insignias', Colors.orange);
+            }
+          }
+        } else {
+          // No hay insignia asignada a la estación
+        }
+      } catch (e) {
+        // Si falla (p.ej. offline), avisar y no bloquear la UX. Podríamos encolar para reintento.
+        if (mounted) {
+          _mostrarMensaje(
+              'No se pudo otorgar la insignia ahora: $e', Colors.orange);
+        }
       }
     } catch (e) {
       if (mounted) {
-        _mostrarMensaje('Error al marcar visitada: ${e.toString()}', Colors.redAccent);
+        _mostrarMensaje(
+            'Error al marcar visitada: ${e.toString()}', Colors.redAccent);
       }
     } finally {
-      if (mounted) setState(() => _validando = false);
+      if (mounted) {
+        setState(() => _validando = false);
+      }
     }
   }
 
@@ -463,7 +526,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(mensaje, style: const TextStyle(fontWeight: FontWeight.w500)),
+        content:
+            Text(mensaje, style: const TextStyle(fontWeight: FontWeight.w500)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -505,13 +569,18 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                     height: 250,
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: _escaneando ? colorVerdeEsmeralda : colorVerdeOliva.withValues(alpha: 0.5),
+                        color: _escaneando
+                            ? colorVerdeEsmeralda
+                            : colorVerdeOliva.withValues(alpha: 0.5),
                         width: 4,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: (_escaneando ? colorVerdeEsmeralda : colorVerdeOliva).withValues(alpha: 0.2),
+                          color: (_escaneando
+                                  ? colorVerdeEsmeralda
+                                  : colorVerdeOliva)
+                              .withValues(alpha: 0.2),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -520,7 +589,8 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                     child: Icon(
                       Icons.qr_code_scanner,
                       size: 120,
-                      color: _escaneando ? colorVerdeEsmeralda : colorVerdeOliva,
+                      color:
+                          _escaneando ? colorVerdeEsmeralda : colorVerdeOliva,
                     ),
                   ),
                 ),
@@ -540,7 +610,9 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                 ),
                 const SizedBox(height: 48),
                 ElevatedButton.icon(
-                  onPressed: _escaneando || _validando ? null : _mostrarOpcionesEscaneo,
+                  onPressed: _escaneando || _validando
+                      ? null
+                      : _mostrarOpcionesEscaneo,
                   icon: _validando
                       ? SizedBox(
                           width: 20,
@@ -553,13 +625,16 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                       : const Icon(Icons.qr_code_scanner, size: 28),
                   label: Text(
                     _validando ? 'Validando...' : 'Escanear QR',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorVerdeEsmeralda,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 48, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
                     elevation: 4,
                     shadowColor: colorVerdeEsmeralda.withValues(alpha: 0.5),
                   ),
@@ -571,13 +646,16 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
                     decoration: BoxDecoration(
                       color: colorVerdeEsmeralda.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colorVerdeEsmeralda.withValues(alpha: 0.3), width: 2),
+                      border: Border.all(
+                          color: colorVerdeEsmeralda.withValues(alpha: 0.3),
+                          width: 2),
                     ),
                     child: Column(
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.check_circle, color: colorVerdeEsmeralda, size: 24),
+                            Icon(Icons.check_circle,
+                                color: colorVerdeEsmeralda, size: 24),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

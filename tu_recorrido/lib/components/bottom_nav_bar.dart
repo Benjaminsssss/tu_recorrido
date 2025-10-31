@@ -5,7 +5,8 @@ class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onChanged;
 
-  const BottomNavBar({super.key, required this.currentIndex, required this.onChanged});
+  const BottomNavBar(
+      {super.key, required this.currentIndex, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +37,12 @@ class BottomNavBar extends StatelessWidget {
               selected: currentIndex == 0,
               onTap: () => onChanged(0),
             ),
-
             BottomNavItem(
               icon: Icons.photo_album,
               label: 'Colección',
               selected: currentIndex == 1,
               onTap: () => onChanged(1),
             ),
-
             BottomNavItem(
               icon: Icons.my_location,
               label: 'Mapa',

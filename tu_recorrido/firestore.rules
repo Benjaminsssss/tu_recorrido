@@ -84,6 +84,33 @@ service cloud.firestore {
                       && request.auth.uid == uid 
                       && isValidEstacionVisitada(request.resource.data);
       }
+
+      // ----- INSIGNIAS POR USUARIO (subcollection) -----
+      // Permite que el propio usuario o un administrador creen/lean las insignias
+      match /insignias/{insigniaId} {
+        // Validación simple para el documento de insignia del usuario
+        function isValidUserInsignia(data) {
+          // Validamos únicamente la presencia de fechaObtenida (timestamp).
+          // No comprobamos el tipo de `estacionRef` porque el tipo `reference`
+          // puede causar errores de análisis en algunos entornos de reglas.
+          return (
+            data.keys().hasOnly(['fechaObtenida']) ||
+            data.keys().hasOnly(['fechaObtenida','estacionRef'])
+          )
+          && (data.fechaObtenida is timestamp);
+        }
+
+        // Lectura: dueño o admin
+        allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+
+        // Crear: dueño o admin
+        allow create: if request.auth != null
+                      && (request.auth.uid == uid || isAdmin())
+                      && isValidUserInsignia(request.resource.data);
+
+        // Update/Delete: dueño o admin
+        allow update, delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      }
     }
 
     // ----- PLACES -----
@@ -91,6 +118,25 @@ service cloud.firestore {
     match /places/{placeId} {
       allow read: if true; // público (puedes cambiarlo si quieres)
       allow create, update, delete: if request.auth != null;
+    }
+
+    // ----- INSIGNIAS -----
+    // Colección de insignias (top-level)
+    match /insignias/{insigniaId} {
+      function isValidInsignia(data) {
+        return data.keys().hasOnly(['nombre','descripcion','imagenUrl','fechaCreacion'])
+               && (data.nombre is string)
+               && (data.descripcion is string)
+               && (data.imagenUrl is string)
+               && (data.fechaCreacion is timestamp);
+      }
+
+      // Lectura: cualquiera autenticado puede leer la lista de insignias
+      allow read: if request.auth != null;
+
+      // Crear/Actualizar/Borrar: solo administradores
+      allow create: if request.auth != null && isAdmin() && isValidInsignia(request.resource.data);
+      allow update, delete: if request.auth != null && isAdmin();
     }
 
     // ----- ESTACIONES -----
@@ -108,23 +154,42 @@ service cloud.firestore {
 
       // Validación de esquema para estaciones
       function isValidEstacion(data) {
-        return
-          (data.keys().hasOnly([
+        // Aceptar dos variantes de keys: con o sin `insigniaID` (es opcional)
+        return (
+          data.keys().hasOnly([
             'codigo', 'codigoQR', 'nombre', 'descripcion', 
             'latitud', 'longitud', 'fechaCreacion', 'activa'
-          ])) &&
-          (data.codigo is string) &&
-          (data.codigoQR is string) &&
-          (data.nombre is string) &&
-          (data.descripcion is string) &&
-          (data.latitud is number) &&
-          (data.longitud is number) &&
-          (data.fechaCreacion is timestamp) &&
-          (data.activa is bool);
+          ])
+        ||
+          data.keys().hasOnly([
+            'codigo', 'codigoQR', 'nombre', 'descripcion', 
+            'latitud', 'longitud', 'fechaCreacion', 'activa', 'insigniaID'
+          ])
+        )
+        && (data.codigo is string)
+        && (data.codigoQR is string)
+        && (data.nombre is string)
+        && (data.descripcion is string)
+        && (data.latitud is number)
+        && (data.longitud is number)
+        && (data.fechaCreacion is timestamp)
+        && (data.activa is bool);
       }
 
-      allow create: if request.auth != null && isValidEstacion(request.resource.data);
-      allow update: if request.auth != null && isValidEstacion(request.resource.data);
+      // Permitir crear/actualizar estaciones a usuarios autenticados pero
+      // restringir cambios en el campo `insigniaID` solo a administradores.
+      allow create: if request.auth != null
+                      && isValidEstacion(request.resource.data)
+                      // en creación, solo permitir insigniaID si es null o el creador es admin
+                      && (request.resource.data.insigniaID == null || isAdmin());
+
+      allow update: if request.auth != null
+                      && isValidEstacion(request.resource.data)
+                      // si se intenta cambiar insigniaID, solo los admins pueden hacerlo
+                      && (
+                        (request.resource.data.insigniaID == resource.data.insigniaID) ||
+                        isAdmin()
+                      );
     }
   }
 }
