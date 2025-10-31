@@ -34,14 +34,17 @@ class InsigniaService {
     if (kIsWeb || imageBytes != null) {
       // Web path: necesitamos un nombre de archivo para la extensión
       final safeName = fileName ?? '${docRef.id}.png';
-      final storageRef = _storage.ref().child('insignias/${docRef.id}_$safeName');
+      final storageRef =
+          _storage.ref().child('insignias/${docRef.id}_$safeName');
 
-      final uploadTask = storageRef.putData(imageBytes ?? await imageFile!.readAsBytes());
+      final uploadTask =
+          storageRef.putData(imageBytes ?? await imageFile!.readAsBytes());
       final snapshot = await uploadTask;
       imageUrl = await snapshot.ref.getDownloadURL();
     } else {
       // Mobile/desktop: usar putFile
-      if (imageFile == null) throw Exception('imageFile is required for non-web upload');
+      if (imageFile == null)
+        throw Exception('imageFile is required for non-web upload');
       final ext = imageFile.path.split('.').last;
       final storageRef = _storage.ref().child('insignias/${docRef.id}.$ext');
       final uploadTask = storageRef.putFile(imageFile);
@@ -70,7 +73,8 @@ class InsigniaService {
   }
 
   static Future<List<Insignia>> obtenerTodas() async {
-    final snapshot = await _collection.orderBy('fechaCreacion', descending: true).get();
+    final snapshot =
+        await _collection.orderBy('fechaCreacion', descending: true).get();
     return snapshot.docs.map((d) => Insignia.fromFirestore(d)).toList();
   }
 
@@ -95,7 +99,8 @@ class InsigniaService {
     await docRef.delete();
   }
 
-  static Future<void> actualizarInsignia(String id, Map<String, dynamic> changes) async {
+  static Future<void> actualizarInsignia(
+      String id, Map<String, dynamic> changes) async {
     await _collection.doc(id).update(changes);
   }
 
@@ -104,7 +109,8 @@ class InsigniaService {
     required String insigniaId,
     required String estacionId,
   }) async {
-    final estacionRef = FirebaseFirestore.instance.collection('estaciones').doc(estacionId);
+    final estacionRef =
+        FirebaseFirestore.instance.collection('estaciones').doc(estacionId);
     final insigniaRef = _collection.doc(insigniaId);
 
     await estacionRef.update({'insigniaID': insigniaRef});

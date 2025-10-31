@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,7 +18,7 @@ class InsigniasAdminScreen extends StatefulWidget {
   const InsigniasAdminScreen({super.key});
 
   @override
-  State<InsigniasAdminScreen> createState() => _InsigniasAdminScreenState();                                        
+  State<InsigniasAdminScreen> createState() => _InsigniasAdminScreenState();
 }
 
 class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
@@ -44,14 +44,22 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email (opcional)')),
+            TextField(
+                controller: emailController,
+                decoration:
+                    const InputDecoration(labelText: 'Email (opcional)')),
             const SizedBox(height: 8),
-            Text('O ingresa UID si no tienes email', style: Theme.of(context).textTheme.bodySmall),
-            TextField(controller: uidController, decoration: const InputDecoration(labelText: 'UID (opcional)')),
+            Text('O ingresa UID si no tienes email',
+                style: Theme.of(context).textTheme.bodySmall),
+            TextField(
+                controller: uidController,
+                decoration: const InputDecoration(labelText: 'UID (opcional)')),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
               final email = emailController.text.trim();
@@ -70,24 +78,28 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                     .limit(1)
                     .get();
 
-                  if (query.docs.isEmpty) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario no encontrado por email')));
-                    }
-                    return;
+                if (query.docs.isEmpty) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Usuario no encontrado por email')));
                   }
+                  return;
+                }
 
                 targetUid = query.docs.first.id;
               }
 
               try {
-                await InsigniaService.otorgarInsigniaAUsuario(userId: targetUid!, insigniaId: insigniaId);
+                await InsigniaService.otorgarInsigniaAUsuario(
+                    userId: targetUid!, insigniaId: insigniaId);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insignia otorgada')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Insignia otorgada')));
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al otorgar insignia: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al otorgar insignia: $e')));
                 }
               }
             },
@@ -120,12 +132,14 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       // Handle Firestore permission errors or other Firebase exceptions
       _insignias = [];
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
       }
     } catch (e) {
       _insignias = [];
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error inesperado al cargar insignias: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error inesperado al cargar insignias: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -147,12 +161,18 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nombreController, decoration: const InputDecoration(labelText: 'Nombre')),
-            TextField(controller: descripcionController, decoration: const InputDecoration(labelText: 'Descripcion')),
+            TextField(
+                controller: nombreController,
+                decoration: const InputDecoration(labelText: 'Nombre')),
+            TextField(
+                controller: descripcionController,
+                decoration: const InputDecoration(labelText: 'Descripcion')),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
               final nombre = nombreController.text.trim();
@@ -199,8 +219,13 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         context: context,
         builder: (_) => AlertDialog(
           title: const Text('Asignar insignia a estación'),
-          content: const Text('No hay estaciones disponibles sin una insignia asignada.'),
-          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Aceptar'))],
+          content: const Text(
+              'No hay estaciones disponibles sin una insignia asignada.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Aceptar'))
+          ],
         ),
       );
       return;
@@ -230,7 +255,9 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
               if (estacionSeleccionadaId == null) return;
@@ -258,9 +285,11 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.emoji_events_outlined, size: 64, color: Colors.grey),
+                      const Icon(Icons.emoji_events_outlined,
+                          size: 64, color: Colors.grey),
                       const SizedBox(height: 12),
-                      const Text('No hay insignias creadas aún', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                      const Text('No hay insignias creadas aún',
+                          style: TextStyle(fontSize: 16, color: Colors.grey)),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: _crearInsignia,
@@ -278,7 +307,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                       leading: SizedBox(
                         width: 56,
                         height: 56,
-                          child: ClipRRect(
+                        child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
                             ins.imagenUrl,
@@ -286,35 +315,52 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                             height: 56,
                             fit: BoxFit.cover,
                             // If image fails (CORS or network), show a gray placeholder instead
-                            errorBuilder: (context, error, stackTrace) => Container(
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
                               color: Colors.grey.shade200,
                               child: Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.broken_image, color: Colors.grey, size: 28),
+                                    const Icon(Icons.broken_image,
+                                        color: Colors.grey, size: 28),
                                     const SizedBox(height: 6),
                                     TextButton.icon(
-                                      icon: const Icon(Icons.open_in_new, size: 16),
+                                      icon: const Icon(Icons.open_in_new,
+                                          size: 16),
                                       label: const Text('Abrir URL'),
                                       onPressed: () {
                                         // Mostrar diálogo con la URL y opción de copiar
                                         showDialog(
                                           context: context,
                                           builder: (_) => AlertDialog(
-                                            title: const Text('URL de la imagen'),
-                                            content: SelectableText(ins.imagenUrl),
+                                            title:
+                                                const Text('URL de la imagen'),
+                                            content:
+                                                SelectableText(ins.imagenUrl),
                                             actions: [
                                               TextButton(
                                                   onPressed: () {
-                                                    Clipboard.setData(ClipboardData(text: ins.imagenUrl));
+                                                    Clipboard.setData(
+                                                        ClipboardData(
+                                                            text:
+                                                                ins.imagenUrl));
                                                     Navigator.of(context).pop();
                                                     if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL copiada al portapapeles')));
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                              const SnackBar(
+                                                                  content: Text(
+                                                                      'URL copiada al portapapeles')));
                                                     }
                                                   },
                                                   child: const Text('Copiar')),
-                                              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(),
+                                                  child: const Text('Cerrar')),
                                             ],
                                           ),
                                         );
@@ -332,7 +378,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                                   child: SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   ),
                                 ),
                               );
@@ -349,9 +396,13 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
                           if (_estacionPorInsignia.containsKey(ins.id))
                             Row(
                               children: [
-                                const Icon(Icons.place, size: 14, color: Colors.grey),
+                                const Icon(Icons.place,
+                                    size: 14, color: Colors.grey),
                                 const SizedBox(width: 6),
-                                Text('Asignada a: ${_estacionPorInsignia[ins.id]!.nombre}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                                Text(
+                                    'Asignada a: ${_estacionPorInsignia[ins.id]!.nombre}',
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.black54)),
                               ],
                             ),
                         ],

@@ -111,6 +111,7 @@ class AdminScreen extends StatelessWidget {
       );
     }
   }
+
   /// Mostrar estado actual de códigos QR
   // ignore: unused_element
   Future<void> _mostrarEstadoQR(BuildContext context) async {
