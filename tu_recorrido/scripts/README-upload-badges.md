@@ -1,7 +1,7 @@
 Bulk upload script for badge images
 
 Files:
-- upload_badges.js: Node script that uploads images to Firebase Storage and appends image objects to the 'imagenes' array in Firestore documents under `places/{placeId}`.
+- upload_badges.js: Node script that uploads images to Firebase Storage and appends image objects to the 'imagenes' array in Firestore documents under `estaciones/{placeId}`.
 
 Usage
 
@@ -35,7 +35,7 @@ node scripts\upload_badges.js mapping.json .\images
 ```
 
 Notes
-- The script uploads each file to `places/{placeId}/img_<timestamp>.<ext>` and appends an object `{ url, alt: '', path }` to the `imagenes` array in Firestore.
+- The script uploads each file to `estaciones/{placeId}/img_<timestamp>.<ext>` and appends an object `{ url, alt: '', path }` to the `imagenes` array in Firestore.
 - The script obtains a signed URL valid for 1 year and stores it in `url`. If you prefer public URLs, adjust the script to call `file.makePublic()`.
 - Ensure your Firestore rules allow `set`/`update` operations from the service account (they normally do).
 - This script is intended for admin/bulk workflows and must be run securely from your machine or a protected environment.

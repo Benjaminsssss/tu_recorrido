@@ -21,7 +21,7 @@ class PlaceBadge {
 
 class PlaceImage {
   final String? url;
-  final String? path; // ruta en Firebase Storage (ej: 'places/{placeId}/main_123.jpg')
+  final String? path; // ruta en Firebase Storage (ej: 'estaciones/{placeId}/main_123.jpg')
   final String? base64;
   final String alt;
   final String? fuenteSugerida;

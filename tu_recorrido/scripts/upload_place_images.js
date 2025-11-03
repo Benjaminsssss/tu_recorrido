@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Script minimalista para subir imágenes a Firebase Storage y añadirlas
- * al array `imagenes` del documento `places/{placeId}` en Firestore.
+ * al array `imagenes` del documento `estaciones/{placeId}` en Firestore.
  *
  * Uso:
  * node upload_place_images.js --serviceAccount ./serviceAccountKey.json --bucket your-bucket.appspot.com --placeId YOUR_PLACE_ID ./img1.jpg ./img2.jpg
@@ -62,7 +62,7 @@ const bucket = admin.storage().bucket();
 const db = admin.firestore();
 
 (async () => {
-  console.log('Uploading', files.length, 'files to', `places/${placeId}/`);
+  console.log('Uploading', files.length, 'files to', `estaciones/${placeId}/`);
   const uploaded = [];
 
   for (let i = 0; i < files.length; i++) {
@@ -73,7 +73,7 @@ const db = admin.firestore();
     }
 
     const ext = path.extname(filePath) || '.jpg';
-    const dest = `places/${placeId}/img_${Date.now()}_${i}${ext}`;
+  const dest = `estaciones/${placeId}/img_${Date.now()}_${i}${ext}`;
     const contentType = mime.getType(filePath) || 'image/jpeg';
 
     console.log('Uploading', filePath, '->', dest);
@@ -85,7 +85,7 @@ const db = admin.firestore();
 
     uploaded.push({ url, path: dest, alt: path.basename(filePath) });
     // Añadir al documento en Firestore (arrayUnion)
-    await db.collection('places').doc(placeId).set({
+    await db.collection('estaciones').doc(placeId).set({
       imagenes: admin.firestore.FieldValue.arrayUnion(uploaded[uploaded.length - 1]),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });

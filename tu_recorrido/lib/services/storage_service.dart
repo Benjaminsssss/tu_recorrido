@@ -15,7 +15,7 @@ class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   /// Sube un archivo y devuelve la URL de descarga pública.
-  /// [path] ejemplo: "places/{placeId}/images/imagen1.jpg"
+  /// [path] ejemplo: "estaciones/{placeId}/images/imagen1.jpg"
   Future<String> uploadFile(File file, String path, {String? contentType}) async {
     final ref = _storage.ref().child(path);
     final metadata = SettableMetadata(contentType: contentType);
@@ -38,7 +38,7 @@ class StorageService {
     return url;
   }
 
-  /// Borra un archivo en Storage por su path (p. ej. 'places/.../imagen1.jpg')
+  /// Borra un archivo en Storage por su path (p. ej. 'estaciones/.../imagen1.jpg')
   Future<void> deleteFile(String path) async {
     final ref = _storage.ref().child(path);
     await ref.delete();

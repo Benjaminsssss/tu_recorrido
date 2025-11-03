@@ -86,10 +86,10 @@ service cloud.firestore {
       }
     }
 
-    // ----- PLACES -----
-    // (DEV) cualquiera autenticado puede leer; crear/borrar/editar si está autenticado.
+    // ----- PLACES (legacy) -----
+    // Mantener reglas para compatibilidad con documentos históricos bajo 'places'.
     match /places/{placeId} {
-      allow read: if true; // público (puedes cambiarlo si quieres)
+      allow read: if true;
       allow create, update, delete: if request.auth != null;
     }
 

@@ -1,7 +1,7 @@
 Upload Place Images
 ===================
 
-This small script uploads image files to Firebase Storage and appends them to the `imagenes` array of a `places/{placeId}` document in Firestore.
+This small script uploads image files to Firebase Storage and appends them to the `imagenes` array of an `estaciones/{placeId}` document in Firestore.
 
 Prerequisites
 -------------
@@ -26,8 +26,8 @@ node upload_place_images.js --serviceAccount ./serviceAccountKey.json --bucket y
 
 Notes
 -----
-- The script uploads each file to Storage path `places/{placeId}/img_<timestamp>_<index>.<ext>`.
-- After upload it generates a signed URL (long expiration) and adds an object { url, path, alt } to `places/{placeId}.imagenes` using arrayUnion.
+- The script uploads each file to Storage path `estaciones/{placeId}/img_<timestamp>_<index>.<ext>`.
+- After upload it generates a signed URL (long expiration) and adds an object { url, path, alt } to `estaciones/{placeId}.imagenes` using arrayUnion.
 - I cannot run this script against your Firebase from here. Run it locally with your service account.
 
 Example

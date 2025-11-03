@@ -69,7 +69,7 @@ class FirestoreService {
   }
 
   // =========================
-  // PLACES
+  // ESTACIONES (antes "places")
   // =========================
 
   Future<String> createPlace({
@@ -80,7 +80,7 @@ class FirestoreService {
     String? country,
     String? city,
   }) async {
-    final ref = await _db.collection('places').add({
+  final ref = await _db.collection('estaciones').add({
       'name': name,
       'lat': lat,
       'lng': lng,
@@ -94,18 +94,18 @@ class FirestoreService {
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchPlaces() {
     return _db
-        .collection('places')
+        .collection('estaciones')
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
 
   Future<void> deletePlace(String placeId) async {
-    await _db.collection('places').doc(placeId).delete();
+    await _db.collection('estaciones').doc(placeId).delete();
   }
 
   /// Actualiza el campo `imageUrl` de un place.
   Future<void> updatePlaceImageUrl({required String placeId, required String imageUrl}) async {
-    await _db.collection('places').doc(placeId).set({
+    await _db.collection('estaciones').doc(placeId).set({
       'imageUrl': imageUrl,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -113,7 +113,7 @@ class FirestoreService {
 
   /// Actualiza campos parciales del place (merge)
   Future<void> updatePlacePartial({required String placeId, required Map<String, dynamic> data}) async {
-    await _db.collection('places').doc(placeId).set({
+    await _db.collection('estaciones').doc(placeId).set({
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -122,7 +122,7 @@ class FirestoreService {
   /// Añade un objeto de imagen al array `imagenes` del place.
   /// El `image` debe ser un Map con al menos la clave `url` (p.ej. {'url': ..., 'alt': ...}).
   Future<void> addPlaceImage({required String placeId, required Map<String, dynamic> image}) async {
-    await _db.collection('places').doc(placeId).set({
+    await _db.collection('estaciones').doc(placeId).set({
       'imagenes': FieldValue.arrayUnion([image]),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -131,7 +131,7 @@ class FirestoreService {
   /// Remueve un objeto de imagen del array `imagenes` del place.
   /// Es importante pasar la misma estructura que está guardada en Firestore para que `arrayRemove` funcione.
   Future<void> removePlaceImage({required String placeId, required Map<String, dynamic> image}) async {
-    await _db.collection('places').doc(placeId).update({
+    await _db.collection('estaciones').doc(placeId).update({
       'imagenes': FieldValue.arrayRemove([image]),
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -139,15 +139,15 @@ class FirestoreService {
 
   /// Reemplaza el array `imagenes` del place por la lista dada.
   Future<void> setPlaceImages({required String placeId, required List<Map<String, dynamic>> images}) async {
-    await _db.collection('places').doc(placeId).set({
+    await _db.collection('estaciones').doc(placeId).set({
       'imagenes': images,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
-  /// Devuelve la lista de imágenes almacenadas en el documento 'places/{placeId}'.
+  /// Devuelve la lista de imágenes almacenadas en el documento 'estaciones/{placeId}'.
   Future<List<Map<String, dynamic>>> getPlaceImages(String placeId) async {
-    final doc = await _db.collection('places').doc(placeId).get();
+  final doc = await _db.collection('estaciones').doc(placeId).get();
     final data = doc.data();
     if (data == null) return [];
     final imgs = (data['imagenes'] as List<dynamic>?) ?? [];

@@ -1,5 +1,5 @@
 /*
-Node.js script to bulk upload badge images to Firebase Storage and update Firestore 'places/{placeId}.imagenes' array.
+Node.js script to bulk upload badge images to Firebase Storage and update Firestore 'estaciones/{placeId}.imagenes' array.
 
 Usage:
 1. Place your images in a folder, and provide a mapping JSON (see mapping.example.json) that maps placeId -> filename.
@@ -10,7 +10,7 @@ Usage:
 4. Run:
    node upload_badges.js mapping.json ./images_folder
 
-The script uploads each file to 'places/{placeId}/img_<timestamp>.jpg' and appends an object { url, alt: '', path } to the 'imagenes' array of the place document.
+The script uploads each file to 'estaciones/{placeId}/img_<timestamp>.jpg' and appends an object { url, alt: '', path } to the 'imagenes' array of the estacion document.
 */
 
 const fs = require('fs');
@@ -41,7 +41,7 @@ async function uploadAndAttach(placeId, filename) {
   }
 
   const timestamp = Date.now();
-  const remotePath = `places/${placeId}/img_${timestamp}${path.extname(filename)}`;
+  const remotePath = `estaciones/${placeId}/img_${timestamp}${path.extname(filename)}`;
 
   console.log(`Uploading ${filename} -> ${remotePath}`);
   await bucket.upload(localPath, {
@@ -61,7 +61,7 @@ async function uploadAndAttach(placeId, filename) {
   // Append to Firestore array
   const imageObj = { url: signedUrl, alt: '', path: remotePath };
 
-  await db.collection('places').doc(placeId).set({
+  await db.collection('estaciones').doc(placeId).set({
     imagenes: admin.firestore.FieldValue.arrayUnion(imageObj),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
