@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/estacion_visitada.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../utils/colores.dart';
 
 /// Widget reutilizable para mostrar lista de estaciones visitadas
@@ -38,19 +39,79 @@ class ListaEstaciones extends StatelessWidget {
           child: ListTile(
             contentPadding: const EdgeInsets.all(16),
             onTap: onTap != null ? () => onTap!(estacion) : null,
-            leading: Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                gradient: Coloressito.buttonGradient,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.location_on,
-                color: Coloressito.textPrimary,
-                size: 24,
-              ),
-            ),
+            leading: estacion.badgeImage != null
+                ? (estacion.badgeImage!.url != null && estacion.badgeImage!.url!.isNotEmpty
+                    ? CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Coloressito.surfaceDark,
+                        backgroundImage: estacion.badgeImage!.imageProvider(),
+                      )
+                    : (estacion.badgeImage!.path != null && estacion.badgeImage!.path!.isNotEmpty
+                        ? FutureBuilder<String>(
+                            future: FirebaseStorage.instance
+                                .ref(estacion.badgeImage!.path)
+                                .getDownloadURL(),
+                            builder: (context, snap) {
+                              if (snap.connectionState == ConnectionState.waiting) {
+                                return Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: const BoxDecoration(
+                                    gradient: Coloressito.buttonGradient,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const SizedBox.shrink(),
+                                );
+                              }
+                              if (snap.hasError || !snap.hasData) {
+                                return Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: const BoxDecoration(
+                                    gradient: Coloressito.buttonGradient,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Coloressito.textPrimary,
+                                    size: 24,
+                                  ),
+                                );
+                              }
+
+                              return CircleAvatar(
+                                radius: 25,
+                                backgroundColor: Coloressito.surfaceDark,
+                                backgroundImage: NetworkImage(snap.data!),
+                              );
+                            },
+                          )
+                        : Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              gradient: Coloressito.buttonGradient,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Coloressito.textPrimary,
+                              size: 24,
+                            ),
+                          )))
+                : Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      gradient: Coloressito.buttonGradient,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.location_on,
+                      color: Coloressito.textPrimary,
+                      size: 24,
+                    ),
+                  ),
             title: Text(
               estacion.estacionNombre,
               style: const TextStyle(

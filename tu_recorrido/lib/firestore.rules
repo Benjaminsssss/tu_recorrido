@@ -40,9 +40,9 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
     }
 
-    // ----- PLACES -----
+    // ----- ESTACIONES (antes "places") -----
     // (DEV) cualquiera autenticado puede leer; crear/borrar/editar si está autenticado.
-    match /places/{placeId} {
+    match /estaciones/{placeId} {
       allow read: if true; // público (puedes cambiarlo si quieres)
       allow create, update, delete: if request.auth != null;
     }

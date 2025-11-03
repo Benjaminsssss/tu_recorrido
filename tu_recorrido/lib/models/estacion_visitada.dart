@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'place.dart';
 
 /// Modelo para las estaciones patrimoniales visitadas
 /// Ahora se almacena como subcolección en users/{userId}/estaciones_visitadas/{estacionId}
@@ -11,6 +12,7 @@ class EstacionVisitada {
   final DateTime fechaVisita; // Cuándo fue visitada
   final double? latitudVisita; // Dónde estaba el usuario al visitarla
   final double? longitudVisita; // Coordenadas de la visita
+  final PlaceImage? badgeImage; // Imagen/insignia asociada a la estación en el momento de la visita
 
   const EstacionVisitada({
     required this.id,
@@ -20,6 +22,7 @@ class EstacionVisitada {
     required this.fechaVisita,
     this.latitudVisita,
     this.longitudVisita,
+    this.badgeImage,
   });
 
   /// Crear desde documento de Firestore
@@ -35,6 +38,9 @@ class EstacionVisitada {
           (data['fechaVisita'] as Timestamp?)?.toDate() ?? DateTime.now(),
       latitudVisita: data['latitudVisita']?.toDouble(),
       longitudVisita: data['longitudVisita']?.toDouble(),
+      badgeImage: data['badgeImage'] != null
+          ? PlaceImage.fromJson(Map<String, dynamic>.from(data['badgeImage'] as Map))
+          : null,
     );
   }
 
@@ -53,6 +59,9 @@ class EstacionVisitada {
     if (longitudVisita != null) {
       map['longitudVisita'] = longitudVisita!;
     }
+    if (badgeImage != null) {
+      map['badgeImage'] = badgeImage!.toJson();
+    }
 
     return map;
   }
@@ -66,6 +75,7 @@ class EstacionVisitada {
     DateTime? fechaVisita,
     double? latitudVisita,
     double? longitudVisita,
+    PlaceImage? badgeImage,
   }) {
     return EstacionVisitada(
       id: id ?? this.id,
@@ -75,6 +85,7 @@ class EstacionVisitada {
       fechaVisita: fechaVisita ?? this.fechaVisita,
       latitudVisita: latitudVisita ?? this.latitudVisita,
       longitudVisita: longitudVisita ?? this.longitudVisita,
+      badgeImage: badgeImage ?? this.badgeImage,
     );
   }
 }

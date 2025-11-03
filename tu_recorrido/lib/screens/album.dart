@@ -1,9 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/coleccion_service.dart';
+import '../models/estacion_visitada.dart';
 
 import '../components/bottom_nav_bar.dart';
 
@@ -23,6 +28,7 @@ class AlbumItem {
   final String title;
   final String? parentId; // si es foto, referencia a la insignia
   final String? imagePath; // asset or file path
+  final String? base64; // en web puede guardarse la imagen como base64
   final String? location;
   final DateTime date;
   String? description;
@@ -33,6 +39,7 @@ class AlbumItem {
     required this.title,
     this.parentId,
     this.imagePath,
+    this.base64,
     this.location,
     required this.date,
     this.description,
@@ -43,7 +50,8 @@ class AlbumItem {
         'type': type.toString(),
         'title': title,
         'parentId': parentId,
-        'imagePath': imagePath,
+    'imagePath': imagePath,
+    'base64': base64,
         'location': location,
         'date': date.toIso8601String(),
         'description': description,
@@ -57,7 +65,8 @@ class AlbumItem {
           : AlbumItemType.badge,
       title: j['title'] ?? 'Item',
       parentId: j['parentId'],
-      imagePath: j['imagePath'],
+        imagePath: j['imagePath'],
+        base64: j['base64'],
       location: j['location'],
       date: DateTime.tryParse(j['date'] ?? '') ?? DateTime.now(),
       description: j['description'],
@@ -71,30 +80,65 @@ class _AlbumScreenState extends State<AlbumScreen> {
   late SharedPreferences _prefs;
   final ImagePicker _picker = ImagePicker();
   bool _loading = true;
+  Stream<List<EstacionVisitada>>? _visitasStream;
+  StreamSubscription<List<EstacionVisitada>>? _visitasSub;
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _loadPhotos();
+    _startVisitasListener();
   }
-
-  Future<void> _loadItems() async {
+  Future<void> _loadPhotos() async {
     _prefs = await SharedPreferences.getInstance();
     final raw = _prefs.getStringList('album_items') ?? [];
+    // Keep only photo items from prefs; badges come from Firestore stream
     _items.clear();
     for (final s in raw) {
       try {
         final m = jsonDecode(s) as Map<String, dynamic>;
-        _items.add(AlbumItem.fromJson(m));
+        final it = AlbumItem.fromJson(m);
+        if (it.type == AlbumItemType.photo) _items.add(it);
       } catch (_) {}
     }
     _items.sort((a, b) => b.date.compareTo(a.date));
     if (mounted) setState(() => _loading = false);
   }
 
+  void _startVisitasListener() {
+    _visitasStream = ColeccionService.watchEstacionesVisitadas();
+    _visitasSub = _visitasStream?.listen((visitas) async {
+      // Convertir visitas a AlbumItem badges
+      final badges = visitas.map((ev) {
+        return AlbumItem(
+          id: ev.id,
+          type: AlbumItemType.badge,
+          title: ev.estacionNombre.isNotEmpty ? ev.estacionNombre : ev.estacionCodigo,
+          parentId: null,
+          imagePath: null,
+          location: (ev.latitudVisita != null && ev.longitudVisita != null)
+              ? '${ev.latitudVisita}, ${ev.longitudVisita}'
+              : null,
+          date: ev.fechaVisita,
+        );
+      }).toList();
+
+      // Remove existing badge items and re-add from stream (keep photos)
+      _items
+        ..removeWhere((e) => e.type == AlbumItemType.badge)
+        ..addAll(badges);
+
+      _items.sort((a, b) => b.date.compareTo(a.date));
+      if (mounted) setState(() {});
+    }, onError: (_) {
+      // Ignorar errores temporales en el stream
+    });
+  }
+
   Future<void> _saveItems() async {
-    final raw = _items.map((e) => jsonEncode(e.toJson())).toList();
-    await _prefs.setStringList('album_items', raw);
+    // Persistir únicamente las fotos (las badges se obtienen desde Firestore)
+    final photos = _items.where((e) => e.type == AlbumItemType.photo).map((e) => jsonEncode(e.toJson())).toList();
+    await _prefs.setStringList('album_items', photos);
   }
 
   int _totalPhotosCount() =>
@@ -112,12 +156,27 @@ class _AlbumScreenState extends State<AlbumScreen> {
         await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null) return;
 
+    String? imgPath;
+    String? base64str;
+    if (kIsWeb) {
+      try {
+        final bytes = await file.readAsBytes();
+        base64str = base64Encode(bytes);
+      } catch (_) {
+        base64str = null;
+      }
+      imgPath = null;
+    } else {
+      imgPath = file.path;
+    }
+
     final newItem = AlbumItem(
       id: UniqueKey().toString(),
       type: AlbumItemType.photo,
       title: 'Foto',
       parentId: parentId,
-      imagePath: file.path,
+      imagePath: imgPath,
+      base64: base64str,
       location: null,
       date: DateTime.now(),
     );
@@ -212,10 +271,18 @@ class _AlbumScreenState extends State<AlbumScreen> {
   }
 
   Widget _buildItemImage(AlbumItem item, {double? width, double? height}) {
-    if (item.type == AlbumItemType.photo && item.imagePath != null) {
-      final f = File(item.imagePath!);
-      if (f.existsSync()) {
-        return Image.file(f, width: width, height: height, fit: BoxFit.cover);
+    if (item.type == AlbumItemType.photo) {
+      if (item.base64 != null && item.base64!.isNotEmpty) {
+        try {
+          final bytes = base64Decode(item.base64!);
+          return Image.memory(bytes, width: width, height: height, fit: BoxFit.cover);
+        } catch (_) {}
+      }
+      if (item.imagePath != null) {
+        final f = File(item.imagePath!);
+        if (f.existsSync()) {
+          return Image.file(f, width: width, height: height, fit: BoxFit.cover);
+        }
       }
     }
     return Container(
@@ -366,5 +433,13 @@ class _AlbumScreenState extends State<AlbumScreen> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    try {
+      _visitasSub?.cancel();
+    } catch (_) {}
+    super.dispose();
   }
 }
