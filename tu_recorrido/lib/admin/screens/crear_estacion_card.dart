@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../services/firestore_service.dart';
+import '../../services/estacion_service.dart';
+import '../../models/estacion.dart';
 import '../../services/storage_service.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
@@ -20,9 +22,10 @@ class CrearEstacionCardScreen extends StatefulWidget {
 
 class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
   final _comunaCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  List<Estacion> _estaciones = [];
+  String? _selectedEstacionId;
   final ImagePicker _picker = ImagePicker();
   List<XFile> _pickedImages = [];
   List<Uint8List?> _pickedImagesBytes = [];
@@ -69,7 +72,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
     }
   }
 
-  Future<void> _createPlace() async {
+  Future<void> _assignCardToEstacion() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
@@ -89,6 +92,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                 : descripcion)
             : '',
         'mejorMomento': '',
+        // No duplicar 'description' legacy key; prefer 'descripcion' in the document
       });
 
       if (_pickedImages.isNotEmpty) {
@@ -97,7 +101,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final path = 'estaciones/$placeId/img_$ts$ext';
+          final path = 'estaciones/${_selectedEstacionId!}/img_$ts$ext';
           try {
             String url;
             if (kIsWeb &&
@@ -143,7 +147,6 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _comunaCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();

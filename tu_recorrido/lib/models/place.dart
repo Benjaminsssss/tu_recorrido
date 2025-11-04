@@ -95,23 +95,64 @@ class Place {
   });
 
   factory Place.fromJson(Map<String, dynamic> json) {
+    // Support both legacy 'place' JSON and the newer 'estacion' document shape.
+    final id = json['id'] as String? ?? json['id_estacion'] as String? ?? '';
+    final nombre = (json['nombre'] ??
+        json['name'] ??
+        json['nombreEstacion'] ??
+        '') as String;
+    final region =
+        json['region'] as String? ?? json['country'] as String? ?? 'Chile';
+    final comuna = (json['comuna'] ?? json['city'] ?? '') as String;
+    final shortDesc =
+        (json['shortDesc'] ?? json['short_description'] ?? '') as String;
+    final descripcion =
+        (json['descripcion'] ?? json['description'] ?? '') as String;
+    final mejorMomento =
+        (json['mejorMomento'] ?? json['bestTime'] ?? 'Todo el año') as String;
+
+    // imagenes may be a list of Map<String,dynamic> or legacy PlaceImage json
+    final imagenesRaw = (json['imagenes'] as List<dynamic>?) ??
+        (json['images'] as List<dynamic>?) ??
+        [];
+    final imagenes = imagenesRaw.map((e) {
+      if (e is Map<String, dynamic>) return PlaceImage.fromJson(e);
+      if (e is Map) return PlaceImage.fromJson(Map<String, dynamic>.from(e));
+      return PlaceImage(url: null, path: null, base64: null, alt: '');
+    }).toList();
+
+    final badge =
+        (json['badge'] != null && json['badge'] is Map<String, dynamic>)
+            ? PlaceBadge.fromJson(json['badge'] as Map<String, dynamic>)
+            : PlaceBadge(
+                nombre: json['category']?.toString() ?? 'General',
+                tema: json['tema']?.toString() ?? 'Cultura');
+
+    final badgeImage = (json['badgeImage'] != null &&
+            json['badgeImage'] is Map<String, dynamic>)
+        ? PlaceImage.fromJson(json['badgeImage'] as Map<String, dynamic>)
+        : null;
+
+    final lat = (json['lat'] as num?)?.toDouble() ??
+        (json['latitud'] as num?)?.toDouble() ??
+        (json['latitude'] as num?)?.toDouble();
+    final lng = (json['lng'] as num?)?.toDouble() ??
+        (json['longitud'] as num?)?.toDouble() ??
+        (json['longitude'] as num?)?.toDouble();
+
     return Place(
-      id: json['id'] as String,
-      nombre: json['nombre'] as String,
-      region: json['region'] as String? ?? 'Chile',
-      comuna: json['comuna'] as String,
-      shortDesc: json['shortDesc'] as String,
-      descripcion: json['descripcion'] as String,
-      mejorMomento: json['mejorMomento'] as String,
-      badge: PlaceBadge.fromJson(json['badge'] as Map<String, dynamic>),
-      imagenes: (json['imagenes'] as List<dynamic>)
-          .map((e) => PlaceImage.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      badgeImage: json['badgeImage'] != null
-          ? PlaceImage.fromJson(json['badgeImage'] as Map<String, dynamic>)
-          : null,
-      lat: (json['lat'] as num?)?.toDouble(),
-      lng: (json['lng'] as num?)?.toDouble(),
+      id: id,
+      nombre: nombre,
+      region: region,
+      comuna: comuna,
+      shortDesc: shortDesc,
+      descripcion: descripcion,
+      mejorMomento: mejorMomento,
+      badge: badge,
+      imagenes: imagenes,
+      badgeImage: badgeImage,
+      lat: lat,
+      lng: lng,
     );
   }
 

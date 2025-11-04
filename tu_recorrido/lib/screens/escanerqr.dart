@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/estacion.dart';
 import '../services/estacion_service.dart';
 import '../services/coleccion_service.dart';
@@ -536,6 +537,102 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
     );
   }
 
+  /// Ejecutar migración de insignias (método temporal)
+  Future<void> _ejecutarMigracion() async {
+    // Mostrar confirmación
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Migración de Insignias'),
+        content: const Text(
+            'Esto actualizará todas las estaciones que tienen insignias '
+            'asignadas para que muestren correctamente la imagen en el álbum.\n\n'
+            'También actualizará las visitas existentes del usuario actual.\n\n'
+            '¿Deseas continuar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Ejecutar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    setState(() => _validando = true);
+
+    try {
+      // Primero migrar las estaciones
+      await InsigniaService.migrarInsigniasExistentes();
+
+      // Luego actualizar las visitas del usuario actual
+      await _actualizarVisitasUsuarioActual();
+
+      if (mounted) {
+        _mostrarMensaje(
+            '✅ Migración completada exitosamente', colorVerdeEsmeralda);
+      }
+    } catch (e) {
+      if (mounted) {
+        _mostrarMensaje('❌ Error en migración: $e', Colors.redAccent);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _validando = false);
+      }
+    }
+  }
+
+  /// Actualizar las visitas existentes del usuario actual
+  Future<void> _actualizarVisitasUsuarioActual() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final userId = currentUser.uid;
+
+    // Obtener todas las visitas del usuario
+    final visitasSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('estaciones_visitadas')
+        .get();
+
+    for (final visitaDoc in visitasSnapshot.docs) {
+      try {
+        final visitaData = visitaDoc.data();
+        final estacionId = visitaData['estacionId'] as String?;
+
+        if (estacionId != null) {
+          // Obtener los datos actualizados de la estación
+          final estacionDoc = await FirebaseFirestore.instance
+              .collection('estaciones')
+              .doc(estacionId)
+              .get();
+
+          if (estacionDoc.exists) {
+            final estacionData = estacionDoc.data();
+            final badgeImage = estacionData?['badgeImage'];
+
+            if (badgeImage != null) {
+              // Actualizar la visita con la imagen de la insignia
+              await visitaDoc.reference.update({
+                'badgeImage': badgeImage,
+              });
+              debugPrint('✅ Visita actualizada: $estacionId');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ Error actualizando visita ${visitaDoc.id}: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -544,6 +641,14 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
         backgroundColor: colorAzulPetroleo,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          // Botón temporal para migración de insignias
+          IconButton(
+            icon: const Icon(Icons.build, color: Colors.white),
+            onPressed: _ejecutarMigracion,
+            tooltip: 'Migrar Insignias',
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(

@@ -656,6 +656,21 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             onTap: () {},
           ),
         ),
+        const SizedBox(height: 12),
+        // Debug Auth (temporal)
+        Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 0,
+          color: Colors.orange[50],
+          child: ListTile(
+            leading: Icon(Icons.bug_report, color: Colors.orange[600]),
+            title: const Text('Debug Auth'),
+            subtitle: const Text('Diagnosticar problema de auth'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => Navigator.pushNamed(context, '/debug-auth'),
+          ),
+        ),
         const SizedBox(height: 32),
         // Cerrar sesión
         SizedBox(

@@ -10,6 +10,7 @@ import 'package:tu_recorrido/models/insignia.dart';
 import 'package:tu_recorrido/models/estacion.dart';
 import 'package:tu_recorrido/services/insignia_service.dart';
 import 'package:tu_recorrido/services/estacion_service.dart';
+import 'package:tu_recorrido/services/coleccion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
@@ -286,10 +287,155 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     );
   }
 
+  Future<void> _migrarInsigniasExistentes() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Mostrar confirmación
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Migrar insignias existentes'),
+        content: const Text(
+            'Esto actualizará todas las estaciones que tienen insignias asignadas para que las insignias aparezcan correctamente en el Album de los usuarios.\n\n¿Continuar?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Migrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      setState(() => _loading = true);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Iniciando migración...')),
+      );
+
+      await InsigniaService.migrarInsigniasExistentes();
+
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('✅ Migración completada exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('❌ Error en migración: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _eliminarVisitaPalacio() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Buscar el ID del Palacio de la Moneda
+    String? palacioId;
+    try {
+      final estaciones = await EstacionService.obtenerEstacionesActivas();
+      final palacio = estaciones
+          .where((e) => e.nombre.toLowerCase().contains('palacio'))
+          .firstOrNull;
+      palacioId = palacio?.id;
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+            content: Text('Error buscando Palacio: $e'),
+            backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (palacioId == null) {
+      messenger.showSnackBar(
+        const SnackBar(
+            content: Text('No se encontró el Palacio de la Moneda'),
+            backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    // Confirmar eliminación
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar visita del Palacio'),
+        content: const Text(
+            '¿Eliminar la visita al Palacio de la Moneda para poder probar de nuevo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await ColeccionService.eliminarVisitaTemporal(palacioId);
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+                '✅ Visita del Palacio eliminada. Ya puedes escanear de nuevo.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('❌ Error eliminando visita: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestión de Insignias')),
+      appBar: AppBar(
+        title: const Text('Gestión de Insignias'),
+        actions: [
+          IconButton(
+            onPressed: _migrarInsigniasExistentes,
+            icon: const Icon(Icons.sync),
+            tooltip: 'Migrar insignias existentes',
+          ),
+          IconButton(
+            onPressed: _eliminarVisitaPalacio,
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'Eliminar visita del Palacio (testing)',
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : (_insignias.isEmpty

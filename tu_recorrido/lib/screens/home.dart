@@ -72,14 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Place(
       id: doc.id,
-      nombre: d['name']?.toString() ?? 'Sin nombre',
+  nombre: d['nombre']?.toString() ?? d['name']?.toString() ?? 'Sin nombre',
       region: d['country']?.toString() ?? d['region']?.toString() ?? 'Chile',
       comuna:
           d['city']?.toString() ?? d['comuna']?.toString() ?? 'Sin ubicación',
       shortDesc: d['shortDesc']?.toString() ?? d['category']?.toString() ?? '',
-      descripcion: d['description']?.toString() ??
-          d['descripcion']?.toString() ??
-          'Sin descripción disponible.',
+    descripcion: d['descripcion']?.toString() ??
+      d['description']?.toString() ??
+      'Sin descripción disponible.',
       mejorMomento: d['bestTime']?.toString() ??
           d['mejorMomento']?.toString() ??
           'Todo el año',
@@ -249,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Lista de lugares
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirestoreService.instance.watchPlaces(),
+              stream: FirestoreService.instance.watchEstaciones(),
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -259,21 +259,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
                 final all = snap.data?.docs ?? [];
 
+                // DEBUG: listar ids y campos claves para diagnosticar por qué
+                // una estación creada no aparece en el scroll.
+                try {
+                  debugPrint('Home: snapshot total=${all.length} docs');
+                  for (final doc in all) {
+                    final d = doc.data();
+                    final id = doc.id;
+                    final nombre = d['nombre'] ?? d['name'];
+                    final createdAt = d['createdAt'] ?? d['fechaCreacion'];
+                    final lat = d['lat'] ?? d['latitud'];
+                    final lng = d['lng'] ?? d['longitud'];
+                    debugPrint('  doc: $id  nombre=$nombre  createdAt=$createdAt  lat=$lat  lng=$lng');
+                  }
+                } catch (e) {
+                  debugPrint('Home: error debug print snapshot: $e');
+                }
+
                 // Aplicar filtros
                 var filtered = all;
 
-                // Filtro por país
+                // Filtro por país (compatibilidad: country, region, pais)
                 if (_selectedCountry != null) {
                   filtered = filtered.where((d) {
-                    final country = d.data()['country']?.toString();
+                    final data = d.data();
+                    final country = (data['country'] ?? data['region'] ?? data['pais'])?.toString();
                     return country == _selectedCountry;
                   }).toList();
                 }
 
-                // Filtro por ciudad
+                // Filtro por ciudad/comuna (compatibilidad: city, comuna)
                 if (_selectedCity != null) {
                   filtered = filtered.where((d) {
-                    final city = d.data()['city']?.toString();
+                    final data = d.data();
+                    final city = (data['city'] ?? data['comuna'])?.toString();
                     return city == _selectedCity;
                   }).toList();
                 }
@@ -283,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (q.isNotEmpty) {
                   filtered = filtered.where((d) {
                     final name =
-                        (d.data()['name'] ?? '').toString().toLowerCase();
+                        (d.data()['nombre'] ?? d.data()['name'] ?? '').toString().toLowerCase();
                     return name.contains(q);
                   }).toList();
                 }
@@ -294,19 +313,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
+                // Lista principal: renderizamos los documentos filtrados como cards.
                 return ListView.builder(
                   padding: const EdgeInsets.only(bottom: 96),
                   itemCount: filtered.length,
                   itemBuilder: (context, i) {
                     final doc = filtered[i];
                     final d = doc.data();
-                    final name = d['name']?.toString() ?? '—';
-                    final category = d['category']?.toString() ?? '';
-                    final city = d['city']?.toString();
-                    final country = d['country']?.toString();
-                    final imageUrl = d['imageUrl']?.toString();
+
+                    // Convertir documento Firestore a Place (view-model)
+                    final place = _convertToPlace(doc);
+
+                    // Usar los valores ya normalizados en el view-model para evitar
+                    // discrepancias entre 'd' y 'place' (nombre/descripcion vacíos)
+                    final name = place.nombre.isNotEmpty ? place.nombre : (d['nombre'] ?? d['name'] ?? '—').toString();
+                    final imageUrl = (place.imagenes.isNotEmpty ? place.imagenes[0].url : null) ?? d['imageUrl']?.toString();
 
                     String? subtitle;
+                    final city = place.comuna.isNotEmpty ? place.comuna : (d['city'] ?? d['comuna'])?.toString();
+                    final country = place.region.isNotEmpty ? place.region : (d['country'] ?? d['region'])?.toString();
+                    final category = d['category']?.toString() ?? '';
+
                     if (city != null && country != null) {
                       subtitle = '$city, $country';
                     } else if (city != null) {
@@ -317,12 +344,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       subtitle = category;
                     }
 
-                    // Convertir documento Firestore a Place
-                    final place = _convertToPlace(doc);
-
                     return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: _PlaceCard(
                         title: name,
                         subtitle: subtitle,

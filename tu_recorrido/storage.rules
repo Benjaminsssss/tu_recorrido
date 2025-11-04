@@ -1,0 +1,52 @@
+rules_version = '2';
+
+// Firebase Storage Rules para Tu Recorrido
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ----- FOTOS DEL ÁLBUM DE USUARIOS -----
+    // Estructura: album_photos/{userId}/{photoId}.jpg
+    match /album_photos/{userId}/{photoId} {
+      // Solo el dueño puede subir/leer/eliminar sus fotos
+      allow read, write, delete: if request.auth != null 
+                                 && request.auth.uid == userId;
+      
+      // Validar tipo de archivo y tamaño para uploads
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.contentType.matches('image/.*')
+                    && request.resource.size < 10 * 1024 * 1024; // Máximo 10MB
+    }
+
+    // ----- IMÁGENES DE INSIGNIAS (admin only) -----
+    // Para futuras implementaciones de gestión de insignias por admins
+    match /badges/{badgeId} {
+      // Cualquiera puede leer las insignias
+      allow read: if true;
+      
+      // Solo administradores pueden subir/modificar insignias
+      // Nota: Esta validación requiere custom claims o verificación adicional
+      allow write, delete: if request.auth != null;
+    }
+
+    // ----- AVATARES DE USUARIOS -----
+    // Estructura: avatars/{userId}/profile.{ext}
+    match /avatars/{userId}/{fileName} {
+      // Solo el dueño puede gestionar su avatar
+      allow read, write, delete: if request.auth != null 
+                                 && request.auth.uid == userId;
+      
+      // Validar tipo de archivo para avatares
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.contentType.matches('image/.*')
+                    && request.resource.size < 5 * 1024 * 1024; // Máximo 5MB para avatares
+    }
+
+    // ----- IMÁGENES GENERALES (legacy o futuras implementaciones) -----
+    match /{allPaths=**} {
+      // Por defecto, denegar acceso a rutas no especificadas
+      allow read, write: if false;
+    }
+  }
+}

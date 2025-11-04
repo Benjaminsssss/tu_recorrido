@@ -91,7 +91,7 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
       child: PantallaBase(
         titulo: 'Gestionar Estaciones',
         body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirestoreService.instance.watchPlaces(),
+          stream: FirestoreService.instance.watchEstaciones(),
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -111,7 +111,8 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
               itemBuilder: (context, i) {
                 final doc = docs[i];
                 final d = doc.data();
-                final title = d['name']?.toString() ?? '—';
+                final title =
+                    d['nombre']?.toString() ?? d['name']?.toString() ?? '—';
                 final estacionId = doc.id;
                 final List<dynamic> imgsRaw =
                     (d['imagenes'] as List<dynamic>?) ?? [];

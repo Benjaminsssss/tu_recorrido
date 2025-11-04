@@ -28,7 +28,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _comunaController = TextEditingController();
-  final _descripcionCardController = TextEditingController();
+  // Nota: usamos la misma descripción de la estación para el card.
 
   bool _cargando = false;
   // Puede ser un Position (cuando usamos Geolocator) o un objeto con latitude/longitude (LatLng)
@@ -54,7 +54,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     _nombreController.dispose();
     _descripcionController.dispose();
     _comunaController.dispose();
-    _descripcionCardController.dispose();
     super.dispose();
   }
 
@@ -134,14 +133,14 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         'estacionId': newId, // Enlazar el card con la estación patrimonial
       });
 
-      // Subir imágenes del card (múltiples)
+      // Subir imágenes y guardarlas en el array `imagenes` del documento de la estación
       if (_pickedCardImages.isNotEmpty) {
         final toUpload = _pickedCardImages.take(5).toList();
         for (var idx = 0; idx < toUpload.length; idx++) {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final cardImagePath = 'estaciones/$cardId/img_$ts$ext';
+          final imagePath = 'estaciones/$newId/img_$ts$ext';
           try {
             String cardImageUrl;
             if (kIsWeb &&
@@ -163,7 +162,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
             await FirestoreService.instance
                 .addPlaceImage(placeId: cardId, image: imageObj);
           } catch (e) {
-            debugPrint('Error subiendo imagen $idx del card: $e');
+            debugPrint('Error subiendo imagen $idx de la estación: $e');
             continue;
           }
         }
@@ -269,11 +268,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     _nombreController.clear();
     _descripcionController.clear();
     _comunaController.clear();
-    _descripcionCardController.clear();
     _formKey.currentState?.reset();
     setState(() {
-      _pickedBadge = null;
-      _pickedBadgeBytes = null;
       _pickedCardImages = [];
       _pickedCardImagesBytes = [];
     });
@@ -406,12 +402,15 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                                       width: 100,
                                       height: 100,
                                     )
-                                  : Image.file(
-                                      File(_pickedCardImages[index].path),
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: 100,
-                                    ),
+                                  : (kIsWeb
+                                      ? const Icon(Icons.image,
+                                          size: 40, color: Colors.grey)
+                                      : Image.file(
+                                          File(_pickedCardImages[index].path),
+                                          fit: BoxFit.cover,
+                                          width: 100,
+                                          height: 100,
+                                        )),
                             ),
                             Positioned(
                               top: 4,
