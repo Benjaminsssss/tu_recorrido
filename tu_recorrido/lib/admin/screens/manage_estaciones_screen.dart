@@ -23,9 +23,9 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
   bool _loadingUpload = false;
 
   Future<void> _uploadForEstacion(String estacionId) async {
-    final List<XFile>? pickedList =
+    final List<XFile> pickedList =
         await _picker.pickMultiImage(imageQuality: 82);
-    if (pickedList == null || pickedList.isEmpty) return;
+    if (pickedList.isEmpty) return;
 
     setState(() => _loadingUpload = true);
     try {
@@ -33,10 +33,11 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
           await FirestoreService.instance.getEstacionImages(estacionId);
       final availableSlots = 5 - existing.length;
       if (availableSlots <= 0) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                   'Ya hay 5 imágenes, elimina alguna antes de subir más')));
+        }
         return;
       }
 

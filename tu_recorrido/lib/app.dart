@@ -11,6 +11,7 @@ import 'screens/menu.dart';
 import 'screens/perfil.dart';
 import 'screens/saved_places_screen.dart';
 import 'screens/coleccion.dart';
+import 'screens/debug_auth_screen.dart';
 
 // Admin screens
 import 'admin/screens/admin_screen.dart';
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         // Admin routes
         '/admin': (_) => const AdminScreen(),
         '/admin/generador-qr': (_) => const GeneradorQRScreen(),
+        '/debug-auth': (_) => const DebugAuthScreen(),
 
         // Si ya tienes una pantalla de lugares, descomenta:
         // '/places': (_) => const PlacesScreen(),

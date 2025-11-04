@@ -37,8 +37,8 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   }
 
   Future<void> _pickImages() async {
-    final List<XFile>? picked = await _picker.pickMultiImage(imageQuality: 85);
-    if (picked == null || picked.isEmpty) return;
+    final List<XFile> picked = await _picker.pickMultiImage(imageQuality: 85);
+    if (picked.isEmpty) return;
 
     final remaining = 5 - _pickedImages.length;
     if (remaining <= 0) return;
@@ -190,7 +190,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                   // Guardar lista local para usar el nombre al subir imágenes
                   _estaciones = estaciones;
                   return DropdownButtonFormField<String>(
-                    value: _selectedEstacionId,
+                    initialValue: _selectedEstacionId,
                     items: estaciones
                         .map((e) => DropdownMenuItem(
                             value: e.id, child: Text(e.nombre)))
@@ -260,8 +260,9 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                               onTap: () {
                                 setState(() {
                                   _pickedImages.removeAt(i);
-                                  if (i < _pickedImagesBytes.length)
+                                  if (i < _pickedImagesBytes.length) {
                                     _pickedImagesBytes.removeAt(i);
+                                  }
                                 });
                               },
                               child: Container(

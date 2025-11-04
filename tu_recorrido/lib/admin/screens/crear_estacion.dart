@@ -167,8 +167,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
   /// Seleccionar múltiples imágenes para el card
   Future<void> _pickCardImages() async {
-    final List<XFile>? picked = await _picker.pickMultiImage(imageQuality: 85);
-    if (picked == null || picked.isEmpty) return;
+    final List<XFile> picked = await _picker.pickMultiImage(imageQuality: 85);
+    if (picked.isEmpty) return;
 
     final remaining = 5 - _pickedCardImages.length;
     if (remaining <= 0) return;

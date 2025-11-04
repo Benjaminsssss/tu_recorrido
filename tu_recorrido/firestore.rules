@@ -111,6 +111,36 @@ service cloud.firestore {
         // Update/Delete: dueño o admin
         allow update, delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
       }
+
+      // ----- FOTOS DEL ÁLBUM (subcollection) -----
+      match /album_photos/{photoId} {
+        // Validación de esquema para fotos del álbum
+        function isValidAlbumPhoto(data) {
+          return
+            (data.keys().hasOnly([
+              'id', 'badgeId', 'imageUrl', 'thumbnailUrl', 'description',
+              'uploadDate', 'location', 'metadata'
+            ])) &&
+            (data.id is string) &&
+            (data.badgeId is string) &&
+            (data.imageUrl is string) &&
+            (data.thumbnailUrl is string || data.thumbnailUrl == null) &&
+            (data.description is string || data.description == null) &&
+            (data.uploadDate is timestamp) &&
+            (data.location is string || data.location == null) &&
+            (data.metadata is map || data.metadata == null);
+        }
+
+        // Solo el dueño puede leer/escribir sus fotos del álbum con validación
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null 
+                      && request.auth.uid == uid 
+                      && isValidAlbumPhoto(request.resource.data);
+        allow update: if request.auth != null 
+                      && request.auth.uid == uid 
+                      && isValidAlbumPhoto(request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // ----- PLACES (legacy) -----

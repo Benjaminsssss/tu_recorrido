@@ -38,7 +38,7 @@ class BottomNavBar extends StatelessWidget {
               onTap: () => onChanged(0),
             ),
             BottomNavItem(
-              icon: Icons.photo_album,
+              icon: Icons.collections, // Ícono más elegante para colección
               label: 'Colección',
               selected: currentIndex == 1,
               onTap: () => onChanged(1),
@@ -80,13 +80,39 @@ class BottomNavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white),
+            selected 
+              ? Stack(
+                  children: [
+                    // Borde gris
+                    Icon(
+                      icon, 
+                      color: Colors.grey.shade600,
+                    ),
+                    // Ícono amarillo llamativo encima
+                    Icon(
+                      icon, 
+                      color: const Color(0xFFFFD700), // Amarillo oro llamativo
+                      size: 22, // Ligeramente más pequeño para mostrar el borde gris
+                    ),
+                  ],
+                )
+              : Icon(
+                  icon, 
+                  color: Colors.white,
+                ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: Colors.white,
+                color: selected ? const Color(0xFFFFD700) : Colors.white, // Amarillo oro llamativo cuando seleccionado
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                shadows: selected ? [
+                  Shadow(
+                    color: Colors.grey.shade600,
+                    blurRadius: 1,
+                    offset: const Offset(1, 1),
+                  ),
+                ] : null,
               ),
             ),
           ],

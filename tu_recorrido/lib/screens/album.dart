@@ -8,7 +8,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/coleccion_service.dart';
+import '../services/album_photos_service.dart';
 import '../models/estacion_visitada.dart';
+import '../models/place.dart';
+import '../widgets/simple_insignia_modal.dart';
 
 import '../components/bottom_nav_bar.dart';
 
@@ -92,18 +95,97 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   Future<void> _loadPhotos() async {
     _prefs = await SharedPreferences.getInstance();
+    
+    // Clear existing photos
+    _items.removeWhere((item) => item.type == AlbumItemType.photo);
+    
+    try {
+      // 1. Cargar fotos desde Firebase (nuevo sistema)
+      final firebasePhotos = await _loadPhotosFromFirebase();
+      _items.addAll(firebasePhotos);
+      
+      // 2. Cargar fotos desde SharedPreferences (sistema legacy) solo si no hay fotos en Firebase
+      if (firebasePhotos.isEmpty) {
+        final legacyPhotos = await _loadPhotosFromSharedPrefs();
+        _items.addAll(legacyPhotos);
+      }
+    } catch (e) {
+      // print('Error cargando fotos desde Firebase: $e');
+      
+      // Fallback: cargar desde SharedPreferences
+      try {
+        final legacyPhotos = await _loadPhotosFromSharedPrefs();
+        _items.addAll(legacyPhotos);
+      } catch (e2) {
+        // print('Error cargando fotos desde SharedPrefs: $e2');
+      }
+    }
+    
+    _items.sort((a, b) => b.date.compareTo(a.date));
+    if (mounted) setState(() => _loading = false);
+  }
+
+  /// Cargar fotos desde Firebase (nuevo sistema)
+  Future<List<AlbumItem>> _loadPhotosFromFirebase() async {
+    try {
+      // Usar AlbumPhotosService para obtener fotos del usuario
+      final albumPhotos = await AlbumPhotosService.getUserPhotos();
+      
+      return albumPhotos.map((photo) => AlbumItem(
+        id: photo.id,
+        type: AlbumItemType.photo,
+        title: 'Experiencia', // Título genérico para fotos
+        parentId: photo.badgeId,
+        imagePath: photo.imageUrl, // URL de Firebase Storage
+        base64: null, // No necesitamos base64 con Firebase
+        location: photo.location,
+        date: photo.uploadDate,
+        description: photo.description,
+      )).toList();
+    } catch (e) {
+      // print('Error obteniendo fotos de Firebase: $e');
+      rethrow;
+    }
+  }
+
+  /// Cargar fotos desde SharedPreferences (sistema legacy)
+  Future<List<AlbumItem>> _loadPhotosFromSharedPrefs() async {
     final raw = _prefs.getStringList('album_items') ?? [];
-    // Keep only photo items from prefs; badges come from Firestore stream
-    _items.clear();
+    final photos = <AlbumItem>[];
+    
     for (final s in raw) {
       try {
         final m = jsonDecode(s) as Map<String, dynamic>;
         final it = AlbumItem.fromJson(m);
-        if (it.type == AlbumItemType.photo) _items.add(it);
-      } catch (_) {}
+        if (it.type == AlbumItemType.photo) {
+          photos.add(it);
+        }
+      } catch (e) {
+        print('Error parsing legacy photo: $e');
+      }
     }
-    _items.sort((a, b) => b.date.compareTo(a.date));
-    if (mounted) setState(() => _loading = false);
+    
+    return photos;
+  }
+
+  /// Recargar solo las fotos desde Firebase y actualizar la UI
+  Future<void> _reloadPhotosFromFirebase() async {
+    try {
+      // Remover fotos existentes
+      _items.removeWhere((item) => item.type == AlbumItemType.photo);
+      
+      // Cargar fotos desde Firebase
+      final firebasePhotos = await _loadPhotosFromFirebase();
+      _items.addAll(firebasePhotos);
+      
+      // Reordenar por fecha
+      _items.sort((a, b) => b.date.compareTo(a.date));
+      
+      // Actualizar UI
+      if (mounted) setState(() {});
+    } catch (e) {
+      print('Error recargando fotos desde Firebase: $e');
+    }
   }
 
   void _startVisitasListener() {
@@ -139,60 +221,92 @@ class _AlbumScreenState extends State<AlbumScreen> {
   }
 
   Future<void> _saveItems() async {
-    // Persistir únicamente las fotos (las badges se obtienen desde Firestore)
-    final photos = _items
-        .where((e) => e.type == AlbumItemType.photo)
+    // Las fotos ahora se guardan directamente en Firebase mediante AlbumPhotosService
+    // Solo mantener compatibilidad con fotos legacy de SharedPreferences
+    final legacyPhotos = _items
+        .where((e) => e.type == AlbumItemType.photo && e.base64 != null)
         .map((e) => jsonEncode(e.toJson()))
         .toList();
-    await _prefs.setStringList('album_items', photos);
+    
+    if (legacyPhotos.isNotEmpty) {
+      await _prefs.setStringList('album_items', legacyPhotos);
+    }
   }
 
   int _totalPhotosCount() =>
       _items.where((e) => e.type == AlbumItemType.photo).length;
 
   Future<void> _addPhotoFor(String parentId) async {
-    if (_totalPhotosCount() >= 10) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Has alcanzado el límite de 10 fotos')));
-      return;
-    }
-
-    final XFile? file =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (file == null) return;
-
-    String? imgPath;
-    String? base64str;
-    if (kIsWeb) {
-      try {
-        final bytes = await file.readAsBytes();
-        base64str = base64Encode(bytes);
-      } catch (_) {
-        base64str = null;
+    try {
+      // Verificar límite con Firebase
+      final hasReachedLimit = await AlbumPhotosService.hasReachedPhotoLimit(maxPhotos: 50);
+      if (hasReachedLimit) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Has alcanzado el límite de 50 fotos de experiencia')));
+        return;
       }
-      imgPath = null;
-    } else {
-      imgPath = file.path;
+
+      // Seleccionar imagen
+      final XFile? file = await _picker.pickImage(
+        source: ImageSource.gallery, 
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+      if (file == null) return;
+
+      // Mostrar indicador de carga
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                SizedBox(width: 16),
+                Text('Subiendo imagen...'),
+              ],
+            ),
+            duration: Duration(seconds: 10),
+          ),
+        );
+      }
+
+      // Subir foto a Firebase
+      await AlbumPhotosService.uploadPhoto(
+        imageFile: file,
+        badgeId: parentId,
+        description: null, // El usuario puede agregar descripción después
+        metadata: {
+          'source': 'user_gallery',
+          'originalName': file.name,
+          'addedFrom': 'album_screen',
+        },
+      );
+
+      // Recargar fotos desde Firebase para mostrar la nueva foto
+      await _reloadPhotosFromFirebase();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📸 Imagen agregada exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error subiendo foto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-
-    final newItem = AlbumItem(
-      id: UniqueKey().toString(),
-      type: AlbumItemType.photo,
-      title: 'Foto',
-      parentId: parentId,
-      imagePath: imgPath,
-      base64: base64str,
-      location: null,
-      date: DateTime.now(),
-    );
-
-    setState(() => _items.insert(0, newItem));
-    await _saveItems();
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('📸 Foto agregada al álbum')));
   }
 
   void _openDetail(AlbumItem item) async {
@@ -244,17 +358,32 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cerrar')),
-                      ElevatedButton(
-                        onPressed: () {
-                          item.description = descCtrl.text.trim();
-                          Navigator.pop(context, item);
-                        },
-                        child: const Text('Guardar'),
+                      // Botón de eliminar solo para fotos del usuario
+                      if (item.type == AlbumItemType.photo)
+                        TextButton.icon(
+                          onPressed: () => _showDeleteConfirmation(context, item),
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                        )
+                      else
+                        const SizedBox(), // Espacio vacío si no es foto
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cerrar')),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              item.description = descCtrl.text.trim();
+                              Navigator.pop(context, item);
+                            },
+                            child: const Text('Guardar'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -268,6 +397,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
     if (!mounted) return;
     if (edited != null) {
+      // Actualizar Firebase si la foto proviene de Firebase
+      try {
+        await AlbumPhotosService.updatePhotoDescription(edited.id, edited.description);
+        print('✅ Descripción actualizada en Firebase para foto ${edited.id}');
+      } catch (e) {
+        print('❌ Error actualizando descripción en Firebase: $e');
+      }
+      
+      // Actualizar lista local y SharedPreferences (para compatibilidad)
       final idx = _items.indexWhere((e) => e.id == edited.id);
       if (idx != -1) {
         setState(() => _items[idx] = edited);
@@ -276,19 +414,371 @@ class _AlbumScreenState extends State<AlbumScreen> {
     }
   }
 
+  void _showPhotoOptionsOverlay(BuildContext context, AlbumItem item) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Stack(
+            children: [
+              // Imagen de fondo
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: _buildItemImage(item, width: 300, height: 300),
+                ),
+              ),
+              // Overlay con opciones
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.7),
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Botón cerrar
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: IconButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                        ),
+                      ),
+                      // Botones Ver y Editar
+                      Row(
+                        children: [
+                          // Botón Ver (mitad izquierda)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                _showPhotoViewer(context, item);
+                              },
+                              child: Container(
+                                height: 60,
+                                margin: const EdgeInsets.only(right: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    'Ver',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Botón Editar (mitad derecha)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                _openDetail(item);
+                              },
+                              child: Container(
+                                height: 60,
+                                margin: const EdgeInsets.only(left: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    'Editar',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPhotoViewer(BuildContext context, AlbumItem item) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (BuildContext dialogContext) {
+        return GestureDetector(
+          onTap: () => Navigator.of(dialogContext).pop(),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: [
+                // Contenido principal centrado
+                Center(
+                  child: SingleChildScrollView(
+                    child: GestureDetector(
+                      onTap: () {}, // Prevenir que se cierre cuando se toca la imagen/descripción
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                    // Imagen grande
+                    Container(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.98,
+                        maxHeight: item.description != null && item.description!.isNotEmpty
+                            ? MediaQuery.of(context).size.height * 0.75
+                            : MediaQuery.of(context).size.height * 0.90,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: _buildItemImage(item),
+                      ),
+                    ),
+                    // Descripción solo si existe
+                    if (item.description != null && item.description!.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 35),
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              const Color(0xFFFAF9F6).withOpacity(0.98),
+                              const Color(0xFFF5F5DC).withOpacity(0.95),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFFD4C5A9).withOpacity(0.3),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF8B4513).withOpacity(0.08),
+                              blurRadius: 15,
+                              offset: const Offset(0, 4),
+                              spreadRadius: 1,
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 25,
+                              offset: const Offset(0, 8),
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          item.description!,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: const Color(0xFF2C3E50),
+                            height: 1.5,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                            fontFamily: 'serif',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, AlbumItem item) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Eliminar imagen'),
+          content: const Text('¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // Cerrar el diálogo
+                Navigator.of(context).pop(); // Cerrar el modal de la imagen
+                await _deletePhoto(item);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deletePhoto(AlbumItem item) async {
+    if (item.type != AlbumItemType.photo) return;
+
+    try {
+      // Detectar si es una foto de Firebase (URL de Firebase Storage)
+      if (item.imagePath != null && item.imagePath!.startsWith('http') && 
+          item.imagePath!.contains('firebasestorage.googleapis.com')) {
+        // Eliminar desde Firebase
+        await AlbumPhotosService.deletePhoto(item.id);
+      } else {
+        // Eliminar archivo local (fotos antiguas)
+        if (!kIsWeb && item.imagePath != null && !item.imagePath!.startsWith('http')) {
+          try {
+            final file = File(item.imagePath!);
+            if (await file.exists()) {
+              await file.delete();
+            }
+          } catch (e) {
+            print('Error eliminando archivo local: $e');
+          }
+        }
+      }
+
+      // Remover de la lista local y guardar
+      setState(() {
+        _items.removeWhere((e) => e.id == item.id);
+      });
+      
+      await _saveItems();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('📷 Imagen eliminada del álbum'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error eliminando imagen: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget _buildItemImage(AlbumItem item, {double? width, double? height}) {
     if (item.type == AlbumItemType.photo) {
+      // Primero intentar mostrar desde Firebase (URL)
+      if (item.imagePath != null && item.imagePath!.startsWith('http')) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            item.imagePath!,
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                width: width,
+                height: height,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: width,
+                height: height,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.error, color: Colors.red),
+              );
+            },
+          ),
+        );
+      }
+      
+      // Fallback: mostrar desde base64 (fotos antiguas)
       if (item.base64 != null && item.base64!.isNotEmpty) {
         try {
           final bytes = base64Decode(item.base64!);
-          return Image.memory(bytes,
-              width: width, height: height, fit: BoxFit.cover);
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.memory(bytes,
+                width: width, height: height, fit: BoxFit.cover),
+          );
         } catch (_) {}
       }
-      if (item.imagePath != null) {
+      
+      // Fallback: mostrar desde archivo local (fotos muy antiguas)
+      if (item.imagePath != null && !item.imagePath!.startsWith('http')) {
         final f = File(item.imagePath!);
         if (f.existsSync()) {
-          return Image.file(f, width: width, height: height, fit: BoxFit.cover);
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(f, width: width, height: height, fit: BoxFit.cover),
+          );
         }
       }
     }
@@ -383,22 +873,99 @@ class _AlbumScreenState extends State<AlbumScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mi Album'),
-        centerTitle: true,
+      body: Container(
+        // Fondo blanco como el resto de la app
+        color: Colors.white,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header compacto con imagen - esquinas rectas
+              SizedBox(
+                height: 70, // Un poco más pequeño
+                width: double.infinity,
+                // Sin borderRadius para esquinas rectas
+                child: Stack(
+                  children: [
+                    // Imagen de fondo
+                    Image.asset(
+                      'assets/img/condorHeader.jpeg',
+                      width: double.infinity,
+                      height: 70,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback con gradiente elegante
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.grey[400]!,
+                                Colors.grey[600]!,
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Overlay sutil para mejorar legibilidad
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.1),
+                            Colors.black.withOpacity(0.4),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Título pequeño abajo a la derecha
+                    Positioned(
+                      bottom: 8,
+                      right: 16,
+                      child: Text(
+                        'Mi Álbum',
+                        style: TextStyle(
+                          color: const Color(0xFFB8860B), // Amarillo mostaza original
+                          fontSize: 16, // Más pequeño
+                          fontWeight: FontWeight.w600,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.7),
+                              blurRadius: 3,
+                              offset: const Offset(1, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Contenido principal
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _items.where((e) => e.type == AlbumItemType.badge).isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                            child: _buildEmptyStateNoBadges(theme),
+                          )
+                        : _buildPremiumBadgesList(context),
+              ),
+            ],
+          ),
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(12),
-              child: _items.where((e) => e.type == AlbumItemType.badge).isEmpty
-                  ? _buildEmptyStateNoBadges(theme)
-                  : _buildBadgesList(context),
-            ),
       bottomNavigationBar:
           BottomNavBar(currentIndex: _currentIndex, onChanged: _onNavChanged),
     );
   }
+
+
 
   Widget _buildEmptyStateNoBadges(ThemeData theme) {
     return Center(
@@ -433,11 +1000,12 @@ class _AlbumScreenState extends State<AlbumScreen> {
     );
   }
 
-  Widget _buildBadgesList(BuildContext context) {
+  Widget _buildPremiumBadgesList(BuildContext context) {
     final badges = _items.where((e) => e.type == AlbumItemType.badge).toList();
     return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96), // Igual que Home
       itemCount: badges.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 16), // Espaciado más consistente
       itemBuilder: (context, index) {
         final badge = badges[index];
         final photos = _items
@@ -445,88 +1013,46 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 (i) => i.type == AlbumItemType.photo && i.parentId == badge.id)
             .toList();
         final canAdd = _totalPhotosCount() < 10;
-        return Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 4,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                  color: Colors.grey.shade300, width: 2),
-                            ),
-                            child:
-                                _buildItemImage(badge, width: 90, height: 90))),
-                    const SizedBox(width: 16),
-                    Expanded(
-                        child: Text(badge.title,
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold))),
-                    if (canAdd)
-                      IconButton(
-                        onPressed: () => _addPhotoFor(badge.id),
-                        icon: const Icon(Icons.add_a_photo, size: 28),
-                        tooltip: 'Agregar foto a esta insignia',
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 120,
-                  child: photos.isEmpty
-                      ? Center(
-                          child: Text('No hay fotos para esta insignia',
-                              style: TextStyle(
-                                  color: Colors.grey.shade600, fontSize: 16)))
-                      : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: photos.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, i) {
-                            final p = photos[i];
-                            return GestureDetector(
-                              onTap: () => _openDetail(p),
-                              child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                      width: 160,
-                                      height: 120,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.1),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: _buildItemImage(p,
-                                          width: 160, height: 120))),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          ),
+        
+        return _PremiumBadgeCard(
+          badge: badge,
+          photos: photos,
+          canAdd: canAdd,
+          onTapInsignia: () => _openInsigniaModal(badge),
+          onAddPhoto: () => _addPhotoFor(badge.id),
+          onTapPhoto: (photo) => _showPhotoOptionsOverlay(context, photo),
+          buildItemImage: _buildItemImage,
         );
       },
+    );
+  }
+
+  /// Abre el modal épico de insignia con animaciones
+  void _openInsigniaModal(AlbumItem badge) {
+    // Crear EstacionVisitada temporal para el modal
+    final estacionVisitada = EstacionVisitada(
+      id: badge.id,
+      estacionId: badge.id,
+      estacionCodigo: 'QR_${badge.id}',
+      estacionNombre: badge.title,
+      fechaVisita: badge.date,
+      badgeImage: badge.imagePath != null ? 
+        PlaceImage(url: badge.imagePath, alt: badge.title) : null,
+    );
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            SimpleInsigniaModal(estacion: estacionVisitada),
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+      ),
     );
   }
 
@@ -538,3 +1064,261 @@ class _AlbumScreenState extends State<AlbumScreen> {
     super.dispose();
   }
 }
+
+// Widget premium para las cards de insignias con efectos especiales
+class _PremiumBadgeCard extends StatefulWidget {
+  final AlbumItem badge;
+  final List<AlbumItem> photos;
+  final bool canAdd;
+  final VoidCallback onTapInsignia;
+  final VoidCallback onAddPhoto;
+  final Function(AlbumItem) onTapPhoto;
+  final Widget Function(AlbumItem, {required double width, required double height}) buildItemImage;
+
+  const _PremiumBadgeCard({
+    required this.badge,
+    required this.photos,
+    required this.canAdd,
+    required this.onTapInsignia,
+    required this.onAddPhoto,
+    required this.onTapPhoto,
+    required this.buildItemImage,
+  });
+
+  @override
+  State<_PremiumBadgeCard> createState() => _PremiumBadgeCardState();
+}
+
+class _PremiumBadgeCardState extends State<_PremiumBadgeCard> 
+    with SingleTickerProviderStateMixin {
+  late AnimationController _hoverController;
+  late Animation<double> _elevationAnimation;
+  late Animation<double> _scaleAnimation;
+  
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _hoverController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _elevationAnimation = Tween<double>(begin: 8, end: 20).animate(
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeOutCubic),
+    );
+    
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _hoverController.dispose();
+    super.dispose();
+  }
+
+  void _onHover(bool hovering) {
+    setState(() => _isHovered = hovering);
+    if (hovering) {
+      _hoverController.forward();
+    } else {
+      _hoverController.reverse();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => _onHover(true),
+      onExit: (_) => _onHover(false),
+      child: AnimatedBuilder(
+        animation: _hoverController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                // Fondo blanco limpio
+                color: Colors.white,
+                // Sombras profundas para sensación de profundidad
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: _elevationAnimation.value,
+                    spreadRadius: _elevationAnimation.value * 0.3,
+                    offset: Offset(0, _elevationAnimation.value * 0.5),
+                  ),
+
+                ],
+                // Bordes marrones claros sutiles
+                border: Border.all(
+                  color: _isHovered 
+                    ? const Color(0xFFD2B48C) // Tan claro
+                    : const Color(0xFFDDD0C0).withOpacity(0.8), // Beige muy sutil
+                  width: _isHovered ? 2 : 1,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  // Textura sutil de papel
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.1),
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.02),
+                      ],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Fila superior con insignia y título
+                        Row(
+                          children: [
+                            // Insignia completamente sin contenedor visible
+                            GestureDetector(
+                              onTap: widget.onTapInsignia,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: widget.buildItemImage(
+                                  widget.badge, 
+                                  width: 90, 
+                                  height: 90
+                                ),
+                              ),
+                            ),
+                            
+                            const SizedBox(width: 20),
+                            
+                            // Título con tipografía elegante
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.badge.title,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF4A4A4A),
+                                      letterSpacing: 0.5,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 2,
+                                          offset: const Offset(1, 1),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            // Botón de agregar foto simple
+                            if (widget.canAdd)
+                              IconButton(
+                                onPressed: widget.onAddPhoto,
+                                icon: const Icon(
+                                  Icons.photo_library, 
+                                  size: 28, 
+                                  color: Color(0xFF87CEEB), // Azul celeste
+                                ),
+                                tooltip: 'Agregar foto desde galería',
+                              ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Galería de fotos que llega casi al límite del card
+                        Container(
+                          height: 180,
+                          width: double.infinity, // Ocupa todo el ancho disponible
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: const Color(0xFFE0E0E0),
+                              width: 1,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          child: widget.photos.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.photo_library_outlined,
+                                        size: 48,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Agrega tus experiencias fotográficas',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 14,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: widget.photos.length,
+                                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                  itemBuilder: (context, i) {
+                                    final photo = widget.photos[i];
+                                    return GestureDetector(
+                                      onTap: () => widget.onTapPhoto(photo),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          width: 220,
+                                          height: 160,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.1),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
+                                          ),
+                                          child: widget.buildItemImage(photo, width: 220, height: 160),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+
