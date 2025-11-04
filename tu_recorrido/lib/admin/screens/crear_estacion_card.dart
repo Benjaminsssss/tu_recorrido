@@ -34,11 +34,15 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   }
 
   Future<void> _pickImages() async {
-    final List<XFile>? picked = await _picker.pickMultiImage(imageQuality: 85);
-    if (picked == null || picked.isEmpty) return;
+    final picked = await _picker.pickMultiImage(imageQuality: 85);
+    if (picked.isEmpty) {
+      return;
+    }
 
     final remaining = 5 - _pickedImages.length;
-    if (remaining <= 0) return;
+    if (remaining <= 0) {
+      return;
+    }
     final toTake = picked.take(remaining).toList();
 
     if (kIsWeb) {
@@ -218,8 +222,9 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                               onTap: () {
                                 setState(() {
                                   _pickedImages.removeAt(i);
-                                  if (i < _pickedImagesBytes.length)
+                                  if (i < _pickedImagesBytes.length) {
                                     _pickedImagesBytes.removeAt(i);
+                                  }
                                 });
                               },
                               child: Container(
