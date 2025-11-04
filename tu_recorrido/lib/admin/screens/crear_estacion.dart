@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'seleccionar_punto_map.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../services/storage_service.dart';
@@ -29,7 +31,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _descripcionCardController = TextEditingController();
 
   bool _cargando = false;
-  Position? _ubicacionActual;
+  // Puede ser un Position (cuando usamos Geolocator) o un objeto con latitude/longitude (LatLng)
+  dynamic _ubicacionActual;
   final ImagePicker _picker = ImagePicker();
   
   // Badge/insignia para la estación patrimonial
@@ -436,7 +439,35 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 ],
               ),
               const SizedBox(height: 12),
+              // Botones para seleccionar ubicación: mapa o usar ubicación actual
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        // Abrir pantalla de mapa para seleccionar punto
+                        final LatLng? selected = await Navigator.of(context).push<LatLng>(
+                          MaterialPageRoute(builder: (_) => SeleccionarPuntoMap(initialLocation: _ubicacionActual != null ? LatLng(_ubicacionActual!.latitude, _ubicacionActual!.longitude) : null)),
+                        );
+                        if (selected != null) {
+                          // Guardar como LatLng (InfoUbicacion acepta objetos con latitude/longitude)
+                          setState(() {
+                            _ubicacionActual = LatLng(selected.latitude, selected.longitude);
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.map),
+                      label: const Text('Seleccionar en mapa'),
+                    ),
+                  ),
+                  // Se eliminó el botón de "Usar mi ubicación" según solicitud.
+                ],
+              ),
+              const SizedBox(height: 12),
               // Las imágenes para el card se gestionan desde la pantalla de gestión de lugares.
+              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               const SizedBox(height: 16),
               InfoUbicacion(ubicacion: _ubicacionActual),
               const SizedBox(height: 32),

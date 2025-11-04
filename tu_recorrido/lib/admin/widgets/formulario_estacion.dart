@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import '../../utils/colores.dart';
 
 /// Widget para el encabezado de crear estación
@@ -41,7 +40,7 @@ class EncabezadoEstacion extends StatelessWidget {
 
 /// Widget para mostrar información de ubicación GPS
 class InfoUbicacion extends StatelessWidget {
-  final Position? ubicacion;
+  final dynamic ubicacion;
 
   const InfoUbicacion({super.key, required this.ubicacion});
 
@@ -65,9 +64,9 @@ class InfoUbicacion extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              ubicacion != null
-                  ? 'Ubicación: ${ubicacion!.latitude.toStringAsFixed(6)}, ${ubicacion!.longitude.toStringAsFixed(6)}'
-                  : 'Obteniendo ubicación GPS...',
+        ubicacion != null
+          ? 'Ubicación: ${ubicacion.latitude.toStringAsFixed(6)}, ${ubicacion.longitude.toStringAsFixed(6)}'
+          : 'Obteniendo ubicación GPS...',
               style: TextStyle(
                 color: ubicacion != null
                     ? Coloressito.textPrimary
