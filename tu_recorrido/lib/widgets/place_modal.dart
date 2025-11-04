@@ -64,10 +64,16 @@ class PlaceModal extends StatelessWidget {
                         Flexible(
                           child: Text(
                             // Mostrar región + comuna si están presentes
-                            ( (place.region.isNotEmpty ? place.region : '') +
-                              (place.region.isNotEmpty && place.comuna.isNotEmpty ? ', ' : '') +
-                              (place.comuna.isNotEmpty ? place.comuna : (place.shortDesc.isNotEmpty ? place.shortDesc : 'Sin ubicación'))
-                            ),
+                            ((place.region.isNotEmpty ? place.region : '') +
+                                (place.region.isNotEmpty &&
+                                        place.comuna.isNotEmpty
+                                    ? ', '
+                                    : '') +
+                                (place.comuna.isNotEmpty
+                                    ? place.comuna
+                                    : (place.shortDesc.isNotEmpty
+                                        ? place.shortDesc
+                                        : 'Sin ubicación'))),
                             style: const TextStyle(
                               fontSize: 15,
                               color: Color(0xFF7B8063), // oliva

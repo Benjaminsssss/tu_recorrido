@@ -9,20 +9,20 @@ Future<void> seedPlaces() async {
   await FirebaseAuth.instance.signInAnonymously();
 
   final s = FirestoreService.instance;
-  await s.createPlace(
-    name: 'Plaza de Armas',
+  await s.createEstacion(
+    nombre: 'Plaza de Armas',
     lat: -33.4372,
     lng: -70.6506,
     category: 'histórico',
   );
-  await s.createPlace(
-    name: 'Cerro San Cristóbal',
+  await s.createEstacion(
+    nombre: 'Cerro San Cristóbal',
     lat: -33.4143,
     lng: -70.6385,
     category: 'parque',
   );
-  await s.createPlace(
-    name: 'Museo Bellas Artes',
+  await s.createEstacion(
+    nombre: 'Museo Bellas Artes',
     lat: -33.4343,
     lng: -70.6410,
     category: 'museo',

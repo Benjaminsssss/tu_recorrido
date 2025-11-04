@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../services/firestore_service.dart';
+import '../../services/estacion_service.dart';
+import '../../models/estacion.dart';
 import '../../services/storage_service.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
@@ -14,14 +16,16 @@ class CrearEstacionCardScreen extends StatefulWidget {
   const CrearEstacionCardScreen({super.key});
 
   @override
-  State<CrearEstacionCardScreen> createState() => _CrearEstacionCardScreenState();
+  State<CrearEstacionCardScreen> createState() =>
+      _CrearEstacionCardScreenState();
 }
 
 class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
   final _comunaCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  List<Estacion> _estaciones = [];
+  String? _selectedEstacionId;
   final ImagePicker _picker = ImagePicker();
   List<XFile> _pickedImages = [];
   List<Uint8List?> _pickedImagesBytes = [];
@@ -56,25 +60,37 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
     } else {
       setState(() {
         _pickedImages = [..._pickedImages, ...toTake];
-        _pickedImagesBytes = [..._pickedImagesBytes, ...List<Uint8List?>.filled(toTake.length, null)];
+        _pickedImagesBytes = [
+          ..._pickedImagesBytes,
+          ...List<Uint8List?>.filled(toTake.length, null)
+        ];
       });
     }
   }
 
-  Future<void> _createPlace() async {
+  Future<void> _assignCardToEstacion() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final name = _nameCtrl.text.trim();
-      final placeId = await FirestoreService.instance.createPlace(name: name, lat: 0.0, lng: 0.0);
+      // En lugar de crear un documento separado, actualizamos una estación existente.
+      if (_selectedEstacionId == null) {
+        throw Exception(
+            'Selecciona primero una estación existente para asignarle el card');
+      }
 
       final comuna = _comunaCtrl.text.trim();
       final descripcion = _descCtrl.text.trim();
-      await FirestoreService.instance.updatePlacePartial(placeId: placeId, data: {
+      await FirestoreService.instance
+          .updateEstacionPartial(estacionId: _selectedEstacionId!, data: {
         'comuna': comuna.isNotEmpty ? comuna : '',
         'descripcion': descripcion,
-        'shortDesc': descripcion.isNotEmpty ? (descripcion.length > 120 ? '${descripcion.substring(0, 120)}...' : descripcion) : '',
+        'shortDesc': descripcion.isNotEmpty
+            ? (descripcion.length > 120
+                ? '${descripcion.substring(0, 120)}...'
+                : descripcion)
+            : '',
         'mejorMomento': '',
+        // No duplicar 'description' legacy key; prefer 'descripcion' in the document
       });
 
       if (_pickedImages.isNotEmpty) {
@@ -83,17 +99,39 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final path = 'estaciones/$placeId/img_$ts$ext';
+          final path = 'estaciones/${_selectedEstacionId!}/img_$ts$ext';
           try {
             String url;
-            if (kIsWeb && idx < _pickedImagesBytes.length && _pickedImagesBytes[idx] != null) {
-              url = await StorageService.instance.uploadBytes(_pickedImagesBytes[idx]!, path, contentType: 'image/jpeg');
+            if (kIsWeb &&
+                idx < _pickedImagesBytes.length &&
+                _pickedImagesBytes[idx] != null) {
+              url = await StorageService.instance.uploadBytes(
+                  _pickedImagesBytes[idx]!, path,
+                  contentType: 'image/jpeg');
             } else {
               final file = File(picked.path);
-              url = await StorageService.instance.uploadFile(file, path, contentType: 'image/jpeg');
+              url = await StorageService.instance
+                  .uploadFile(file, path, contentType: 'image/jpeg');
             }
-            final imageObj = {'url': url, 'path': path, 'alt': name};
-            await FirestoreService.instance.addPlaceImage(placeId: placeId, image: imageObj);
+            final stationName = _estaciones
+                .firstWhere((e) => e.id == _selectedEstacionId,
+                    orElse: () => Estacion(
+                        id: _selectedEstacionId!,
+                        codigo: '',
+                        codigoQR: '',
+                        nombre: '',
+                        descripcion: '',
+                        latitud: 0.0,
+                        longitud: 0.0,
+                        fechaCreacion: DateTime.now()))
+                .nombre;
+            final imageObj = {
+              'url': url,
+              'path': path,
+              'alt': stationName.isNotEmpty ? stationName : 'Imagen del lugar'
+            };
+            await FirestoreService.instance.addEstacionImage(
+                estacionId: _selectedEstacionId!, image: imageObj);
           } catch (e) {
             // ignore errors for single images
             debugPrint('Error subiendo imagen $idx: $e');
@@ -103,14 +141,18 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Estación (card) creada')));
-      _nameCtrl.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Estación (card) creada')));
       _comunaCtrl.clear();
       _descCtrl.clear();
-      setState(() { _pickedImages = []; _pickedImagesBytes = []; });
+      setState(() {
+        _pickedImages = [];
+        _pickedImagesBytes = [];
+      });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Coloressito.badgeRed));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e'), backgroundColor: Coloressito.badgeRed));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -118,7 +160,6 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _comunaCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
@@ -134,25 +175,57 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nombre de la estación (card)'),
-                validator: (v) => (v==null || v.trim().isEmpty) ? 'Ingresa un nombre' : null,
+              // Seleccionar una estación existente para asignarle/editar el card
+              FutureBuilder<List<Estacion>>(
+                future: EstacionService.obtenerEstacionesActivas(),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final estaciones = snap.data ?? [];
+                  if (estaciones.isEmpty) {
+                    return const Text(
+                        'No hay estaciones. Crea una estación primero.');
+                  }
+                  // Guardar lista local para usar el nombre al subir imágenes
+                  _estaciones = estaciones;
+                  return DropdownButtonFormField<String>(
+                    value: _selectedEstacionId,
+                    items: estaciones
+                        .map((e) => DropdownMenuItem(
+                            value: e.id, child: Text(e.nombre)))
+                        .toList(),
+                    onChanged: (v) => setState(() {
+                      _selectedEstacionId = v;
+                    }),
+                    decoration: const InputDecoration(
+                        labelText: 'Selecciona estación a editar (card)'),
+                    validator: (v) =>
+                        v == null ? 'Selecciona una estación' : null,
+                  );
+                },
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _comunaCtrl,
-                decoration: const InputDecoration(labelText: 'Dirección breve / Comuna'),
-                validator: (v) => (v==null || v.trim().isEmpty) ? 'Ingresa la comuna o dirección breve' : null,
+                decoration: const InputDecoration(
+                    labelText: 'Dirección breve / Comuna'),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Ingresa la comuna o dirección breve'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descCtrl,
-                decoration: const InputDecoration(labelText: 'Descripción (mostrar en Ver detalles)'),
+                decoration: const InputDecoration(
+                    labelText: 'Descripción (mostrar en Ver detalles)'),
                 maxLines: 4,
               ),
               const SizedBox(height: 12),
-              ElevatedButton.icon(onPressed: _pickImages, icon: const Icon(Icons.photo), label: const Text('Elegir imágenes (card, máx 5)')),
+              ElevatedButton.icon(
+                  onPressed: _pickImages,
+                  icon: const Icon(Icons.photo),
+                  label: const Text('Elegir imágenes (card, máx 5)')),
               const SizedBox(height: 6),
               const Text(
                 'Selecciona hasta 5 imágenes. En web: Usa Ctrl/Cmd+click o Shift para seleccionar varias.',
@@ -172,9 +245,13 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: kIsWeb && i < _pickedImagesBytes.length && _pickedImagesBytes[i] != null
-                                ? Image.memory(_pickedImagesBytes[i]!, width: 240, height: 160, fit: BoxFit.cover)
-                                : Image.file(File(p.path), width: 240, height: 160, fit: BoxFit.cover),
+                            child: kIsWeb &&
+                                    i < _pickedImagesBytes.length &&
+                                    _pickedImagesBytes[i] != null
+                                ? Image.memory(_pickedImagesBytes[i]!,
+                                    width: 240, height: 160, fit: BoxFit.cover)
+                                : Image.file(File(p.path),
+                                    width: 240, height: 160, fit: BoxFit.cover),
                           ),
                           Positioned(
                             top: 6,
@@ -183,13 +260,17 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                               onTap: () {
                                 setState(() {
                                   _pickedImages.removeAt(i);
-                                  if (i < _pickedImagesBytes.length) _pickedImagesBytes.removeAt(i);
+                                  if (i < _pickedImagesBytes.length)
+                                    _pickedImagesBytes.removeAt(i);
                                 });
                               },
                               child: Container(
-                                decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle),
                                 padding: const EdgeInsets.all(6),
-                                child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                child: const Icon(Icons.close,
+                                    size: 16, color: Colors.white),
                               ),
                             ),
                           ),
@@ -199,7 +280,11 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _loading ? null : _createPlace, child: _loading ? const CircularProgressIndicator() : const Text('Crear')),
+              ElevatedButton(
+                  onPressed: _loading ? null : _assignCardToEstacion,
+                  child: _loading
+                      ? const CircularProgressIndicator()
+                      : const Text('Asignar Card')),
             ],
           ),
         ),

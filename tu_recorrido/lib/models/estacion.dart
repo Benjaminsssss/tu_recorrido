@@ -15,6 +15,9 @@ class Estacion {
   final double longitud; // Coordenadas GPS
   final DateTime fechaCreacion;
   final bool activa; // Si está disponible para visitar
+  final List<Map<String, dynamic>>
+      imagenes; // Imágenes asociadas al card/estación
+  final String? comuna;
 
   const Estacion({
     required this.id,
@@ -27,6 +30,8 @@ class Estacion {
     required this.longitud,
     required this.fechaCreacion,
     this.activa = true,
+    this.imagenes = const [],
+    this.comuna,
   });
 
   /// Crear Estacion desde documento de Firestore
@@ -45,6 +50,9 @@ class Estacion {
       fechaCreacion:
           (data['fechaCreacion'] as Timestamp?)?.toDate() ?? DateTime.now(),
       activa: data['activa'] ?? true,
+      imagenes: ((data['imagenes'] as List<dynamic>?) ?? [])
+          .cast<Map<String, dynamic>>(),
+      comuna: data['comuna'] as String?,
     );
   }
 
@@ -54,8 +62,14 @@ class Estacion {
       'insigniaID': insigniaID,
       'codigo': codigo,
       'codigoQR': codigoQR,
+      // Mantener claves modernas y legacy para compatibilidad con la UI
       'nombre': nombre,
+      // legacy 'name' removed to avoid duplicate fields; UI reads 'nombre' and falls back to 'name' when needed
       'descripcion': descripcion,
+      // legacy 'description' removed to avoid duplicate fields; UI should read 'descripcion' first
+      // Card-related fields (use existing 'nombre' and 'descripcion' for main values)
+      'comuna': comuna,
+      'imagenes': imagenes,
       'latitud': latitud,
       'longitud': longitud,
       'fechaCreacion': Timestamp.fromDate(fechaCreacion),
@@ -75,6 +89,8 @@ class Estacion {
     double? longitud,
     DateTime? fechaCreacion,
     bool? activa,
+    List<Map<String, dynamic>>? imagenes,
+    String? comuna,
   }) {
     return Estacion(
       id: id ?? this.id,
@@ -87,6 +103,8 @@ class Estacion {
       longitud: longitud ?? this.longitud,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,
       activa: activa ?? this.activa,
+      imagenes: imagenes ?? this.imagenes,
+      comuna: comuna ?? this.comuna,
     );
   }
 }

@@ -26,14 +26,12 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _comunaController = TextEditingController();
-  final _descripcionCardController = TextEditingController();
+  // Nota: usamos la misma descripción de la estación para el card.
 
   bool _cargando = false;
   Position? _ubicacionActual;
   final ImagePicker _picker = ImagePicker();
-  
 
-  
   // Imágenes para el card/lugar (múltiples)
   List<XFile> _pickedCardImages = [];
   List<Uint8List?> _pickedCardImagesBytes = [];
@@ -49,7 +47,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     _nombreController.dispose();
     _descripcionController.dispose();
     _comunaController.dispose();
-    _descripcionCardController.dispose();
     super.dispose();
   }
 
@@ -102,57 +99,54 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       // Crear estación patrimonial y obtener el id generado
       final newId = await EstacionService.crearEstacion(estacion);
 
-      // AHORA TAMBIÉN CREAR EL LUGAR/CARD EN FIRESTORE (colección estaciones)
-      final nombreCard = _nombreController.text.trim();
-      final cardId = await FirestoreService.instance.createPlace(
-        name: nombreCard, 
-        lat: _ubicacionActual!.latitude, 
-        lng: _ubicacionActual!.longitude,
-        category: 'patrimonio',
-        country: 'Chile',
-        city: 'Santiago', // Podrías hacer esto configurable
-      );
-
-      // Actualizar datos adicionales del card
+      // Guardar metadatos del "card" directamente en el documento de la estación
       final comuna = _comunaController.text.trim();
-      final descripcionCard = _descripcionCardController.text.trim();
-      await FirestoreService.instance.updatePlacePartial(placeId: cardId, data: {
+      // Actualizar campos del documento de la estación usando los campos existentes
+      await FirestoreService.instance
+          .updateEstacionPartial(estacionId: newId, data: {
         'comuna': comuna.isNotEmpty ? comuna : '',
-        'descripcion': descripcionCard,
-        'shortDesc': descripcionCard.isNotEmpty ? (descripcionCard.length > 120 ? '${descripcionCard.substring(0, 120)}...' : descripcionCard) : '',
-        'mejorMomento': '',
-        'estacionId': newId, // Enlazar el card con la estación patrimonial
+        // Guardar la descripción del card en la clave en español
+        'descripcion': _descripcionController.text.trim(),
       });
 
-      // Subir imágenes del card (múltiples)
+      // Subir imágenes y guardarlas en el array `imagenes` del documento de la estación
       if (_pickedCardImages.isNotEmpty) {
         final toUpload = _pickedCardImages.take(5).toList();
         for (var idx = 0; idx < toUpload.length; idx++) {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final cardImagePath = 'estaciones/$cardId/img_$ts$ext';
+          final imagePath = 'estaciones/$newId/img_$ts$ext';
           try {
-            String cardImageUrl;
-            if (kIsWeb && idx < _pickedCardImagesBytes.length && _pickedCardImagesBytes[idx] != null) {
-              cardImageUrl = await StorageService.instance.uploadBytes(_pickedCardImagesBytes[idx]!, cardImagePath, contentType: 'image/jpeg');
+            String imageUrl;
+            if (kIsWeb &&
+                idx < _pickedCardImagesBytes.length &&
+                _pickedCardImagesBytes[idx] != null) {
+              imageUrl = await StorageService.instance.uploadBytes(
+                  _pickedCardImagesBytes[idx]!, imagePath,
+                  contentType: 'image/jpeg');
             } else {
               final file = File(picked.path);
-              cardImageUrl = await StorageService.instance.uploadFile(file, cardImagePath, contentType: 'image/jpeg');
+              imageUrl = await StorageService.instance
+                  .uploadFile(file, imagePath, contentType: 'image/jpeg');
             }
-            final imageObj = {'url': cardImageUrl, 'path': cardImagePath, 'alt': nombreCard};
-            await FirestoreService.instance.addPlaceImage(placeId: cardId, image: imageObj);
+            final imageObj = {
+              'url': imageUrl,
+              'path': imagePath,
+              'alt': _nombreController.text.trim()
+            };
+            await FirestoreService.instance
+                .addEstacionImage(estacionId: newId, image: imageObj);
           } catch (e) {
-            debugPrint('Error subiendo imagen $idx del card: $e');
+            debugPrint('Error subiendo imagen $idx de la estación: $e');
             continue;
           }
         }
       }
 
-
-
       if (mounted) {
-        _mostrarExito('Estación patrimonial y lugar/card creados exitosamente.\nCódigo: $codigo');
+        _mostrarExito(
+            'Estación patrimonial creada exitosamente.\nCódigo: $codigo');
         _limpiarFormulario();
       }
     } catch (e) {
@@ -196,18 +190,18 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     } else {
       setState(() {
         _pickedCardImages = [..._pickedCardImages, ...toTake];
-        _pickedCardImagesBytes = [..._pickedCardImagesBytes, ...List<Uint8List?>.filled(toTake.length, null)];
+        _pickedCardImagesBytes = [
+          ..._pickedCardImagesBytes,
+          ...List<Uint8List?>.filled(toTake.length, null)
+        ];
       });
     }
   }
-
-
 
   void _limpiarFormulario() {
     _nombreController.clear();
     _descripcionController.clear();
     _comunaController.clear();
-    _descripcionCardController.clear();
     _formKey.currentState?.reset();
     setState(() {
       _pickedCardImages = [];
@@ -291,18 +285,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              CampoFormulario(
-                controller: _descripcionCardController,
-                label: 'Descripción del card',
-                hint: 'Descripción breve que aparecerá en la pantalla principal...',
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Agrega una descripción para el card';
-                  }
-                  return null;
-                },
-              ),
+              // Usamos la misma descripción histórica para el card; no se requiere campo adicional.
               const SizedBox(height: 16),
               // Selector de imágenes del card
               Row(
@@ -311,7 +294,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _pickCardImages,
                       icon: const Icon(Icons.photo_library),
-                      label: Text('Imágenes del card (${_pickedCardImages.length})'),
+                      label: Text(
+                          'Imágenes del card (${_pickedCardImages.length})'),
                     ),
                   ),
                 ],
@@ -332,15 +316,18 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: kIsWeb && index < _pickedCardImagesBytes.length && _pickedCardImagesBytes[index] != null
+                              child: kIsWeb &&
+                                      index < _pickedCardImagesBytes.length &&
+                                      _pickedCardImagesBytes[index] != null
                                   ? Image.memory(
                                       _pickedCardImagesBytes[index]!,
                                       fit: BoxFit.cover,
                                       width: 100,
                                       height: 100,
                                     )
-                                  : (kIsWeb 
-                                      ? const Icon(Icons.image, size: 40, color: Colors.grey)
+                                  : (kIsWeb
+                                      ? const Icon(Icons.image,
+                                          size: 40, color: Colors.grey)
                                       : Image.file(
                                           File(_pickedCardImages[index].path),
                                           fit: BoxFit.cover,

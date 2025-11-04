@@ -545,11 +545,10 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
       builder: (context) => AlertDialog(
         title: const Text('Migración de Insignias'),
         content: const Text(
-          'Esto actualizará todas las estaciones que tienen insignias '
-          'asignadas para que muestren correctamente la imagen en el álbum.\n\n'
-          'También actualizará las visitas existentes del usuario actual.\n\n'
-          '¿Deseas continuar?'
-        ),
+            'Esto actualizará todas las estaciones que tienen insignias '
+            'asignadas para que muestren correctamente la imagen en el álbum.\n\n'
+            'También actualizará las visitas existentes del usuario actual.\n\n'
+            '¿Deseas continuar?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -570,12 +569,13 @@ class _EscanerQRScreenState extends State<EscanerQRScreen>
     try {
       // Primero migrar las estaciones
       await InsigniaService.migrarInsigniasExistentes();
-      
+
       // Luego actualizar las visitas del usuario actual
       await _actualizarVisitasUsuarioActual();
-      
+
       if (mounted) {
-        _mostrarMensaje('✅ Migración completada exitosamente', colorVerdeEsmeralda);
+        _mostrarMensaje(
+            '✅ Migración completada exitosamente', colorVerdeEsmeralda);
       }
     } catch (e) {
       if (mounted) {

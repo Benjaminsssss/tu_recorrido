@@ -74,8 +74,10 @@ class InsigniaService {
 
   static Future<List<Insignia>> obtenerTodas() async {
     try {
-      final snapshot = await _collection.orderBy('fechaCreacion', descending: true).get();
-      print('InsigniaService.obtenerTodas: fetched ${snapshot.docs.length} docs');
+      final snapshot =
+          await _collection.orderBy('fechaCreacion', descending: true).get();
+      print(
+          'InsigniaService.obtenerTodas: fetched ${snapshot.docs.length} docs');
       return snapshot.docs.map((d) => Insignia.fromFirestore(d)).toList();
     } catch (e, st) {
       // Log error para facilitar diagnóstico en runtime
@@ -146,7 +148,7 @@ class InsigniaService {
     final updateData = <String, dynamic>{
       'insigniaID': insigniaRef,
     };
-    
+
     if (badgeImage != null) {
       updateData['badgeImage'] = badgeImage;
     }
@@ -159,9 +161,8 @@ class InsigniaService {
   static Future<void> migrarInsigniasExistentes() async {
     try {
       // Obtener todas las estaciones
-      final estacionesSnapshot = await FirebaseFirestore.instance
-          .collection('estaciones')
-          .get();
+      final estacionesSnapshot =
+          await FirebaseFirestore.instance.collection('estaciones').get();
 
       int actualizadas = 0;
       int errores = 0;
@@ -190,7 +191,8 @@ class InsigniaService {
                   }
                 });
                 actualizadas++;
-                print('✅ Estación ${estacionDoc.id} actualizada con badgeImage');
+                print(
+                    '✅ Estación ${estacionDoc.id} actualizada con badgeImage');
               }
             }
           }
@@ -200,7 +202,8 @@ class InsigniaService {
         }
       }
 
-      print('🎯 Migración completada: $actualizadas estaciones actualizadas, $errores errores');
+      print(
+          '🎯 Migración completada: $actualizadas estaciones actualizadas, $errores errores');
     } catch (e) {
       print('💥 Error en migración: $e');
       rethrow;

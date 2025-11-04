@@ -16,7 +16,8 @@ class StorageService {
 
   /// Sube un archivo y devuelve la URL de descarga pública.
   /// [path] ejemplo: "estaciones/{placeId}/images/imagen1.jpg"
-  Future<String> uploadFile(File file, String path, {String? contentType}) async {
+  Future<String> uploadFile(File file, String path,
+      {String? contentType}) async {
     final ref = _storage.ref().child(path);
     final metadata = SettableMetadata(contentType: contentType);
 
@@ -28,7 +29,8 @@ class StorageService {
   }
 
   /// Sube bytes (útil para Flutter Web) y devuelve URL de descarga
-  Future<String> uploadBytes(Uint8List data, String path, {String? contentType}) async {
+  Future<String> uploadBytes(Uint8List data, String path,
+      {String? contentType}) async {
     final ref = _storage.ref().child(path);
     final metadata = SettableMetadata(contentType: contentType);
 

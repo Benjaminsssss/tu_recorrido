@@ -12,7 +12,8 @@ class EstacionVisitada {
   final DateTime fechaVisita; // Cuándo fue visitada
   final double? latitudVisita; // Dónde estaba el usuario al visitarla
   final double? longitudVisita; // Coordenadas de la visita
-  final PlaceImage? badgeImage; // Imagen/insignia asociada a la estación en el momento de la visita
+  final PlaceImage?
+      badgeImage; // Imagen/insignia asociada a la estación en el momento de la visita
 
   const EstacionVisitada({
     required this.id,
@@ -39,7 +40,8 @@ class EstacionVisitada {
       latitudVisita: data['latitudVisita']?.toDouble(),
       longitudVisita: data['longitudVisita']?.toDouble(),
       badgeImage: data['badgeImage'] != null
-          ? PlaceImage.fromJson(Map<String, dynamic>.from(data['badgeImage'] as Map))
+          ? PlaceImage.fromJson(
+              Map<String, dynamic>.from(data['badgeImage'] as Map))
           : null,
     );
   }

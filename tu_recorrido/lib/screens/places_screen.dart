@@ -10,7 +10,7 @@ class PlacesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Lugares')),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirestoreService.instance.watchPlaces(),
+        stream: FirestoreService.instance.watchEstaciones(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -29,7 +29,7 @@ class PlacesScreen extends StatelessWidget {
             itemBuilder: (context, i) {
               final id = docs[i].id;
               final d = docs[i].data();
-              final name = d['name'] ?? '—';
+              final name = d['nombre'] ?? d['name'] ?? '—';
               final category = d['category'] ?? '—';
               final lat = d['lat'];
               final lng = d['lng'];
@@ -58,7 +58,7 @@ class PlacesScreen extends StatelessWidget {
                       ),
                     );
                     if (ok == true) {
-                      await FirestoreService.instance.deletePlace(id);
+                      await FirestoreService.instance.deleteEstacion(id);
                     }
                   },
                 ),
@@ -128,8 +128,8 @@ class PlacesScreen extends StatelessWidget {
           FilledButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
-              await FirestoreService.instance.createPlace(
-                name: nameCtrl.text.trim(),
+              await FirestoreService.instance.createEstacion(
+                nombre: nameCtrl.text.trim(),
                 category: catCtrl.text.trim(),
                 lat: double.parse(latCtrl.text),
                 lng: double.parse(lngCtrl.text),

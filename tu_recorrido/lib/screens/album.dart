@@ -50,8 +50,8 @@ class AlbumItem {
         'type': type.toString(),
         'title': title,
         'parentId': parentId,
-    'imagePath': imagePath,
-    'base64': base64,
+        'imagePath': imagePath,
+        'base64': base64,
         'location': location,
         'date': date.toIso8601String(),
         'description': description,
@@ -65,8 +65,8 @@ class AlbumItem {
           : AlbumItemType.badge,
       title: j['title'] ?? 'Item',
       parentId: j['parentId'],
-        imagePath: j['imagePath'],
-        base64: j['base64'],
+      imagePath: j['imagePath'],
+      base64: j['base64'],
       location: j['location'],
       date: DateTime.tryParse(j['date'] ?? '') ?? DateTime.now(),
       description: j['description'],
@@ -89,6 +89,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
     _loadPhotos();
     _startVisitasListener();
   }
+
   Future<void> _loadPhotos() async {
     _prefs = await SharedPreferences.getInstance();
     final raw = _prefs.getStringList('album_items') ?? [];
@@ -113,7 +114,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
         return AlbumItem(
           id: ev.id,
           type: AlbumItemType.badge,
-          title: ev.estacionNombre.isNotEmpty ? ev.estacionNombre : ev.estacionCodigo,
+          title: ev.estacionNombre.isNotEmpty
+              ? ev.estacionNombre
+              : ev.estacionCodigo,
           parentId: null,
           imagePath: ev.badgeImage?.url, // Usar la URL de la insignia
           location: (ev.latitudVisita != null && ev.longitudVisita != null)
@@ -137,7 +140,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   Future<void> _saveItems() async {
     // Persistir únicamente las fotos (las badges se obtienen desde Firestore)
-    final photos = _items.where((e) => e.type == AlbumItemType.photo).map((e) => jsonEncode(e.toJson())).toList();
+    final photos = _items
+        .where((e) => e.type == AlbumItemType.photo)
+        .map((e) => jsonEncode(e.toJson()))
+        .toList();
     await _prefs.setStringList('album_items', photos);
   }
 
@@ -275,7 +281,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
       if (item.base64 != null && item.base64!.isNotEmpty) {
         try {
           final bytes = base64Decode(item.base64!);
-          return Image.memory(bytes, width: width, height: height, fit: BoxFit.cover);
+          return Image.memory(bytes,
+              width: width, height: height, fit: BoxFit.cover);
         } catch (_) {}
       }
       if (item.imagePath != null) {
@@ -285,9 +292,11 @@ class _AlbumScreenState extends State<AlbumScreen> {
         }
       }
     }
-    
+
     // Para badges/insignias
-    if (item.type == AlbumItemType.badge && item.imagePath != null && item.imagePath!.isNotEmpty) {
+    if (item.type == AlbumItemType.badge &&
+        item.imagePath != null &&
+        item.imagePath!.isNotEmpty) {
       // Si la insignia tiene una imagen, mostrarla
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -317,7 +326,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
         ),
       );
     }
-    
+
     // Insignia sin imagen o fallback
     return _buildDefaultBadgeIcon(width: width, height: height);
   }
@@ -451,15 +460,16 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300, width: 2),
-                          ),
-                          child: _buildItemImage(badge, width: 90, height: 90)
-                        )),
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.grey.shade300, width: 2),
+                            ),
+                            child:
+                                _buildItemImage(badge, width: 90, height: 90))),
                     const SizedBox(width: 16),
                     Expanded(
                         child: Text(badge.title,
@@ -479,11 +489,13 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   child: photos.isEmpty
                       ? Center(
                           child: Text('No hay fotos para esta insignia',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 16)))
+                              style: TextStyle(
+                                  color: Colors.grey.shade600, fontSize: 16)))
                       : ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: photos.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
                           itemBuilder: (context, i) {
                             final p = photos[i];
                             return GestureDetector(
@@ -491,20 +503,21 @@ class _AlbumScreenState extends State<AlbumScreen> {
                               child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
-                                    width: 160,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: _buildItemImage(p, width: 160, height: 120)
-                                  )),
+                                      width: 160,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: _buildItemImage(p,
+                                          width: 160, height: 120))),
                             );
                           },
                         ),

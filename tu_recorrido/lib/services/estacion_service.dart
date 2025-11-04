@@ -29,10 +29,18 @@ class EstacionService {
       // Crear nueva estación con código QR
       final estacionConQR = estacion.copyWith(codigoQR: codigoQR);
 
+      // Preparar payload garantizando compatibilidad con consumidores (Home, UI)
+      final Map<String, dynamic> payload =
+          Map.from(estacionConQR.toFirestore());
+
+      // Algunos consumidores/consultas esperan 'createdAt', 'lat' y 'lng'
+      // Añadimos serverTimestamp para createdAt y duplicamos latitud/longitud a lat/lng
+      payload['createdAt'] = FieldValue.serverTimestamp();
+      payload['lat'] = estacionConQR.latitud;
+      payload['lng'] = estacionConQR.longitud;
+
       // Guardar en Firestore
-      final docRef = await _firestore
-          .collection(_collection)
-          .add(estacionConQR.toFirestore());
+      final docRef = await _firestore.collection(_collection).add(payload);
 
       return docRef.id;
     } catch (e) {
@@ -120,7 +128,8 @@ class EstacionService {
   }
 
   /// Establece el campo `badgeImage` del documento de estación con el objeto provisto.
-  static Future<void> setBadgeImage(String id, Map<String, dynamic> image) async {
+  static Future<void> setBadgeImage(
+      String id, Map<String, dynamic> image) async {
     try {
       await _firestore.collection(_collection).doc(id).set({
         'badgeImage': image,
@@ -132,7 +141,8 @@ class EstacionService {
   }
 
   /// Añade elementos al array `imagenes` de la estación.
-  static Future<void> addEstacionImages(String id, List<Map<String, dynamic>> images) async {
+  static Future<void> addEstacionImages(
+      String id, List<Map<String, dynamic>> images) async {
     try {
       for (final img in images) {
         await _firestore.collection(_collection).doc(id).set({

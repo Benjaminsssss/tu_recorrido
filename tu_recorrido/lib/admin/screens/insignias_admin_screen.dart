@@ -122,7 +122,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       _insignias = await InsigniaService.obtenerTodas();
       // debug: cantidad recibida
       // ignore: avoid_print
-      print('InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
+      print(
+          'InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
       // Cargar estaciones y mapear por insigniaID
       try {
         final estaciones = await EstacionService.obtenerEstacionesActivas();
@@ -295,15 +296,14 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
 
   Future<void> _migrarInsigniasExistentes() async {
     final messenger = ScaffoldMessenger.of(context);
-    
+
     // Mostrar confirmación
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Migrar insignias existentes'),
         content: const Text(
-          'Esto actualizará todas las estaciones que tienen insignias asignadas para que las insignias aparezcan correctamente en el Album de los usuarios.\n\n¿Continuar?'
-        ),
+            'Esto actualizará todas las estaciones que tienen insignias asignadas para que las insignias aparezcan correctamente en el Album de los usuarios.\n\n¿Continuar?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -326,7 +326,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       );
 
       await InsigniaService.migrarInsigniasExistentes();
-      
+
       if (mounted) {
         messenger.showSnackBar(
           const SnackBar(
@@ -353,23 +353,29 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
 
   Future<void> _eliminarVisitaPalacio() async {
     final messenger = ScaffoldMessenger.of(context);
-    
+
     // Buscar el ID del Palacio de la Moneda
     String? palacioId;
     try {
       final estaciones = await EstacionService.obtenerEstacionesActivas();
-      final palacio = estaciones.where((e) => e.nombre.toLowerCase().contains('palacio')).firstOrNull;
+      final palacio = estaciones
+          .where((e) => e.nombre.toLowerCase().contains('palacio'))
+          .firstOrNull;
       palacioId = palacio?.id;
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Error buscando Palacio: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('Error buscando Palacio: $e'),
+            backgroundColor: Colors.red),
       );
       return;
     }
 
     if (palacioId == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('No se encontró el Palacio de la Moneda'), backgroundColor: Colors.orange),
+        const SnackBar(
+            content: Text('No se encontró el Palacio de la Moneda'),
+            backgroundColor: Colors.orange),
       );
       return;
     }
@@ -379,7 +385,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Eliminar visita del Palacio'),
-        content: const Text('¿Eliminar la visita al Palacio de la Moneda para poder probar de nuevo?'),
+        content: const Text(
+            '¿Eliminar la visita al Palacio de la Moneda para poder probar de nuevo?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -400,7 +407,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       if (mounted) {
         messenger.showSnackBar(
           const SnackBar(
-            content: Text('✅ Visita del Palacio eliminada. Ya puedes escanear de nuevo.'),
+            content: Text(
+                '✅ Visita del Palacio eliminada. Ya puedes escanear de nuevo.'),
             backgroundColor: Colors.green,
           ),
         );

@@ -128,7 +128,9 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
           // Compute a safe visible snap fraction: prefer the manual _currentSnap while dragging,
           // otherwise use the animated value. Clamp to [0, expandedSnap] to avoid negative heights.
           final double animValue = _sheetAnimation.value;
-          final double visibleSnap = (_dragOffset != 0.0 ? _currentSnap : animValue).clamp(0.0, expandedSnap);
+          final double visibleSnap =
+              (_dragOffset != 0.0 ? _currentSnap : animValue)
+                  .clamp(0.0, expandedSnap);
 
           return Stack(
             children: [
@@ -149,12 +151,12 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
                 ),
               ),
               // Top Sheet
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  // Use the computed visibleSnap (already clamped to valid range)
-                  height: size.height * visibleSnap,
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                // Use the computed visibleSnap (already clamped to valid range)
+                height: size.height * visibleSnap,
                 child: GestureDetector(
                   onVerticalDragUpdate: _handleDragUpdate,
                   onVerticalDragEnd: _handleDragEnd,
