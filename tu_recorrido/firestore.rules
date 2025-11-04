@@ -3,11 +3,63 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Función para verificar si un usuario es administrador
+    // Funciones auxiliares de validación
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
     function isAdmin() {
-      return request.auth != null && 
+      return isAuthenticated() && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isValidRating() {
+      return request.resource.data.rating is number &&
+             request.resource.data.rating >= 0 &&
+             request.resource.data.rating <= 5;
+    }
+
+    // ----- ESTACIONES -----
+    match /estaciones/{estacionId} {
+      // Cualquiera puede leer las estaciones
+      allow read: if true;
+      
+      // Solo los administradores pueden crear/borrar estaciones
+      allow create, delete: if isAdmin();
+      
+      // Permitir actualizar solo los campos de rating
+      allow update: if isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['rating', 'totalRatings', 'updatedAt']) ||
+        isAdmin();
+        
+      // Subcolección de ratings
+      match /ratings/{ratingId} {
+        // Cualquiera puede ver los ratings
+        allow read: if true;
+        
+        // Solo usuarios autenticados y verificados pueden crear/actualizar su propio rating
+        allow create: if isAuthenticated() && isEmailVerified() &&
+          ratingId == request.auth.uid &&
+          request.resource.data.keys().hasAll(['rating', 'userId', 'fecha']) &&
+          request.resource.data.userId == request.auth.uid &&
+          isValidRating();
+          
+        allow update: if isAuthenticated() && isEmailVerified() &&
+          ratingId == request.auth.uid &&
+          request.resource.data.userId == request.auth.uid &&
+          resource.data.userId == request.auth.uid &&
+          isValidRating();
+          
+        // Solo el dueño del rating o un admin pueden borrarlo
+        allow delete: if isAuthenticated() &&
+          (ratingId == request.auth.uid || isAdmin());
+      }
     }
 
     // ----- USERS -----
@@ -139,57 +191,7 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && isAdmin();
     }
 
-    // ----- ESTACIONES -----
-    // Estaciones patrimoniales para escaneo QR
-    match /estaciones/{estacionId} {
-      // Lectura pública para usuarios autenticados (escaneo QR)
-      allow read: if request.auth != null;
-      
-      // Solo usuarios autenticados pueden crear/actualizar estaciones
-      // En producción, esto debería restringirse solo a administradores
-      allow create, update: if request.auth != null;
-      
-      // Solo administradores pueden eliminar (implementar role-based después)
-      allow delete: if request.auth != null;
-
-      // Validación de esquema para estaciones
-      function isValidEstacion(data) {
-        // Aceptar dos variantes de keys: con o sin `insigniaID` (es opcional)
-        return (
-          data.keys().hasOnly([
-            'codigo', 'codigoQR', 'nombre', 'descripcion', 
-            'latitud', 'longitud', 'fechaCreacion', 'activa'
-          ])
-        ||
-          data.keys().hasOnly([
-            'codigo', 'codigoQR', 'nombre', 'descripcion', 
-            'latitud', 'longitud', 'fechaCreacion', 'activa', 'insigniaID'
-          ])
-        )
-        && (data.codigo is string)
-        && (data.codigoQR is string)
-        && (data.nombre is string)
-        && (data.descripcion is string)
-        && (data.latitud is number)
-        && (data.longitud is number)
-        && (data.fechaCreacion is timestamp)
-        && (data.activa is bool);
-      }
-
-      // Permitir crear/actualizar estaciones a usuarios autenticados pero
-      // restringir cambios en el campo `insigniaID` solo a administradores.
-      allow create: if request.auth != null
-                      && isValidEstacion(request.resource.data)
-                      // en creación, solo permitir insigniaID si es null o el creador es admin
-                      && (request.resource.data.insigniaID == null || isAdmin());
-
-      allow update: if request.auth != null
-                      && isValidEstacion(request.resource.data)
-                      // si se intenta cambiar insigniaID, solo los admins pueden hacerlo
-                      && (
-                        (request.resource.data.insigniaID == resource.data.insigniaID) ||
-                        isAdmin()
-                      );
-    }
+    // No necesitamos esta sección duplicada ya que las reglas de estaciones 
+    // están definidas arriba
   }
 }

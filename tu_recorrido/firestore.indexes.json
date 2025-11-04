@@ -9,10 +9,15 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "codigoQR",
+          "fieldPath": "codigo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
-      ]
+      ],
+      "density": "SPARSE_ALL"
     },
     {
       "collectionGroup": "estaciones",
@@ -23,10 +28,15 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "codigo",
+          "fieldPath": "codigoQR",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
-      ]
+      ],
+      "density": "SPARSE_ALL"
     },
     {
       "collectionGroup": "estaciones",
@@ -39,8 +49,13 @@
         {
           "fieldPath": "fechaCreacion",
           "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
         }
-      ]
+      ],
+      "density": "SPARSE_ALL"
     }
   ],
   "fieldOverrides": []

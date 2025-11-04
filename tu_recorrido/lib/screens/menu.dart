@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,6 +10,9 @@ import 'package:http/http.dart' as http;
 
 import 'package:tu_recorrido/models/lugares.dart';
 import 'package:tu_recorrido/models/marcadores.dart';
+import 'package:tu_recorrido/services/estamayrai.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+
 
 class Mapita extends StatefulWidget {
   const Mapita({super.key});
@@ -17,7 +21,11 @@ class Mapita extends StatefulWidget {
   State<Mapita> createState() => _MapitaState();
 }
 
-class _MapitaState extends State<Mapita> {
+class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
+  // Controlador para la animación de latido
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  
   static const String googleApiKeyInline =
       "AIzaSyBZ2j2pQXkUQXnkKlNkheNi-1utBPc2Vqk";
 
@@ -31,29 +39,38 @@ class _MapitaState extends State<Mapita> {
   final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
 
-  static const double _cardHeight = 140;
-  static const double _cardWidth = 350;
+  static const double _cardHeight = 120;
+  static const double _cardWidth = 400;
 
   final PageController _pageController = PageController(viewportFraction: 0.90);
   int _currentPage = 0;
 
-  CameraPosition? _initialCameraPosition;
+  // Servicios
+  final EstacionesService _estacionesService = EstacionesService();
+  StreamSubscription<List<PlaceResult>>? _estacionesSubscription;
+  
+
+  // Estado del mapa
+  CameraPosition _initialCameraPosition = const CameraPosition(
+    target: LatLng(-33.4489, -70.6693), // Santiago, Chile
+    zoom: 12,
+  );
+  final Set<Marker> _markers = {};
   Marker? _userMarker;
   List<PlaceResult> _lugares = [];
-  final Set<Marker> _markers = {};
-
   final Set<Polyline> _polylines = {};
   LatLng? _currentPosition;
   LatLng? _currentDestination;
 
-  static const double _arrivalToleranceMeters = 50.0;
+  // Variables de estado
+  static const double _arrivalToleranceMeters = 20000.0; // 20 km de rango para mostrar el botón de rating
   bool _isRouteActive = false;
   bool _arrivalHandled = false;
 
+  // Lugares
   PlaceResult? _destinationPlace;
 
-  PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
-
+  // Configuración
   final LocationSettings _locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.bestForNavigation,
     distanceFilter: 3,
@@ -63,10 +80,69 @@ class _MapitaState extends State<Mapita> {
     accuracy: LocationAccuracy.best,
   );
 
+  BitmapDescriptor? _customMarkerIcon;
+
+  Future<void> _createCustomMarker() async {
+    final recoder = ui.PictureRecorder();
+    final canvas = Canvas(recoder);
+    // Dibujar el círculo de fondo
+    final paint = Paint()
+      ..color = const ui.Color.fromARGB(255, 223, 233, 232)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(const Offset(24, 24), 24, paint);
+
+    // Dibujar el icono de cámara
+    TextPainter textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(Icons.camera_alt.codePoint),
+      style: TextStyle(
+        fontSize: 30,
+        fontFamily: Icons.camera_alt.fontFamily,
+        color: Colors.white,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, const Offset(9, 9));
+
+    final picture = recoder.endRecording();
+    final image = await picture.toImage(48, 48);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    setState(() {
+      _customMarkerIcon = BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
+    });
+  }
+
+  Future<void> _initializeMap() async {
+    await _createCustomMarker();
+    _determinePositionAndStartListening();
+    _cargarEstaciones();
+  }
+
   @override
   void initState() {
     super.initState();
-    _determinePositionAndStartListening();
+    
+    // Inicializar el mapa y los marcadores
+    _initializeMap();
+    
+    // Inicializar el controlador de la animación de latido
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.1,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Hacer que la animación se repita indefinidamente
+    _pulseController.repeat(reverse: true);
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pageController.hasClients) {
         _pageController.addListener(_pageControllerListener);
@@ -76,11 +152,103 @@ class _MapitaState extends State<Mapita> {
 
   @override
   void dispose() {
+    _estacionesSubscription?.cancel();
     _positionStreamSubscription?.cancel();
     _pageController.removeListener(_pageControllerListener);
     _pageController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
+
+  void _cargarEstaciones() {
+    print('🔍 Intentando cargar estaciones desde Firestore...');
+    _estacionesSubscription = _estacionesService.obtenerEstaciones().listen(
+      (estaciones) {
+        print('📍 Estaciones recibidas de Firestore: ${estaciones.length}');
+        if (!mounted) return;
+        
+        setState(() {
+          _lugares = estaciones;
+          _markers.clear();
+          
+          // Primero agregamos los lugares de Firestore
+          for (final estacion in estaciones) {
+            _markers.add(
+              Marker(
+                markerId: MarkerId(estacion.placeId),
+                position: estacion.ubicacion,
+                icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(200.0), // Gris claro azulado
+                infoWindow: InfoWindow(
+                  title: estacion.nombre,
+                  snippet: estacion.rating != null 
+                      ? '⭐ ${estacion.rating!.toStringAsFixed(1)}'
+                      : 'Sin calificación',
+                ),
+              ),
+            );
+          }
+          
+          // Como respaldo, si no hay lugares en Firestore, usamos los marcadores locales
+          if (estaciones.isEmpty) {
+            print('⚠️ No hay estaciones en Firestore, usando marcadores locales...');
+            for (final lugar in MarcadoresData.lugaresMarcados) {
+              _markers.add(
+                Marker(
+                  markerId: MarkerId(lugar.placeId),
+                  position: lugar.ubicacion,
+                  infoWindow: InfoWindow(
+                    title: lugar.nombre,
+                    snippet: lugar.rating != null 
+                        ? '⭐ ${lugar.rating!.toStringAsFixed(1)}'
+                        : 'Sin calificación',
+                  ),
+                ),
+              );
+            }
+          }
+          
+          // Siempre agregamos el marcador del usuario si existe
+          if (_userMarker != null) {
+            _markers.add(_userMarker!);
+          }
+        });
+      },
+      onError: (e) {
+        print('❌ Error al cargar estaciones de Firestore: $e');
+        print('⚠️ Usando marcadores locales como respaldo...');
+        
+        if (mounted) {
+          setState(() {
+            _markers.clear();
+            // Usar marcadores locales como respaldo
+            for (final lugar in MarcadoresData.lugaresMarcados) {
+              _markers.add(
+                Marker(
+                  markerId: MarkerId(lugar.placeId),
+                  position: lugar.ubicacion,
+                  infoWindow: InfoWindow(
+                    title: lugar.nombre,
+                    snippet: lugar.rating != null 
+                        ? '⭐ ${lugar.rating!.toStringAsFixed(1)}'
+                        : 'Sin calificación',
+                  ),
+                ),
+              );
+            }
+            if (_userMarker != null) {
+              _markers.add(_userMarker!);
+            }
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Usando datos locales (sin conexión)')),
+          );
+        }
+      },
+    );
+  }
+
+  PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
 
   void _pageControllerListener() {
     if (_pageController.page != null) {
@@ -101,14 +269,13 @@ class _MapitaState extends State<Mapita> {
     if (_currentPosition == null) return;
 
     const double maxDistanceMeters = 5000;
-    final List<PlaceResult> allPlaces = MarcadoresData.lugaresMarcados;
-
-    final List<PlaceResult> nearbyPlaces = allPlaces.where((place) {
+    // Filtrar las estaciones que ya tenemos cargadas de Firestore
+    final List<PlaceResult> nearbyPlaces = _lugares.where((estacion) {
       final d = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
-        place.ubicacion.latitude,
-        place.ubicacion.longitude,
+        estacion.ubicacion.latitude,
+        estacion.ubicacion.longitude,
       );
       return d <= maxDistanceMeters;
     }).toList();
@@ -135,22 +302,21 @@ class _MapitaState extends State<Mapita> {
 
       if (_userMarker != null) _markers.add(_userMarker!);
 
-      for (final place in allPlaces) {
+      for (final estacion in nearbyPlaces) {
         _markers.add(
           Marker(
-            markerId: MarkerId(place.placeId),
-            position: place.ubicacion,
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueGreen),
+            markerId: MarkerId(estacion.placeId),
+            position: estacion.ubicacion,
+            icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(220.0),
             infoWindow: InfoWindow(
-              title: place.nombre,
-              snippet: place.rating != null
-                  ? 'Rating: ${place.rating!.toStringAsFixed(1)}'
+              title: estacion.nombre,
+              snippet: estacion.rating != null
+                  ? '⭐ ${estacion.rating!.toStringAsFixed(1)}'
                   : 'Sin calificar',
             ),
             onTap: () {
               final index =
-                  _lugares.indexWhere((p) => p.placeId == place.placeId);
+                  _lugares.indexWhere((p) => p.placeId == estacion.placeId);
               if (index != -1 && _pageController.hasClients) {
                 _pageController.animateToPage(
                   index,
@@ -158,7 +324,7 @@ class _MapitaState extends State<Mapita> {
                   curve: Curves.easeInOut,
                 );
               } else {
-                _goToPosition(place.ubicacion, zoom: 17.0);
+                _goToPosition(estacion.ubicacion, zoom: 17.0);
               }
             },
           ),
@@ -174,25 +340,32 @@ class _MapitaState extends State<Mapita> {
   }
 
   Future<void> _determinePositionAndStartListening() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      _showSnackBar('⚠️ Los servicios de ubicación están deshabilitados.');
-      return;
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        _showSnackBar('❌ Los permisos de ubicación fueron denegados.');
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showSnackBar('⚠️ Los servicios de ubicación están deshabilitados. Por favor, actívalos.');
         return;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      _showSnackBar(
-          '❌ Permisos denegados permanentemente. Actívalos en Configuración.');
-      return;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _showSnackBar('❌ Los permisos de ubicación fueron denegados. El mapa funcionará con funcionalidad limitada.');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        _showSnackBar(
+            '❌ Permisos denegados permanentemente. Por favor, actívalos en Configuración > Permisos.');
+        return;
+      }
+
+      print('✅ Permisos de ubicación concedidos');
+    } catch (e) {
+      print('❌ Error al verificar permisos: $e');
+      _showSnackBar('❌ Error al verificar permisos de ubicación');
     }
 
     try {
@@ -215,12 +388,10 @@ class _MapitaState extends State<Mapita> {
       _listenForRealTimeUpdates();
     } catch (e) {
       dev.log("❌ Error al obtener la ubicación inicial: $e");
-      if (mounted &&
-          _initialCameraPosition == null &&
-          MarcadoresData.lugaresMarcados.isNotEmpty) {
+      if (mounted && _lugares.isNotEmpty) {
         setState(() {
           _initialCameraPosition = CameraPosition(
-            target: MarcadoresData.lugaresMarcados.first.ubicacion,
+            target: _lugares.first.ubicacion,
             zoom: 14.0,
           );
         });
@@ -375,37 +546,47 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
-  void _showRatingDialog(PlaceResult place) {
-    int selectedRating = 0;
+  Future<void> _showRatingDialog(PlaceResult place) async {
+    double currentRating = 0.0;
 
-    showDialog(
+    await showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
-          builder: (_, setStateDialog) {
+          builder: (BuildContext context, StateSetter setState) {
+            void setStateDialog(VoidCallback fn) {
+              setState(fn);
+            }
+
             return AlertDialog(
-              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               title: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorVerdeEsmeralda.withValues(alpha: 0.2),
+                      color: colorVerdeEsmeralda.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.star,
-                        color: colorVerdeEsmeralda, size: 24),
+                    child: const Icon(
+                      Icons.star,
+                      color: colorVerdeEsmeralda,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Evalúa ${place.nombre}',
-                      style:
-                          const TextStyle(fontSize: 18, color: colorGrisCarbon),
+                      'Calificar ${place.nombre}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: colorGrisCarbon,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -414,89 +595,147 @@ class _MapitaState extends State<Mapita> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      '¿Cómo calificarías tu experiencia?',
-                      style: TextStyle(fontSize: 14, color: colorAzulPetroleo),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (i) {
-                        final starValue = i + 1;
-                        return IconButton(
-                          iconSize: 36,
-                          padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(),
-                          icon: Icon(
-                            selectedRating >= starValue
-                                ? Icons.star
-                                : Icons.star_border,
-                            color: selectedRating >= starValue
-                                ? colorAmarillo
-                                : Colors.grey.shade400,
+                    StreamBuilder<double?>(
+                      stream: _estacionesService.obtenerPromedioRatings(place.placeId),
+                      builder: (context, snapshot) {
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          onPressed: () =>
-                              setStateDialog(() => selectedRating = starValue),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                snapshot.hasData ? Icons.star : Icons.star_border,
+                                color: snapshot.hasData ? Colors.amber : Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                snapshot.hasData
+                                    ? 'Promedio: ${snapshot.data!.toStringAsFixed(1)}'
+                                    : 'Sin calificaciones',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: snapshot.hasData ? Colors.black87 : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         );
-                      }),
+                      },
                     ),
-                    const SizedBox(height: 8),
-                    if (selectedRating > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: colorAmarillo.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$selectedRating de 5 estrellas',
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: colorGrisCarbon,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    const SizedBox(height: 24),
+                    FutureBuilder<double?>(
+                      future: _estacionesService.obtenerRatingUsuario(place.placeId),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && currentRating == 0.0) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            setStateDialog(() {
+                              currentRating = snapshot.data!;
+                            });
+                          });
+                        }
+                        return Column(
+                          children: [
+                            const Text(
+                              'Tu calificación',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            RatingBar.builder(
+                              initialRating: currentRating,
+                              minRating: 0.5, // Calificación mínima permitida
+                              maxRating: 5.0, // Calificación máxima permitida
+                              direction: Axis.horizontal,
+                              allowHalfRating: true, // Permite medias estrellas
+                              itemCount: 5, // Número total de estrellas a mostrar
+                              itemSize: 36, // Tamaño de cada estrella
+                              unratedColor: Colors.grey.withOpacity(0.3),
+                              itemBuilder: (context, _) => const Icon(
+                                Icons.star_rounded,
+                                color: Colors.amber,
+                              ),
+                              onRatingUpdate: (rating) {
+                                setStateDialog(() {
+                                  currentRating = rating;
+                                });
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
               actions: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: colorGrisCarbon,
-                      ),
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: const Text('Cancelar'),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey[600],
+                  ),
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorVerdeEsmeralda,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedRating > 0
-                            ? colorVerdeEsmeralda
-                            : Colors.grey,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                      onPressed: selectedRating > 0
-                          ? () {
-                              MarcadoresData.updatePlaceRating(
-                                place.placeId,
-                                selectedRating.toDouble(),
-                              );
-                              Navigator.of(dialogContext).pop();
-                              setState(() {
-                                _filterPlacesByDistance();
-                              });
-                              _showSnackBar(
-                                  '✅ Gracias por evaluar ${place.nombre}.');
-                            }
-                          : null,
-                      child: const Text('Enviar'),
+                  ),
+                  onPressed: () async {
+                    try {
+                      if (currentRating == 0.0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Por favor selecciona una calificación'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      await _estacionesService.calificarEstacion(
+                        place.placeId,
+                        currentRating,
+                      );
+                      Navigator.pop(dialogContext);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('¡Gracias por tu calificación!'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } catch (error) {
+                      print('❌ Error al calificar: $error');
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al guardar la calificación. Por favor intenta nuevamente.'),
+                          behavior: SnackBarBehavior.floating,
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Guardar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
+                  ),
                 ),
               ],
             );
@@ -598,7 +837,7 @@ class _MapitaState extends State<Mapita> {
             _polylines.add(
               Polyline(
                 polylineId: const PolylineId('http_route_to_poi'),
-                color: colorVerdeEsmeralda,
+                color: const Color.fromARGB(255, 223, 255, 42),
                 points: coords,
                 width: 6,
                 geodesic: true,
@@ -681,23 +920,6 @@ class _MapitaState extends State<Mapita> {
 
   @override
   Widget build(BuildContext context) {
-    if (_initialCameraPosition == null) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: colorVerdeEsmeralda),
-              const SizedBox(height: 16),
-              const Text('Obteniendo ubicación...',
-                  style: TextStyle(color: colorGrisCarbon)),
-            ],
-          ),
-        ),
-      );
-    }
-
     bool canShowFlagBtn = false;
     if (_isRouteActive &&
         _currentDestination != null &&
@@ -716,14 +938,18 @@ class _MapitaState extends State<Mapita> {
         children: [
           GoogleMap(
             mapType: MapType.normal,
-            initialCameraPosition: _initialCameraPosition!,
-            onMapCreated: (GoogleMapController controller) =>
-                _controller.complete(controller),
+            initialCameraPosition: _initialCameraPosition,
+            onMapCreated: (GoogleMapController controller) {
+              _controller.complete(controller);
+              print('🗺️ Mapa creado correctamente');
+            },
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             markers: _markers,
             polylines: _polylines,
             zoomControlsEnabled: false,
+            compassEnabled: true,
+            mapToolbarEnabled: true,
           ),
 
           // ⭐ Botón Mi ubicación (esquina superior derecha)
@@ -922,9 +1148,74 @@ class _MapitaState extends State<Mapita> {
     );
   }
 
+  // Calcula el texto de distancia y tiempo estimado para mostrar en la card
+  String _getDistanceText(LatLng ubicacion) {
+    if (_currentPosition == null) return '';
+    
+    final double distanceMeters = Geolocator.distanceBetween(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+      ubicacion.latitude,
+      ubicacion.longitude,
+    );
+    
+    // Velocidad promedio caminando: 5 km/h = 1.4 m/s
+    final double walkingSpeedMps = 1.4;
+    final int timeSeconds = (distanceMeters / walkingSpeedMps).round();
+    
+    String timeText;
+    if (timeSeconds < 60) {
+      timeText = '$timeSeconds seg';
+    } else if (timeSeconds < 3600) {
+      final int minutes = (timeSeconds / 60).round();
+      timeText = '$minutes min';
+    } else {
+      final int hours = (timeSeconds / 3600).round();
+      final int remainingMinutes = ((timeSeconds % 3600) / 60).round();
+      timeText = hours > 0 ? 
+        (remainingMinutes > 0 ? '$hours h $remainingMinutes min' : '$hours h') :
+        '$remainingMinutes min';
+    }
+    
+    // Convertir a kilómetros si es más de 1000 metros
+    String distanceText;
+    if (distanceMeters >= 1000) {
+      distanceText = '${(distanceMeters / 1000).toStringAsFixed(1)} km';
+    } else {
+      distanceText = '${distanceMeters.toStringAsFixed(0)} m';
+    }
+    
+    return '$distanceText • $timeText';
+  }
+
+  // Widget para construir la tarjeta de cada lugar
   Widget _buildCard(String title, String subtitle, int cardNumber) {
     final place = _lugares[cardNumber - 1];
     final bool isDisabled = _isRouteActive;
+    
+    // Verificar si estamos cerca del destino (5 metros)
+    bool isNearDestination = false;
+    double? currentDistance;
+    
+    if (_currentPosition != null) {
+      currentDistance = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        place.ubicacion.latitude,
+        place.ubicacion.longitude,
+      );
+      
+      if (_isRouteActive && _currentDestination != null && 
+          place.ubicacion.latitude == _currentDestination!.latitude &&
+          place.ubicacion.longitude == _currentDestination!.longitude) {
+        isNearDestination = currentDistance <= 5; // 5 metros
+        if (isNearDestination && !_pulseController.isAnimating) {
+          _pulseController.repeat(reverse: true);
+        } else if (!isNearDestination && _pulseController.isAnimating) {
+          _pulseController.stop();
+        }
+      }
+    }
 
     final displayRating = place.rating != null
         ? place.rating!.toStringAsFixed(1)
@@ -933,84 +1224,116 @@ class _MapitaState extends State<Mapita> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Center(
-        child: SizedBox(
-          width: _cardWidth,
-          height: _cardHeight,
-          child: Card(
-            elevation: 6,
-            shadowColor: Colors.black.withValues(alpha: 0.2),
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: InkWell(
-              onTap: isDisabled
-                  ? () => _showSnackBar(
-                      '⚠️ Cancela la ruta actual (botón X) antes de iniciar una nueva.')
-                  : () => _showStartTripConfirmation(place),
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    // ⭐ Icono circular verde a la izquierda
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: colorVerdeOliva.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.place,
-                        color: colorVerdeOliva,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // ⭐ Contenido del card
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Título del lugar
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: colorGrisCarbon,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) => Transform.scale(
+            scale: isNearDestination ? _pulseAnimation.value : 1.0,
+            child: SizedBox(
+              width: _cardWidth,
+              height: _cardHeight,
+              child: Card(
+                elevation: 6,
+                shadowColor: Colors.black.withOpacity(0.2),
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: InkWell(
+                  onTap: isDisabled
+                      ? () => _showSnackBar(
+                          '⚠️ Cancela la ruta actual (botón X) antes de iniciar una nueva.')
+                      : () => _showStartTripConfirmation(place),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        // ⭐ Icono circular verde a la izquierda
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: colorVerdeOliva.withOpacity(0.2),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 8),
+                          child: const Icon(
+                            Icons.place,
+                            color: colorVerdeOliva,
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
 
-                          // Rating con estrella amarilla
-                          Row(
+                        // ⭐ Contenido del card
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.star,
-                                size: 20,
-                                color: colorAmarillo,
-                              ),
-                              const SizedBox(width: 6),
+                              // Título del lugar
                               Text(
-                                displayRating,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.grey[700],
-                                  fontWeight: FontWeight.w500,
+                                title,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorGrisCarbon,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Rating y distancia
+                              Row(
+                                children: [
+                                  // Rating con estrella
+                                  const Icon(
+                                    Icons.star,
+                                    size: 20,
+                                    color: colorAmarillo,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    displayRating,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  if (_currentPosition != null)
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.directions_walk,
+                                            size: 20,
+                                            color: colorVerdeOliva,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              _getDistanceText(place.ubicacion),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[700],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1018,5 +1341,4 @@ class _MapitaState extends State<Mapita> {
         ),
       ),
     );
-  }
-}
+  }  }
