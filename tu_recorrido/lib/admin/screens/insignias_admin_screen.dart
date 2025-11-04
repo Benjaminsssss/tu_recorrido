@@ -119,7 +119,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       _insignias = await InsigniaService.obtenerTodas();
       // debug: cantidad recibida
       // ignore: avoid_print
-      print('InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
+      print(
+          'InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
       // Cargar estaciones y mapear por insigniaID
       try {
         final estaciones = await EstacionService.obtenerEstacionesActivas();

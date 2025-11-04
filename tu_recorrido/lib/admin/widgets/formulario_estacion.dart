@@ -64,9 +64,9 @@ class InfoUbicacion extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-        ubicacion != null
-          ? 'Ubicación: ${ubicacion.latitude.toStringAsFixed(6)}, ${ubicacion.longitude.toStringAsFixed(6)}'
-          : 'Obteniendo ubicación GPS...',
+              ubicacion != null
+                  ? 'Ubicación: ${ubicacion.latitude.toStringAsFixed(6)}, ${ubicacion.longitude.toStringAsFixed(6)}'
+                  : 'Obteniendo ubicación GPS...',
               style: TextStyle(
                 color: ubicacion != null
                     ? Coloressito.textPrimary

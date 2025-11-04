@@ -61,8 +61,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
                     semanticLabel: img.alt,
                     errorBuilder: (context, error, stack) => Container(
                       color: Colors.grey[200],
-                      child:
-                          const Center(child: Icon(Icons.broken_image, size: 48)),
+                      child: const Center(
+                          child: Icon(Icons.broken_image, size: 48)),
                     ),
                   ),
                 ),
@@ -97,7 +97,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
 class FullscreenImageViewer extends StatefulWidget {
   final List<PlaceImage> images;
   final int initialPage;
-  const FullscreenImageViewer({super.key, required this.images, this.initialPage = 0});
+  const FullscreenImageViewer(
+      {super.key, required this.images, this.initialPage = 0});
 
   @override
   State<FullscreenImageViewer> createState() => _FullscreenImageViewerState();
@@ -146,7 +147,9 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer> {
                       semanticLabel: img.alt,
                       errorBuilder: (context, error, stack) => Container(
                         color: Colors.black,
-                        child: const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 48)),
+                        child: const Center(
+                            child: Icon(Icons.broken_image,
+                                color: Colors.white, size: 48)),
                       ),
                     ),
                   ),

@@ -14,7 +14,8 @@ class CrearEstacionCardScreen extends StatefulWidget {
   const CrearEstacionCardScreen({super.key});
 
   @override
-  State<CrearEstacionCardScreen> createState() => _CrearEstacionCardScreenState();
+  State<CrearEstacionCardScreen> createState() =>
+      _CrearEstacionCardScreenState();
 }
 
 class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
@@ -56,7 +57,10 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
     } else {
       setState(() {
         _pickedImages = [..._pickedImages, ...toTake];
-        _pickedImagesBytes = [..._pickedImagesBytes, ...List<Uint8List?>.filled(toTake.length, null)];
+        _pickedImagesBytes = [
+          ..._pickedImagesBytes,
+          ...List<Uint8List?>.filled(toTake.length, null)
+        ];
       });
     }
   }
@@ -66,14 +70,20 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
     setState(() => _loading = true);
     try {
       final name = _nameCtrl.text.trim();
-      final placeId = await FirestoreService.instance.createPlace(name: name, lat: 0.0, lng: 0.0);
+      final placeId = await FirestoreService.instance
+          .createPlace(name: name, lat: 0.0, lng: 0.0);
 
       final comuna = _comunaCtrl.text.trim();
       final descripcion = _descCtrl.text.trim();
-      await FirestoreService.instance.updatePlacePartial(placeId: placeId, data: {
+      await FirestoreService.instance
+          .updatePlacePartial(placeId: placeId, data: {
         'comuna': comuna.isNotEmpty ? comuna : '',
         'descripcion': descripcion,
-        'shortDesc': descripcion.isNotEmpty ? (descripcion.length > 120 ? '${descripcion.substring(0, 120)}...' : descripcion) : '',
+        'shortDesc': descripcion.isNotEmpty
+            ? (descripcion.length > 120
+                ? '${descripcion.substring(0, 120)}...'
+                : descripcion)
+            : '',
         'mejorMomento': '',
       });
 
@@ -86,14 +96,20 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           final path = 'estaciones/$placeId/img_$ts$ext';
           try {
             String url;
-            if (kIsWeb && idx < _pickedImagesBytes.length && _pickedImagesBytes[idx] != null) {
-              url = await StorageService.instance.uploadBytes(_pickedImagesBytes[idx]!, path, contentType: 'image/jpeg');
+            if (kIsWeb &&
+                idx < _pickedImagesBytes.length &&
+                _pickedImagesBytes[idx] != null) {
+              url = await StorageService.instance.uploadBytes(
+                  _pickedImagesBytes[idx]!, path,
+                  contentType: 'image/jpeg');
             } else {
               final file = File(picked.path);
-              url = await StorageService.instance.uploadFile(file, path, contentType: 'image/jpeg');
+              url = await StorageService.instance
+                  .uploadFile(file, path, contentType: 'image/jpeg');
             }
             final imageObj = {'url': url, 'path': path, 'alt': name};
-            await FirestoreService.instance.addPlaceImage(placeId: placeId, image: imageObj);
+            await FirestoreService.instance
+                .addPlaceImage(placeId: placeId, image: imageObj);
           } catch (e) {
             // ignore errors for single images
             debugPrint('Error subiendo imagen $idx: $e');
@@ -103,14 +119,19 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Estación (card) creada')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Estación (card) creada')));
       _nameCtrl.clear();
       _comunaCtrl.clear();
       _descCtrl.clear();
-      setState(() { _pickedImages = []; _pickedImagesBytes = []; });
+      setState(() {
+        _pickedImages = [];
+        _pickedImagesBytes = [];
+      });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Coloressito.badgeRed));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e'), backgroundColor: Coloressito.badgeRed));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -136,23 +157,33 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
             children: [
               TextFormField(
                 controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nombre de la estación (card)'),
-                validator: (v) => (v==null || v.trim().isEmpty) ? 'Ingresa un nombre' : null,
+                decoration: const InputDecoration(
+                    labelText: 'Nombre de la estación (card)'),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Ingresa un nombre'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _comunaCtrl,
-                decoration: const InputDecoration(labelText: 'Dirección breve / Comuna'),
-                validator: (v) => (v==null || v.trim().isEmpty) ? 'Ingresa la comuna o dirección breve' : null,
+                decoration: const InputDecoration(
+                    labelText: 'Dirección breve / Comuna'),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Ingresa la comuna o dirección breve'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _descCtrl,
-                decoration: const InputDecoration(labelText: 'Descripción (mostrar en Ver detalles)'),
+                decoration: const InputDecoration(
+                    labelText: 'Descripción (mostrar en Ver detalles)'),
                 maxLines: 4,
               ),
               const SizedBox(height: 12),
-              ElevatedButton.icon(onPressed: _pickImages, icon: const Icon(Icons.photo), label: const Text('Elegir imágenes (card, máx 5)')),
+              ElevatedButton.icon(
+                  onPressed: _pickImages,
+                  icon: const Icon(Icons.photo),
+                  label: const Text('Elegir imágenes (card, máx 5)')),
               const SizedBox(height: 6),
               const Text(
                 'Selecciona hasta 5 imágenes. En web: Usa Ctrl/Cmd+click o Shift para seleccionar varias.',
@@ -172,9 +203,13 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: kIsWeb && i < _pickedImagesBytes.length && _pickedImagesBytes[i] != null
-                                ? Image.memory(_pickedImagesBytes[i]!, width: 240, height: 160, fit: BoxFit.cover)
-                                : Image.file(File(p.path), width: 240, height: 160, fit: BoxFit.cover),
+                            child: kIsWeb &&
+                                    i < _pickedImagesBytes.length &&
+                                    _pickedImagesBytes[i] != null
+                                ? Image.memory(_pickedImagesBytes[i]!,
+                                    width: 240, height: 160, fit: BoxFit.cover)
+                                : Image.file(File(p.path),
+                                    width: 240, height: 160, fit: BoxFit.cover),
                           ),
                           Positioned(
                             top: 6,
@@ -183,13 +218,17 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                               onTap: () {
                                 setState(() {
                                   _pickedImages.removeAt(i);
-                                  if (i < _pickedImagesBytes.length) _pickedImagesBytes.removeAt(i);
+                                  if (i < _pickedImagesBytes.length)
+                                    _pickedImagesBytes.removeAt(i);
                                 });
                               },
                               child: Container(
-                                decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle),
                                 padding: const EdgeInsets.all(6),
-                                child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                child: const Icon(Icons.close,
+                                    size: 16, color: Colors.white),
                               ),
                             ),
                           ),
@@ -199,7 +238,11 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _loading ? null : _createPlace, child: _loading ? const CircularProgressIndicator() : const Text('Crear')),
+              ElevatedButton(
+                  onPressed: _loading ? null : _createPlace,
+                  child: _loading
+                      ? const CircularProgressIndicator()
+                      : const Text('Crear')),
             ],
           ),
         ),

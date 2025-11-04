@@ -25,7 +25,8 @@ class _SeleccionarPuntoMapState extends State<SeleccionarPuntoMap> {
     _initialCamera = CameraPosition(target: start, zoom: 15);
     if (widget.initialLocation != null) {
       _selected = widget.initialLocation;
-      _markers.add(Marker(markerId: const MarkerId('selected'), position: _selected!));
+      _markers.add(
+          Marker(markerId: const MarkerId('selected'), position: _selected!));
     }
   }
 

@@ -50,8 +50,8 @@ class AlbumItem {
         'type': type.toString(),
         'title': title,
         'parentId': parentId,
-    'imagePath': imagePath,
-    'base64': base64,
+        'imagePath': imagePath,
+        'base64': base64,
         'location': location,
         'date': date.toIso8601String(),
         'description': description,
@@ -65,8 +65,8 @@ class AlbumItem {
           : AlbumItemType.badge,
       title: j['title'] ?? 'Item',
       parentId: j['parentId'],
-        imagePath: j['imagePath'],
-        base64: j['base64'],
+      imagePath: j['imagePath'],
+      base64: j['base64'],
       location: j['location'],
       date: DateTime.tryParse(j['date'] ?? '') ?? DateTime.now(),
       description: j['description'],
@@ -89,6 +89,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
     _loadPhotos();
     _startVisitasListener();
   }
+
   Future<void> _loadPhotos() async {
     _prefs = await SharedPreferences.getInstance();
     final raw = _prefs.getStringList('album_items') ?? [];
@@ -113,7 +114,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
         return AlbumItem(
           id: ev.id,
           type: AlbumItemType.badge,
-          title: ev.estacionNombre.isNotEmpty ? ev.estacionNombre : ev.estacionCodigo,
+          title: ev.estacionNombre.isNotEmpty
+              ? ev.estacionNombre
+              : ev.estacionCodigo,
           parentId: null,
           imagePath: null,
           location: (ev.latitudVisita != null && ev.longitudVisita != null)
@@ -137,7 +140,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   Future<void> _saveItems() async {
     // Persistir únicamente las fotos (las badges se obtienen desde Firestore)
-    final photos = _items.where((e) => e.type == AlbumItemType.photo).map((e) => jsonEncode(e.toJson())).toList();
+    final photos = _items
+        .where((e) => e.type == AlbumItemType.photo)
+        .map((e) => jsonEncode(e.toJson()))
+        .toList();
     await _prefs.setStringList('album_items', photos);
   }
 
@@ -275,7 +281,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
       if (item.base64 != null && item.base64!.isNotEmpty) {
         try {
           final bytes = base64Decode(item.base64!);
-          return Image.memory(bytes, width: width, height: height, fit: BoxFit.cover);
+          return Image.memory(bytes,
+              width: width, height: height, fit: BoxFit.cover);
         } catch (_) {}
       }
       if (item.imagePath != null) {
