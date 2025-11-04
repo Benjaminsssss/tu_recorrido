@@ -114,8 +114,6 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     // debug: iniciar carga
     // ignore: avoid_print
     print('InsigniasAdminScreen._load: starting');
-    // Capture ScaffoldMessenger before any await to avoid using BuildContext
-    // after async gaps (prevents use_build_context_synchronously info).
     final messenger = ScaffoldMessenger.of(context);
     try {
       _insignias = await InsigniaService.obtenerTodas();
@@ -135,7 +133,6 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       } catch (e, st) {
         // ignore: avoid_print
         print('No se pudieron cargar estaciones: $e');
-        // ignore: avoid_print
         print(st);
       }
     } on FirebaseException catch (e) {
