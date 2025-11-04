@@ -21,15 +21,23 @@ class PlaceBadge {
 
 class PlaceImage {
   final String? url;
+  final String?
+      path; // ruta en Firebase Storage (ej: 'estaciones/{placeId}/main_123.jpg')
   final String? base64;
   final String alt;
   final String? fuenteSugerida;
 
-  PlaceImage({this.url, this.base64, required this.alt, this.fuenteSugerida});
+  PlaceImage(
+      {this.url,
+      this.path,
+      this.base64,
+      required this.alt,
+      this.fuenteSugerida});
 
   factory PlaceImage.fromJson(Map<String, dynamic> json) {
     return PlaceImage(
       url: json['url'] as String?,
+      path: json['path'] as String?,
       base64: json['base64'] as String?,
       alt: (json['alt'] as String?) ?? '',
       fuenteSugerida: json['fuenteSugerida'] as String?,
@@ -38,6 +46,7 @@ class PlaceImage {
 
   Map<String, dynamic> toJson() => {
         if (url != null) 'url': url,
+        if (path != null) 'path': path,
         if (base64 != null) 'base64': base64,
         'alt': alt,
         if (fuenteSugerida != null) 'fuenteSugerida': fuenteSugerida,
@@ -65,6 +74,7 @@ class Place {
   final String descripcion;
   final String mejorMomento;
   final PlaceBadge badge;
+  final PlaceImage? badgeImage;
   final List<PlaceImage> imagenes;
   final double? lat;
   final double? lng;
@@ -79,6 +89,7 @@ class Place {
     required this.mejorMomento,
     required this.badge,
     required this.imagenes,
+    this.badgeImage,
     this.lat,
     this.lng,
   });
@@ -96,6 +107,9 @@ class Place {
       imagenes: (json['imagenes'] as List<dynamic>)
           .map((e) => PlaceImage.fromJson(e as Map<String, dynamic>))
           .toList(),
+      badgeImage: json['badgeImage'] != null
+          ? PlaceImage.fromJson(json['badgeImage'] as Map<String, dynamic>)
+          : null,
       lat: (json['lat'] as num?)?.toDouble(),
       lng: (json['lng'] as num?)?.toDouble(),
     );
@@ -111,6 +125,7 @@ class Place {
         'mejorMomento': mejorMomento,
         'badge': badge.toJson(),
         'imagenes': imagenes.map((i) => i.toJson()).toList(),
+        if (badgeImage != null) 'badgeImage': badgeImage!.toJson(),
         if (lat != null) 'lat': lat,
         if (lng != null) 'lng': lng,
       };

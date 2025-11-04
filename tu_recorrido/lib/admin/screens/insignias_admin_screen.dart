@@ -31,7 +31,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
   Future<void> _otorgarInsignia(String insigniaId) async {
@@ -111,11 +111,15 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    // Capture ScaffoldMessenger before any await to avoid using BuildContext
-    // after async gaps (prevents use_build_context_synchronously info).
+    // debug: iniciar carga
+    // ignore: avoid_print
+    print('InsigniasAdminScreen._load: starting');
     final messenger = ScaffoldMessenger.of(context);
     try {
       _insignias = await InsigniaService.obtenerTodas();
+      // debug: cantidad recibida
+      debugPrint(
+          'InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
       // Cargar estaciones y mapear por insigniaID
       try {
         final estaciones = await EstacionService.obtenerEstacionesActivas();
@@ -126,19 +130,25 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
             _estacionPorInsignia[ref.id] = e;
           }
         }
-      } catch (e) {
-        // ignore: avoid_print
-        print('No se pudieron cargar estaciones: $e');
+      } catch (e, st) {
+        debugPrint('No se pudieron cargar estaciones: $e');
+        debugPrint(st.toString());
       }
     } on FirebaseException catch (e) {
       // Handle Firestore permission errors or other Firebase exceptions
       _insignias = [];
+      // debug: log mensaje de FirebaseException
+      debugPrint(
+          'InsigniasAdminScreen._load: FirebaseException -> ${e.message}');
       if (mounted) {
         messenger.showSnackBar(
             SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
       }
-    } catch (e) {
+    } catch (e, st) {
       _insignias = [];
+      // debug: log error y stacktrace
+      debugPrint('InsigniasAdminScreen._load: unexpected error -> $e');
+      debugPrint(st.toString());
       if (mounted) {
         messenger.showSnackBar(SnackBar(
             content: Text('Error inesperado al cargar insignias: $e')));

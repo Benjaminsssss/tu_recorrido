@@ -7,6 +7,7 @@ import 'crear_estacion.dart';
 import 'generador_qr_screen.dart';
 import 'user_management_screen.dart';
 import 'insignias_admin_screen.dart';
+import 'manage_estaciones_screen.dart';
 
 /// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
@@ -331,18 +332,30 @@ class AdminScreen extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
-          // Botón para gestión de insignias
+          // Botones de gestión
           Row(
             children: [
               Expanded(
                 child: _buildBotonAccion(
                   context: context,
+                  icono: Icons.photo_library,
+                  texto: 'Gestionar\nLugares',
+                  color: Coloressito.badgeBlue,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ManageEstacionesScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBotonAccion(
+                  context: context,
                   icono: Icons.emoji_events,
                   texto: 'Gestionar\nInsignias',
-                  color: Coloressito.badgeBlue,
+                  color: Coloressito.badgeYellow,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const InsigniasAdminScreen(),

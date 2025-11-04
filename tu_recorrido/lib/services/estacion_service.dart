@@ -119,6 +119,34 @@ class EstacionService {
     }
   }
 
+  /// Establece el campo `badgeImage` del documento de estación con el objeto provisto.
+  static Future<void> setBadgeImage(
+      String id, Map<String, dynamic> image) async {
+    try {
+      await _firestore.collection(_collection).doc(id).set({
+        'badgeImage': image,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception('Error al setear badgeImage: $e');
+    }
+  }
+
+  /// Añade elementos al array `imagenes` de la estación.
+  static Future<void> addEstacionImages(
+      String id, List<Map<String, dynamic>> images) async {
+    try {
+      for (final img in images) {
+        await _firestore.collection(_collection).doc(id).set({
+          'imagenes': FieldValue.arrayUnion([img]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      throw Exception('Error al agregar imagenes a estación: $e');
+    }
+  }
+
   /// Desactiva una estación (no la elimina, solo la oculta)
   static Future<void> desactivarEstacion(String id) async {
     try {

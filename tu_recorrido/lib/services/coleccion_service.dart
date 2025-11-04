@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/estacion.dart';
 import '../models/estacion_visitada.dart';
+import '../models/place.dart';
 import 'auth_local_service.dart';
 
 /// Servicio para manejar la colección de estaciones visitadas por el usuario
@@ -51,6 +52,23 @@ class ColeccionService {
         throw Exception('Esta estación ya fue visitada anteriormente');
       }
 
+      // Intentar obtener la imagen de la insignia desde el documento de la estación
+      PlaceImage? badgeImage;
+      try {
+        final doc =
+            await _firestore.collection('estaciones').doc(estacion.id).get();
+        if (doc.exists) {
+          final data = doc.data();
+          if (data != null && data['badgeImage'] != null) {
+            final badgeMap =
+                Map<String, dynamic>.from(data['badgeImage'] as Map);
+            badgeImage = PlaceImage.fromJson(badgeMap);
+          }
+        }
+      } catch (_) {
+        // ignorar si no puede leerse la imagen; la visita igual se guarda
+      }
+
       // Crea un registro de visita
       final visita = EstacionVisitada(
         id: estacion.id, // Usamos el ID de la estación como ID del documento
@@ -60,6 +78,7 @@ class ColeccionService {
         fechaVisita: DateTime.now(),
         latitudVisita: latitudUsuario,
         longitudVisita: longitudUsuario,
+        badgeImage: badgeImage,
       );
 
       // Guarda en la subcolección del usuario
@@ -95,6 +114,25 @@ class ColeccionService {
     } catch (e) {
       throw Exception('Error al obtener estaciones visitadas: $e');
     }
+  }
+
+  /// Observa en tiempo real las estaciones visitadas por el usuario actual.
+  /// Devuelve un Stream que emite la lista ordenada por fecha (desc).
+  static Stream<List<EstacionVisitada>> watchEstacionesVisitadas() async* {
+    final userId = await _obtenerUserId();
+    if (userId == null) {
+      yield [];
+      return;
+    }
+
+    final coll = _firestore
+        .collection(_usersCollection)
+        .doc(userId)
+        .collection(_estacionesVisitadasSubcollection)
+        .orderBy('fechaVisita', descending: true);
+
+    yield* coll.snapshots().map((query) =>
+        query.docs.map((doc) => EstacionVisitada.fromFirestore(doc)).toList());
   }
 
   /// Obtiene las estadísticas del progreso del usuario
