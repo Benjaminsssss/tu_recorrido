@@ -55,11 +55,13 @@ class ColeccionService {
       // Intentar obtener la imagen de la insignia desde el documento de la estación
       PlaceImage? badgeImage;
       try {
-        final doc = await _firestore.collection('estaciones').doc(estacion.id).get();
+        final doc =
+            await _firestore.collection('estaciones').doc(estacion.id).get();
         if (doc.exists) {
           final data = doc.data();
           if (data != null && data['badgeImage'] != null) {
-            final badgeMap = Map<String, dynamic>.from(data['badgeImage'] as Map);
+            final badgeMap =
+                Map<String, dynamic>.from(data['badgeImage'] as Map);
             badgeImage = PlaceImage.fromJson(badgeMap);
           }
         }

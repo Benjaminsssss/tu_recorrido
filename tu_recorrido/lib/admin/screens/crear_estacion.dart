@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'seleccionar_punto_map.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../services/storage_service.dart';
@@ -29,13 +31,14 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _descripcionCardController = TextEditingController();
 
   bool _cargando = false;
-  Position? _ubicacionActual;
+  // Puede ser un Position (cuando usamos Geolocator) o un objeto con latitude/longitude (LatLng)
+  dynamic _ubicacionActual;
   final ImagePicker _picker = ImagePicker();
-  
+
   // Badge/insignia para la estación patrimonial
   XFile? _pickedBadge;
   Uint8List? _pickedBadgeBytes;
-  
+
   // Imágenes para el card/lugar (múltiples)
   List<XFile> _pickedCardImages = [];
   List<Uint8List?> _pickedCardImagesBytes = [];
@@ -107,8 +110,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       // AHORA TAMBIÉN CREAR EL LUGAR/CARD EN FIRESTORE (colección estaciones)
       final nombreCard = _nombreController.text.trim();
       final cardId = await FirestoreService.instance.createPlace(
-        name: nombreCard, 
-        lat: _ubicacionActual!.latitude, 
+        name: nombreCard,
+        lat: _ubicacionActual!.latitude,
         lng: _ubicacionActual!.longitude,
         category: 'patrimonio',
         country: 'Chile',
@@ -118,10 +121,15 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       // Actualizar datos adicionales del card
       final comuna = _comunaController.text.trim();
       final descripcionCard = _descripcionCardController.text.trim();
-      await FirestoreService.instance.updatePlacePartial(placeId: cardId, data: {
+      await FirestoreService.instance
+          .updatePlacePartial(placeId: cardId, data: {
         'comuna': comuna.isNotEmpty ? comuna : '',
         'descripcion': descripcionCard,
-        'shortDesc': descripcionCard.isNotEmpty ? (descripcionCard.length > 120 ? '${descripcionCard.substring(0, 120)}...' : descripcionCard) : '',
+        'shortDesc': descripcionCard.isNotEmpty
+            ? (descripcionCard.length > 120
+                ? '${descripcionCard.substring(0, 120)}...'
+                : descripcionCard)
+            : '',
         'mejorMomento': '',
         'estacionId': newId, // Enlazar el card con la estación patrimonial
       });
@@ -136,14 +144,24 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
           final cardImagePath = 'estaciones/$cardId/img_$ts$ext';
           try {
             String cardImageUrl;
-            if (kIsWeb && idx < _pickedCardImagesBytes.length && _pickedCardImagesBytes[idx] != null) {
-              cardImageUrl = await StorageService.instance.uploadBytes(_pickedCardImagesBytes[idx]!, cardImagePath, contentType: 'image/jpeg');
+            if (kIsWeb &&
+                idx < _pickedCardImagesBytes.length &&
+                _pickedCardImagesBytes[idx] != null) {
+              cardImageUrl = await StorageService.instance.uploadBytes(
+                  _pickedCardImagesBytes[idx]!, cardImagePath,
+                  contentType: 'image/jpeg');
             } else {
               final file = File(picked.path);
-              cardImageUrl = await StorageService.instance.uploadFile(file, cardImagePath, contentType: 'image/jpeg');
+              cardImageUrl = await StorageService.instance
+                  .uploadFile(file, cardImagePath, contentType: 'image/jpeg');
             }
-            final imageObj = {'url': cardImageUrl, 'path': cardImagePath, 'alt': nombreCard};
-            await FirestoreService.instance.addPlaceImage(placeId: cardId, image: imageObj);
+            final imageObj = {
+              'url': cardImageUrl,
+              'path': cardImagePath,
+              'alt': nombreCard
+            };
+            await FirestoreService.instance
+                .addPlaceImage(placeId: cardId, image: imageObj);
           } catch (e) {
             debugPrint('Error subiendo imagen $idx del card: $e');
             continue;
@@ -154,20 +172,25 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       // Si el admin escogió una insignia para la estación patrimonial, subirla
       if (_pickedBadge != null) {
         final ts = DateTime.now().millisecondsSinceEpoch;
-        final ext = kIsWeb ? _getExt(_pickedBadge!.name) : _getExt(_pickedBadge!.path);
+        final ext =
+            kIsWeb ? _getExt(_pickedBadge!.name) : _getExt(_pickedBadge!.path);
         final path = 'insignias/$newId/badge_$ts$ext';
         String url;
         if (kIsWeb && _pickedBadgeBytes != null) {
-          url = await StorageService.instance.uploadBytes(_pickedBadgeBytes!, path, contentType: 'image/jpeg');
+          url = await StorageService.instance
+              .uploadBytes(_pickedBadgeBytes!, path, contentType: 'image/jpeg');
         } else {
           final file = File(_pickedBadge!.path);
-          url = await StorageService.instance.uploadFile(file, path, contentType: 'image/jpeg');
+          url = await StorageService.instance
+              .uploadFile(file, path, contentType: 'image/jpeg');
         }
-        await EstacionService.setBadgeImage(newId, {'url': url, 'path': path, 'alt': _nombreController.text.trim()});
+        await EstacionService.setBadgeImage(newId,
+            {'url': url, 'path': path, 'alt': _nombreController.text.trim()});
       }
 
       if (mounted) {
-        _mostrarExito('Estación patrimonial y lugar/card creados exitosamente.\nCódigo: $codigo');
+        _mostrarExito(
+            'Estación patrimonial y lugar/card creados exitosamente.\nCódigo: $codigo');
         _limpiarFormulario();
       }
     } catch (e) {
@@ -188,11 +211,15 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
 
   /// Seleccionar múltiples imágenes para el card
   Future<void> _pickCardImages() async {
-    final List<XFile>? picked = await _picker.pickMultiImage(imageQuality: 85);
-    if (picked == null || picked.isEmpty) return;
+    final picked = await _picker.pickMultiImage(imageQuality: 85);
+    if (picked.isEmpty) {
+      return;
+    }
 
     final remaining = 5 - _pickedCardImages.length;
-    if (remaining <= 0) return;
+    if (remaining <= 0) {
+      return;
+    }
     final toTake = picked.take(remaining).toList();
 
     if (kIsWeb) {
@@ -211,20 +238,24 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     } else {
       setState(() {
         _pickedCardImages = [..._pickedCardImages, ...toTake];
-        _pickedCardImagesBytes = [..._pickedCardImagesBytes, ...List<Uint8List?>.filled(toTake.length, null)];
+        _pickedCardImagesBytes = [
+          ..._pickedCardImagesBytes,
+          ...List<Uint8List?>.filled(toTake.length, null)
+        ];
       });
     }
   }
 
   /// Seleccionar insignia/badge para la estación patrimonial
   Future<void> _pickBadge() async {
-    final XFile? picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final XFile? picked =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
-    
+
     setState(() {
       _pickedBadge = picked;
     });
-    
+
     if (kIsWeb) {
       try {
         _pickedBadgeBytes = await picked.readAsBytes();
@@ -327,7 +358,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
               CampoFormulario(
                 controller: _descripcionCardController,
                 label: 'Descripción del card',
-                hint: 'Descripción breve que aparecerá en la pantalla principal...',
+                hint:
+                    'Descripción breve que aparecerá en la pantalla principal...',
                 maxLines: 3,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -344,7 +376,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _pickCardImages,
                       icon: const Icon(Icons.photo_library),
-                      label: Text('Imágenes del card (${_pickedCardImages.length})'),
+                      label: Text(
+                          'Imágenes del card (${_pickedCardImages.length})'),
                     ),
                   ),
                 ],
@@ -365,7 +398,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: kIsWeb && _pickedCardImagesBytes[index] != null
+                              child: kIsWeb &&
+                                      _pickedCardImagesBytes[index] != null
                                   ? Image.memory(
                                       _pickedCardImagesBytes[index]!,
                                       fit: BoxFit.cover,
@@ -431,12 +465,48 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                       height: 64,
                       child: kIsWeb && _pickedBadgeBytes != null
                           ? Image.memory(_pickedBadgeBytes!, fit: BoxFit.cover)
-                          : Image.file(File(_pickedBadge!.path), fit: BoxFit.cover),
+                          : Image.file(File(_pickedBadge!.path),
+                              fit: BoxFit.cover),
                     ),
                 ],
               ),
               const SizedBox(height: 12),
+              // Botones para seleccionar ubicación: mapa o usar ubicación actual
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        // Abrir pantalla de mapa para seleccionar punto
+                        final LatLng? selected =
+                            await Navigator.of(context).push<LatLng>(
+                          MaterialPageRoute(
+                              builder: (_) => SeleccionarPuntoMap(
+                                  initialLocation: _ubicacionActual != null
+                                      ? LatLng(_ubicacionActual!.latitude,
+                                          _ubicacionActual!.longitude)
+                                      : null)),
+                        );
+                        if (selected != null) {
+                          // Guardar como LatLng (InfoUbicacion acepta objetos con latitude/longitude)
+                          setState(() {
+                            _ubicacionActual =
+                                LatLng(selected.latitude, selected.longitude);
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.map),
+                      label: const Text('Seleccionar en mapa'),
+                    ),
+                  ),
+                  // Se eliminó el botón de "Usar mi ubicación" según solicitud.
+                ],
+              ),
+              const SizedBox(height: 12),
               // Las imágenes para el card se gestionan desde la pantalla de gestión de lugares.
+              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               const SizedBox(height: 16),
               InfoUbicacion(ubicacion: _ubicacionActual),
               const SizedBox(height: 32),

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -73,18 +73,20 @@ class InsigniaService {
   }
 
   static Future<List<Insignia>> obtenerTodas() async {
-     try {
-      final snapshot = await _collection.orderBy('fechaCreacion', descending: true).get();
-      print('InsigniaService.obtenerTodas: fetched ${snapshot.docs.length} docs');
+    try {
+      final snapshot =
+          await _collection.orderBy('fechaCreacion', descending: true).get();
+      debugPrint(
+          'InsigniaService.obtenerTodas: fetched ${snapshot.docs.length} docs');
       return snapshot.docs.map((d) => Insignia.fromFirestore(d)).toList();
-      } catch (e, st) {
+    } catch (e, st) {
       // Log error para facilitar diagnóstico en runtime
       // ignore: avoid_print
       print('InsigniaService.obtenerTodas: error -> $e');
       // ignore: avoid_print
       print(st);
       rethrow;
-      }
+    }
   }
 
   static Future<void> deleteInsignia(String id) async {

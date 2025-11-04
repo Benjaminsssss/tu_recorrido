@@ -21,12 +21,18 @@ class PlaceBadge {
 
 class PlaceImage {
   final String? url;
-  final String? path; // ruta en Firebase Storage (ej: 'estaciones/{placeId}/main_123.jpg')
+  final String?
+      path; // ruta en Firebase Storage (ej: 'estaciones/{placeId}/main_123.jpg')
   final String? base64;
   final String alt;
   final String? fuenteSugerida;
-  
-  PlaceImage({this.url, this.path, this.base64, required this.alt, this.fuenteSugerida});
+
+  PlaceImage(
+      {this.url,
+      this.path,
+      this.base64,
+      required this.alt,
+      this.fuenteSugerida});
 
   factory PlaceImage.fromJson(Map<String, dynamic> json) {
     return PlaceImage(

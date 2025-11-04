@@ -40,19 +40,22 @@ class ListaEstaciones extends StatelessWidget {
             contentPadding: const EdgeInsets.all(16),
             onTap: onTap != null ? () => onTap!(estacion) : null,
             leading: estacion.badgeImage != null
-                ? (estacion.badgeImage!.url != null && estacion.badgeImage!.url!.isNotEmpty
+                ? (estacion.badgeImage!.url != null &&
+                        estacion.badgeImage!.url!.isNotEmpty
                     ? CircleAvatar(
                         radius: 25,
                         backgroundColor: Coloressito.surfaceDark,
                         backgroundImage: estacion.badgeImage!.imageProvider(),
                       )
-                    : (estacion.badgeImage!.path != null && estacion.badgeImage!.path!.isNotEmpty
+                    : (estacion.badgeImage!.path != null &&
+                            estacion.badgeImage!.path!.isNotEmpty
                         ? FutureBuilder<String>(
                             future: FirebaseStorage.instance
                                 .ref(estacion.badgeImage!.path)
                                 .getDownloadURL(),
                             builder: (context, snap) {
-                              if (snap.connectionState == ConnectionState.waiting) {
+                              if (snap.connectionState ==
+                                  ConnectionState.waiting) {
                                 return Container(
                                   width: 50,
                                   height: 50,

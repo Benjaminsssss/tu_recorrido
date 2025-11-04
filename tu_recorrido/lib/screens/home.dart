@@ -60,7 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (images.isEmpty) {
       final imageUrl = d['imageUrl']?.toString();
       if (imageUrl != null && imageUrl.isNotEmpty) {
-        images.add(PlaceImage(url: imageUrl, alt: d['name']?.toString() ?? 'Imagen del lugar'));
+        images.add(PlaceImage(
+            url: imageUrl, alt: d['name']?.toString() ?? 'Imagen del lugar'));
       }
     }
 
@@ -392,8 +393,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
- 
 }
 
 class _PlaceCard extends StatefulWidget {
@@ -433,7 +432,9 @@ class _PlaceCardState extends State<_PlaceCard> {
   @override
   void dispose() {
     _notifier.removeListener(_onSavedPlacesChanged);
-    try { _pageController.dispose(); } catch (_) {}
+    try {
+      _pageController.dispose();
+    } catch (_) {}
     super.dispose();
   }
 
@@ -538,11 +539,14 @@ class _PlaceCardState extends State<_PlaceCard> {
   }
 
   // Muestra un visor a pantalla completa que permite deslizar entre imágenes y hacer zoom.
-  void _showImageViewer(BuildContext context, List<PlaceImage> images, {int initialIndex = 0}) {
+  void _showImageViewer(BuildContext context, List<PlaceImage> images,
+      {int initialIndex = 0}) {
     Navigator.of(context).push(PageRouteBuilder(
       opaque: false,
-      pageBuilder: (_, __, ___) => _FullScreenImageViewer(images: images, initialIndex: initialIndex),
-      transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
+      pageBuilder: (_, __, ___) =>
+          _FullScreenImageViewer(images: images, initialIndex: initialIndex),
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
     ));
   }
 
@@ -566,63 +570,72 @@ class _PlaceCardState extends State<_PlaceCard> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(16)),
                   child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: widget.place.imagenes.isNotEmpty
-                          ? Stack(
-                              children: [
-                                PageView.builder(
-                                  controller: _pageController,
-                                  itemCount: widget.place.imagenes.length,
-                                  onPageChanged: (p) => setState(() => _currentPage = p),
-                                  itemBuilder: (context, idx) {
-                                    final img = widget.place.imagenes[idx];
-                                    final provider = img.imageProvider();
-                                    return GestureDetector(
-                                      onTap: () => _showImageViewer(context, widget.place.imagenes, initialIndex: idx),
-                                      child: Image(
-                                        image: provider,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        errorBuilder: (_, __, ___) => Container(
-                                          color: const Color(0xFFF0F0F0),
-                                          child: const Center(
-                                            child: Icon(Icons.image_not_supported, size: 48, color: Colors.black38),
-                                          ),
+                    aspectRatio: 16 / 9,
+                    child: widget.place.imagenes.isNotEmpty
+                        ? Stack(
+                            children: [
+                              PageView.builder(
+                                controller: _pageController,
+                                itemCount: widget.place.imagenes.length,
+                                onPageChanged: (p) =>
+                                    setState(() => _currentPage = p),
+                                itemBuilder: (context, idx) {
+                                  final img = widget.place.imagenes[idx];
+                                  final provider = img.imageProvider();
+                                  return GestureDetector(
+                                    onTap: () => _showImageViewer(
+                                        context, widget.place.imagenes,
+                                        initialIndex: idx),
+                                    child: Image(
+                                      image: provider,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: const Color(0xFFF0F0F0),
+                                        child: const Center(
+                                          child: Icon(Icons.image_not_supported,
+                                              size: 48, color: Colors.black38),
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                                if (widget.place.imagenes.length > 1)
-                                  Positioned(
-                                    bottom: 8,
-                                    left: 0,
-                                    right: 0,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: List.generate(widget.place.imagenes.length, (i) {
-                                        final active = i == _currentPage;
-                                        return Container(
-                                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                                          width: active ? 10 : 6,
-                                          height: active ? 10 : 6,
-                                          decoration: BoxDecoration(
-                                            color: active ? Colors.white : Colors.white54,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        );
-                                      }),
                                     ),
-                                  ),
-                              ],
-                            )
-                          : Container(
-                              color: const Color(0xFFF0F0F0),
-                              child: const Center(
-                                child: Icon(Icons.image, size: 48, color: Colors.black38),
+                                  );
+                                },
                               ),
+                              if (widget.place.imagenes.length > 1)
+                                Positioned(
+                                  bottom: 8,
+                                  left: 0,
+                                  right: 0,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                        widget.place.imagenes.length, (i) {
+                                      final active = i == _currentPage;
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        width: active ? 10 : 6,
+                                        height: active ? 10 : 6,
+                                        decoration: BoxDecoration(
+                                          color: active
+                                              ? Colors.white
+                                              : Colors.white54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ),
+                            ],
+                          )
+                        : Container(
+                            color: const Color(0xFFF0F0F0),
+                            child: const Center(
+                              child: Icon(Icons.image,
+                                  size: 48, color: Colors.black38),
                             ),
+                          ),
                   ),
                 ),
                 // Botón de guardar en la esquina superior derecha
@@ -774,7 +787,8 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                     child: Image(
                       image: provider,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 120, color: Colors.grey),
+                      errorBuilder: (_, __, ___) => const Icon(Icons.image,
+                          size: 120, color: Colors.grey),
                     ),
                   ),
                 );

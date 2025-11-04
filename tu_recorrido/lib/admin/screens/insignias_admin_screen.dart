@@ -118,8 +118,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     try {
       _insignias = await InsigniaService.obtenerTodas();
       // debug: cantidad recibida
-      // ignore: avoid_print
-      print('InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
+      debugPrint(
+          'InsigniasAdminScreen._load: loaded ${_insignias.length} insignias');
       // Cargar estaciones y mapear por insigniaID
       try {
         final estaciones = await EstacionService.obtenerEstacionesActivas();
@@ -131,16 +131,15 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           }
         }
       } catch (e, st) {
-        // ignore: avoid_print
-        print('No se pudieron cargar estaciones: $e');
-        print(st);
+        debugPrint('No se pudieron cargar estaciones: $e');
+        debugPrint(st.toString());
       }
     } on FirebaseException catch (e) {
       // Handle Firestore permission errors or other Firebase exceptions
       _insignias = [];
       // debug: log mensaje de FirebaseException
-      // ignore: avoid_print
-      print('InsigniasAdminScreen._load: FirebaseException -> ${e.message}');
+      debugPrint(
+          'InsigniasAdminScreen._load: FirebaseException -> ${e.message}');
       if (mounted) {
         messenger.showSnackBar(
             SnackBar(content: Text('Error al cargar insignias: ${e.message}')));
@@ -148,10 +147,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     } catch (e, st) {
       _insignias = [];
       // debug: log error y stacktrace
-      // ignore: avoid_print
-      print('InsigniasAdminScreen._load: unexpected error -> $e');
-      // ignore: avoid_print
-      print(st);
+      debugPrint('InsigniasAdminScreen._load: unexpected error -> $e');
+      debugPrint(st.toString());
       if (mounted) {
         messenger.showSnackBar(SnackBar(
             content: Text('Error inesperado al cargar insignias: $e')));

@@ -23,15 +23,22 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
   bool _loadingUpload = false;
 
   Future<void> _uploadForEstacion(String estacionId) async {
-    final List<XFile>? pickedList = await _picker.pickMultiImage(imageQuality: 82);
-    if (pickedList == null || pickedList.isEmpty) return;
+    final pickedList = await _picker.pickMultiImage(imageQuality: 82);
+    if (pickedList.isEmpty) {
+      return;
+    }
 
     setState(() => _loadingUpload = true);
     try {
-      final existing = await FirestoreService.instance.getPlaceImages(estacionId);
+      final existing =
+          await FirestoreService.instance.getPlaceImages(estacionId);
       final availableSlots = 5 - existing.length;
       if (availableSlots <= 0) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya hay 5 imágenes, elimina alguna antes de subir más')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Ya hay 5 imágenes, elimina alguna antes de subir más')));
+        }
         return;
       }
 
@@ -46,21 +53,27 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
         String url;
         if (kIsWeb) {
           final bytes = await picked.readAsBytes();
-          url = await StorageService.instance.uploadBytes(bytes, path, contentType: 'image/jpeg');
+          url = await StorageService.instance
+              .uploadBytes(bytes, path, contentType: 'image/jpeg');
         } else {
           final file = File(picked.path);
-          url = await StorageService.instance.uploadFile(file, path, contentType: 'image/jpeg');
+          url = await StorageService.instance
+              .uploadFile(file, path, contentType: 'image/jpeg');
         }
         final imageObj = {'url': url, 'alt': '', 'path': path};
-        await FirestoreService.instance.addPlaceImage(placeId: estacionId, image: imageObj);
+        await FirestoreService.instance
+            .addPlaceImage(placeId: estacionId, image: imageObj);
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Imágenes subidas y asignadas a la estación')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Imágenes subidas y asignadas a la estación')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e'), backgroundColor: Coloressito.badgeRed));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error al subir imagen: $e'),
+            backgroundColor: Coloressito.badgeRed));
       }
     } finally {
       if (mounted) setState(() => _loadingUpload = false);
@@ -100,11 +113,13 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                 final d = doc.data();
                 final title = d['name']?.toString() ?? '—';
                 final estacionId = doc.id;
-                final List<dynamic> imgsRaw = (d['imagenes'] as List<dynamic>?) ?? [];
+                final List<dynamic> imgsRaw =
+                    (d['imagenes'] as List<dynamic>?) ?? [];
                 final images = imgsRaw.cast<Map<String, dynamic>>();
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Coloressito.surfaceDark,
                     borderRadius: BorderRadius.circular(12),
@@ -115,9 +130,13 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text(title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
                           ),
-                          Text('ID: $estacionId', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                          Text('ID: $estacionId',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.black54)),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -136,25 +155,52 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: url != null && url.isNotEmpty
-                                        ? Image.network(url, width: 120, height: 84, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: Colors.grey, width: 120, height: 84))
-                                        : Container(width: 120, height: 84, color: Colors.grey.shade200, child: const Icon(Icons.image, color: Colors.black38)),
+                                        ? Image.network(url,
+                                            width: 120,
+                                            height: 84,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                Container(
+                                                    color: Colors.grey,
+                                                    width: 120,
+                                                    height: 84))
+                                        : Container(
+                                            width: 120,
+                                            height: 84,
+                                            color: Colors.grey.shade200,
+                                            child: const Icon(Icons.image,
+                                                color: Colors.black38)),
                                   ),
                                   Positioned(
                                     top: 4,
                                     right: 4,
                                     child: Material(
                                       color: Colors.black26,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20)),
                                       child: InkWell(
                                         onTap: () async {
-                                          final confirm = await showDialog<bool>(
+                                          final confirm =
+                                              await showDialog<bool>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
                                               title: const Text('Confirmar'),
-                                              content: const Text('¿Eliminar esta imagen y su archivo en Storage?'),
+                                              content: const Text(
+                                                  '¿Eliminar esta imagen y su archivo en Storage?'),
                                               actions: [
-                                                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                                                TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+                                                TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(ctx)
+                                                            .pop(false),
+                                                    child:
+                                                        const Text('Cancelar')),
+                                                TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(ctx)
+                                                            .pop(true),
+                                                    child:
+                                                        const Text('Eliminar')),
                                               ],
                                             ),
                                           );
@@ -162,24 +208,39 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                                           if (!mounted) return;
 
                                           try {
-                                            await FirestoreService.instance.removePlaceImage(placeId: estacionId, image: img);
-                                            final path = img['path']?.toString();
-                                            if (path != null && path.isNotEmpty) {
+                                            await FirestoreService.instance
+                                                .removePlaceImage(
+                                                    placeId: estacionId,
+                                                    image: img);
+                                            final path =
+                                                img['path']?.toString();
+                                            if (path != null &&
+                                                path.isNotEmpty) {
                                               try {
-                                                await StorageService.instance.deleteFile(path);
+                                                await StorageService.instance
+                                                    .deleteFile(path);
                                               } catch (_) {}
                                             }
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Imagen eliminada')));
+                                            // ignore: use_build_context_synchronously
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(const SnackBar(
+                                                    content: Text(
+                                                        'Imagen eliminada')));
                                           } catch (e) {
                                             if (!mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error eliminando imagen: $e')));
+                                            // ignore: use_build_context_synchronously
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(SnackBar(
+                                                    content: Text(
+                                                        'Error eliminando imagen: $e')));
                                           }
                                         },
                                         borderRadius: BorderRadius.circular(20),
                                         child: const Padding(
                                           padding: EdgeInsets.all(6.0),
-                                          child: Icon(Icons.delete, size: 16, color: Colors.white),
+                                          child: Icon(Icons.delete,
+                                              size: 16, color: Colors.white),
                                         ),
                                       ),
                                     ),
@@ -191,56 +252,102 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                                       children: [
                                         Material(
                                           color: Colors.black26,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20)),
                                           child: InkWell(
                                             onTap: () async {
-                                                  try {
-                                                    final current = await FirestoreService.instance.getPlaceImages(estacionId);
-                                                    if (!mounted) return;
-                                                    if (idx > 0) {
-                                                      final List<Map<String, dynamic>> updated = List<Map<String, dynamic>>.from(current);
-                                                      final tmp = updated[idx - 1];
-                                                      updated[idx - 1] = updated[idx];
-                                                      updated[idx] = tmp;
-                                                      await FirestoreService.instance.setPlaceImages(placeId: estacionId, images: updated);
-                                                    }
-                                                  } catch (e) {
-                                                    if (!mounted) return;
-                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error reordenando: $e')));
-                                                  }
+                                              try {
+                                                final current =
+                                                    await FirestoreService
+                                                        .instance
+                                                        .getPlaceImages(
+                                                            estacionId);
+                                                if (!mounted) return;
+                                                if (idx > 0) {
+                                                  final List<
+                                                          Map<String, dynamic>>
+                                                      updated = List<
+                                                              Map<String,
+                                                                  dynamic>>.from(
+                                                          current);
+                                                  final tmp = updated[idx - 1];
+                                                  updated[idx - 1] =
+                                                      updated[idx];
+                                                  updated[idx] = tmp;
+                                                  await FirestoreService
+                                                      .instance
+                                                      .setPlaceImages(
+                                                          placeId: estacionId,
+                                                          images: updated);
+                                                }
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                // ignore: use_build_context_synchronously
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(SnackBar(
+                                                        content: Text(
+                                                            'Error reordenando: $e')));
+                                              }
                                             },
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
                                             child: const Padding(
                                               padding: EdgeInsets.all(6.0),
-                                              child: Icon(Icons.arrow_left, size: 18, color: Colors.white),
+                                              child: Icon(Icons.arrow_left,
+                                                  size: 18,
+                                                  color: Colors.white),
                                             ),
                                           ),
                                         ),
                                         const SizedBox(width: 6),
                                         Material(
                                           color: Colors.black26,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20)),
                                           child: InkWell(
                                             onTap: () async {
-                                                try {
-                                                  final current = await FirestoreService.instance.getPlaceImages(estacionId);
-                                                  if (!mounted) return;
-                                                  if (idx < current.length - 1) {
-                                                    final List<Map<String, dynamic>> updated = List<Map<String, dynamic>>.from(current);
-                                                    final tmp = updated[idx + 1];
-                                                    updated[idx + 1] = updated[idx];
-                                                    updated[idx] = tmp;
-                                                    await FirestoreService.instance.setPlaceImages(placeId: estacionId, images: updated);
-                                                  }
-                                                } catch (e) {
-                                                  if (!mounted) return;
-                                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error reordenando: $e')));
+                                              try {
+                                                final current =
+                                                    await FirestoreService
+                                                        .instance
+                                                        .getPlaceImages(
+                                                            estacionId);
+                                                if (!mounted) return;
+                                                if (idx < current.length - 1) {
+                                                  final List<
+                                                          Map<String, dynamic>>
+                                                      updated = List<
+                                                              Map<String,
+                                                                  dynamic>>.from(
+                                                          current);
+                                                  final tmp = updated[idx + 1];
+                                                  updated[idx + 1] =
+                                                      updated[idx];
+                                                  updated[idx] = tmp;
+                                                  await FirestoreService
+                                                      .instance
+                                                      .setPlaceImages(
+                                                          placeId: estacionId,
+                                                          images: updated);
                                                 }
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                // ignore: use_build_context_synchronously
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(SnackBar(
+                                                        content: Text(
+                                                            'Error reordenando: $e')));
+                                              }
                                             },
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
                                             child: const Padding(
                                               padding: EdgeInsets.all(6.0),
-                                              child: Icon(Icons.arrow_right, size: 18, color: Colors.white),
+                                              child: Icon(Icons.arrow_right,
+                                                  size: 18,
+                                                  color: Colors.white),
                                             ),
                                           ),
                                         ),
@@ -257,15 +364,26 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                               height: 84,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
-                                color: canAdd ? Colors.white : Colors.grey.shade200,
+                                color: canAdd
+                                    ? Colors.white
+                                    : Colors.grey.shade200,
                                 border: Border.all(color: Colors.grey.shade300),
                               ),
                               child: Center(
                                 child: _loadingUpload
-                                    ? const SizedBox(width: 28, height: 28, child: CircularProgressIndicator())
+                                    ? const SizedBox(
+                                        width: 28,
+                                        height: 28,
+                                        child: CircularProgressIndicator())
                                     : IconButton(
-                                        onPressed: canAdd ? () => _uploadForEstacion(estacionId) : null,
-                                        icon: Icon(Icons.upload_file, color: canAdd ? Coloressito.adventureGreen : Colors.grey),
+                                        onPressed: canAdd
+                                            ? () =>
+                                                _uploadForEstacion(estacionId)
+                                            : null,
+                                        icon: Icon(Icons.upload_file,
+                                            color: canAdd
+                                                ? Coloressito.adventureGreen
+                                                : Colors.grey),
                                       ),
                               ),
                             );
