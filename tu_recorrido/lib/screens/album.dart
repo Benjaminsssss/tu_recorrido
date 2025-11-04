@@ -115,7 +115,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
           type: AlbumItemType.badge,
           title: ev.estacionNombre.isNotEmpty ? ev.estacionNombre : ev.estacionCodigo,
           parentId: null,
-          imagePath: null,
+          imagePath: ev.badgeImage?.url, // Usar la URL de la insignia
           location: (ev.latitudVisita != null && ev.longitudVisita != null)
               ? '${ev.latitudVisita}, ${ev.longitudVisita}'
               : null,
@@ -285,12 +285,78 @@ class _AlbumScreenState extends State<AlbumScreen> {
         }
       }
     }
+    
+    // Para badges/insignias
+    if (item.type == AlbumItemType.badge && item.imagePath != null && item.imagePath!.isNotEmpty) {
+      // Si la insignia tiene una imagen, mostrarla
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          item.imagePath!,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            // Si falla la carga de la imagen, mostrar el ícono por defecto
+            return _buildDefaultBadgeIcon(width: width, height: height);
+          },
+        ),
+      );
+    }
+    
+    // Insignia sin imagen o fallback
+    return _buildDefaultBadgeIcon(width: width, height: height);
+  }
+
+  Widget _buildDefaultBadgeIcon({double? width, double? height}) {
     return Container(
       width: width ?? 120,
       height: height ?? 90,
-      color: Colors.grey.shade200,
-      child: const Center(
-          child: Icon(Icons.verified, size: 40, color: Colors.grey)),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFFFD700).withOpacity(0.3), // Dorado suave
+            const Color(0xFFFFA500).withOpacity(0.5), // Naranja suave
+          ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.emoji_events, // Trofeo/copa para insignias
+              size: (width ?? 120) * 0.4,
+              color: const Color(0xFFB8860B), // Dorado oscuro
+            ),
+            if ((width ?? 120) > 60) // Solo mostrar texto si hay espacio
+              Text(
+                'Insignia',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFB8860B),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -309,7 +375,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Colección'),
+        title: const Text('Mi Album'),
         centerTitle: true,
       ),
       body: _loading
@@ -372,57 +438,73 @@ class _AlbumScreenState extends State<AlbumScreen> {
         final canAdd = _totalPhotosCount() < 10;
         return Card(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                            width: 72,
-                            height: 72,
-                            child:
-                                _buildItemImage(badge, width: 72, height: 72))),
-                    const SizedBox(width: 12),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300, width: 2),
+                          ),
+                          child: _buildItemImage(badge, width: 90, height: 90)
+                        )),
+                    const SizedBox(width: 16),
                     Expanded(
                         child: Text(badge.title,
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold))),
+                                fontSize: 18, fontWeight: FontWeight.bold))),
                     if (canAdd)
                       IconButton(
                         onPressed: () => _addPhotoFor(badge.id),
-                        icon: const Icon(Icons.add_a_photo),
+                        icon: const Icon(Icons.add_a_photo, size: 28),
                         tooltip: 'Agregar foto a esta insignia',
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 SizedBox(
-                  height: 96,
+                  height: 120,
                   child: photos.isEmpty
                       ? Center(
                           child: Text('No hay fotos para esta insignia',
-                              style: TextStyle(color: Colors.grey.shade600)))
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 16)))
                       : ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: photos.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          separatorBuilder: (_, __) => const SizedBox(width: 12),
                           itemBuilder: (context, i) {
                             final p = photos[i];
                             return GestureDetector(
                               onTap: () => _openDetail(p),
                               child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: SizedBox(
-                                      width: 140,
-                                      height: 96,
-                                      child: _buildItemImage(p,
-                                          width: 140, height: 96))),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: 160,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: _buildItemImage(p, width: 160, height: 120)
+                                  )),
                             );
                           },
                         ),

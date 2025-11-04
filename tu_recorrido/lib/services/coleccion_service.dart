@@ -184,6 +184,29 @@ class ColeccionService {
     return doc.exists;
   }
 
+  /// FUNCIÓN TEMPORAL: Eliminar una visita específica (para testing)
+  /// Esta función es solo para pruebas y debugging
+  static Future<void> eliminarVisitaTemporal(String estacionId) async {
+    final userId = await _obtenerUserId();
+    if (userId == null) {
+      throw Exception('Usuario no autenticado');
+    }
+
+    try {
+      await _firestore
+          .collection(_usersCollection)
+          .doc(userId)
+          .collection(_estacionesVisitadasSubcollection)
+          .doc(estacionId)
+          .delete();
+      
+      print('✅ Visita eliminada: $estacionId para usuario: $userId');
+    } catch (e) {
+      print('❌ Error eliminando visita: $e');
+      throw Exception('Error al eliminar visita: $e');
+    }
+  }
+
   /// Obtiene estaciones visitadas en un periodo especifico
   /// Y si no se pasan fechas, obtiene todas las visitas
   static Future<List<EstacionVisitada>> obtenerVisitasPorPeriodo({

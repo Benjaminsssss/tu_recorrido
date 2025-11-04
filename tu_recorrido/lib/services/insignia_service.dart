@@ -122,7 +122,89 @@ class InsigniaService {
         FirebaseFirestore.instance.collection('estaciones').doc(estacionId);
     final insigniaRef = _collection.doc(insigniaId);
 
-    await estacionRef.update({'insigniaID': insigniaRef});
+    // Obtener los datos de la insignia para copiar la imagen al badgeImage
+    final insigniaDoc = await insigniaRef.get();
+    if (!insigniaDoc.exists) {
+      throw Exception('Insignia no encontrada');
+    }
+
+    final insigniaData = insigniaDoc.data() as Map<String, dynamic>;
+    final imagenUrl = insigniaData['imagenUrl'] as String?;
+    final nombre = insigniaData['nombre'] as String? ?? '';
+
+    // Crear el objeto badgeImage con los datos de la insignia
+    Map<String, dynamic>? badgeImage;
+    if (imagenUrl != null && imagenUrl.isNotEmpty) {
+      badgeImage = {
+        'url': imagenUrl,
+        'alt': nombre,
+        // No tenemos el path de Storage, pero la url es suficiente para mostrar la imagen
+      };
+    }
+
+    // Actualizar la estación con la referencia y la imagen de la insignia
+    final updateData = <String, dynamic>{
+      'insigniaID': insigniaRef,
+    };
+    
+    if (badgeImage != null) {
+      updateData['badgeImage'] = badgeImage;
+    }
+
+    await estacionRef.update(updateData);
+  }
+
+  /// Migrar todas las estaciones que tienen insignias asignadas pero no tienen badgeImage
+  /// Esta función debe ejecutarse una vez para corregir datos existentes
+  static Future<void> migrarInsigniasExistentes() async {
+    try {
+      // Obtener todas las estaciones
+      final estacionesSnapshot = await FirebaseFirestore.instance
+          .collection('estaciones')
+          .get();
+
+      int actualizadas = 0;
+      int errores = 0;
+
+      for (final estacionDoc in estacionesSnapshot.docs) {
+        try {
+          final estacionData = estacionDoc.data();
+          final insigniaRef = estacionData['insigniaID'] as DocumentReference?;
+          final badgeImage = estacionData['badgeImage'];
+
+          // Si tiene insignia asignada pero no tiene badgeImage
+          if (insigniaRef != null && badgeImage == null) {
+            // Obtener los datos de la insignia
+            final insigniaDoc = await insigniaRef.get();
+            if (insigniaDoc.exists) {
+              final insigniaData = insigniaDoc.data() as Map<String, dynamic>;
+              final imagenUrl = insigniaData['imagenUrl'] as String?;
+              final nombre = insigniaData['nombre'] as String? ?? '';
+
+              if (imagenUrl != null && imagenUrl.isNotEmpty) {
+                // Actualizar la estación con el badgeImage
+                await estacionDoc.reference.update({
+                  'badgeImage': {
+                    'url': imagenUrl,
+                    'alt': nombre,
+                  }
+                });
+                actualizadas++;
+                print('✅ Estación ${estacionDoc.id} actualizada con badgeImage');
+              }
+            }
+          }
+        } catch (e) {
+          errores++;
+          print('❌ Error actualizando estación ${estacionDoc.id}: $e');
+        }
+      }
+
+      print('🎯 Migración completada: $actualizadas estaciones actualizadas, $errores errores');
+    } catch (e) {
+      print('💥 Error en migración: $e');
+      rethrow;
+    }
   }
 
   /// Otorga una insignia a un usuario: crea users/{userId}/insignias/{insigniaId}

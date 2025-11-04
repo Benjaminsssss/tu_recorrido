@@ -32,9 +32,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   Position? _ubicacionActual;
   final ImagePicker _picker = ImagePicker();
   
-  // Badge/insignia para la estación patrimonial
-  XFile? _pickedBadge;
-  Uint8List? _pickedBadgeBytes;
+
   
   // Imágenes para el card/lugar (múltiples)
   List<XFile> _pickedCardImages = [];
@@ -151,20 +149,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
         }
       }
 
-      // Si el admin escogió una insignia para la estación patrimonial, subirla
-      if (_pickedBadge != null) {
-        final ts = DateTime.now().millisecondsSinceEpoch;
-        final ext = kIsWeb ? _getExt(_pickedBadge!.name) : _getExt(_pickedBadge!.path);
-        final path = 'insignias/$newId/badge_$ts$ext';
-        String url;
-        if (kIsWeb && _pickedBadgeBytes != null) {
-          url = await StorageService.instance.uploadBytes(_pickedBadgeBytes!, path, contentType: 'image/jpeg');
-        } else {
-          final file = File(_pickedBadge!.path);
-          url = await StorageService.instance.uploadFile(file, path, contentType: 'image/jpeg');
-        }
-        await EstacionService.setBadgeImage(newId, {'url': url, 'path': path, 'alt': _nombreController.text.trim()});
-      }
+
 
       if (mounted) {
         _mostrarExito('Estación patrimonial y lugar/card creados exitosamente.\nCódigo: $codigo');
@@ -216,23 +201,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     }
   }
 
-  /// Seleccionar insignia/badge para la estación patrimonial
-  Future<void> _pickBadge() async {
-    final XFile? picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (picked == null) return;
-    
-    setState(() {
-      _pickedBadge = picked;
-    });
-    
-    if (kIsWeb) {
-      try {
-        _pickedBadgeBytes = await picked.readAsBytes();
-      } catch (e) {
-        debugPrint('Error leyendo bytes de badge: $e');
-      }
-    }
-  }
+
 
   void _limpiarFormulario() {
     _nombreController.clear();
@@ -241,8 +210,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     _descripcionCardController.clear();
     _formKey.currentState?.reset();
     setState(() {
-      _pickedBadge = null;
-      _pickedBadgeBytes = null;
       _pickedCardImages = [];
       _pickedCardImagesBytes = [];
     });
@@ -365,19 +332,21 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: kIsWeb && _pickedCardImagesBytes[index] != null
+                              child: kIsWeb && index < _pickedCardImagesBytes.length && _pickedCardImagesBytes[index] != null
                                   ? Image.memory(
                                       _pickedCardImagesBytes[index]!,
                                       fit: BoxFit.cover,
                                       width: 100,
                                       height: 100,
                                     )
-                                  : Image.file(
-                                      File(_pickedCardImages[index].path),
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: 100,
-                                    ),
+                                  : (kIsWeb 
+                                      ? const Icon(Icons.image, size: 40, color: Colors.grey)
+                                      : Image.file(
+                                          File(_pickedCardImages[index].path),
+                                          fit: BoxFit.cover,
+                                          width: 100,
+                                          height: 100,
+                                        )),
                             ),
                             Positioned(
                               top: 4,
@@ -413,28 +382,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
               const SizedBox(height: 24),
               // Separador visual
               const Divider(thickness: 2),
-              const SizedBox(height: 12),
-              // Selector de insignia (badge)
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _pickBadge,
-                      icon: const Icon(Icons.emoji_events),
-                      label: const Text('Subir insignia (badge)'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  if (_pickedBadge != null)
-                    SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: kIsWeb && _pickedBadgeBytes != null
-                          ? Image.memory(_pickedBadgeBytes!, fit: BoxFit.cover)
-                          : Image.file(File(_pickedBadge!.path), fit: BoxFit.cover),
-                    ),
-                ],
-              ),
               const SizedBox(height: 12),
               // Las imágenes para el card se gestionan desde la pantalla de gestión de lugares.
               const SizedBox(height: 16),
