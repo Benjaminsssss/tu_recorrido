@@ -22,19 +22,19 @@ class AdminScreen extends StatelessWidget {
     return AdminProtectedWidget(
       child: PantallaBase(
         titulo: 'Panel de Administración',
-  backgroundColor: Colors.white,
-  appBarBackgroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        appBarBackgroundColor: Colors.white,
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-                // Welcome + summary row (moved above the management buttons)
-                _buildWelcomeCard(context),
-                const SizedBox(height: 20),
+              // Welcome + summary row (moved above the management buttons)
+              _buildWelcomeCard(context),
+              const SizedBox(height: 20),
 
-                // Top management cards (like the design attachment)
-                _buildTopGestiones(context),
+              // Top management cards (like the design attachment)
+              _buildTopGestiones(context),
               const SizedBox(height: 20),
 
               // Two-column area: Acciones Rápidas | Actividad Reciente
@@ -86,9 +86,12 @@ class AdminScreen extends StatelessWidget {
 
   Widget _buildAccionesRapidas(BuildContext context) {
     return AccionesRapidasWidget(
-      onShowQR: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GeneradorQRScreen())),
-      onViewUserVisits: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageEstacionesScreen())),
-      onCreateStation: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CrearEstacionScreen())),
+      onShowQR: () => Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const GeneradorQRScreen())),
+      onViewUserVisits: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ManageEstacionesScreen())),
+      onCreateStation: () => Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const CrearEstacionScreen())),
     );
   }
 

@@ -27,22 +27,22 @@ class _ConfettiParticleState extends State<ConfettiParticle>
   late Animation<double> _fallAnimation;
   late Animation<double> _rotationAnimation;
   late Animation<double> _fadeAnimation;
-  
+
   final Random _random = Random();
   late double _horizontalDrift;
 
   @override
   void initState() {
     super.initState();
-    
+
     _horizontalDrift = _random.nextDouble() * 100 - 50; // -50 a +50
-    
+
     // Animación de caída
     _fallController = AnimationController(
       duration: widget.duration,
       vsync: this,
     );
-    
+
     _fallAnimation = Tween<double>(
       begin: -widget.size,
       end: MediaQuery.of(context).size.height + widget.size,
@@ -50,18 +50,18 @@ class _ConfettiParticleState extends State<ConfettiParticle>
       parent: _fallController,
       curve: Curves.easeIn,
     ));
-    
+
     // Animación de rotación
     _rotationController = AnimationController(
       duration: Duration(milliseconds: widget.duration.inMilliseconds ~/ 2),
       vsync: this,
     );
-    
+
     _rotationAnimation = Tween<double>(
       begin: 0,
       end: _random.nextDouble() * 4 * pi,
     ).animate(_rotationController);
-    
+
     // Animación de fade out al final
     _fadeAnimation = Tween<double>(
       begin: 1.0,
@@ -70,7 +70,7 @@ class _ConfettiParticleState extends State<ConfettiParticle>
       parent: _fallController,
       curve: const Interval(0.7, 1.0, curve: Curves.easeOut),
     ));
-    
+
     _startAnimations();
   }
 
@@ -139,7 +139,7 @@ class ConfettiOverlay extends StatefulWidget {
 class _ConfettiOverlayState extends State<ConfettiOverlay> {
   final List<ConfettiParticle> _particles = [];
   final Random _random = Random();
-  
+
   final List<Color> _colors = [
     Colors.amber,
     Colors.yellow,
@@ -162,7 +162,7 @@ class _ConfettiOverlayState extends State<ConfettiOverlay> {
   void _startConfetti() {
     setState(() {
       _particles.clear();
-      
+
       // Crear 15-20 partículas
       for (int i = 0; i < 18; i++) {
         _particles.add(ConfettiParticle(
@@ -175,7 +175,7 @@ class _ConfettiOverlayState extends State<ConfettiOverlay> {
         ));
       }
     });
-    
+
     // Llamar onComplete después de que termine la animación más larga
     Future.delayed(const Duration(milliseconds: 3500), () {
       if (widget.onComplete != null) {
@@ -193,7 +193,7 @@ class _ConfettiOverlayState extends State<ConfettiOverlay> {
   @override
   Widget build(BuildContext context) {
     if (!widget.isActive) return const SizedBox.shrink();
-    
+
     return Positioned.fill(
       child: IgnorePointer(
         child: Stack(

@@ -15,21 +15,24 @@ class ManagementCardsRow extends StatelessWidget {
         'subtitle': 'Crear / Editar / Eliminar estaciones',
         'icon': Icons.location_on,
         'color': Coloressito.adventureGreen,
-        'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GestionEstacionesScreen())),
+        'onTap': () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const GestionEstacionesScreen())),
       },
       {
         'title': 'Gestión Insignia',
         'subtitle': 'Crear / Asignar / Editar insignias',
         'icon': Icons.emoji_events,
         'color': Coloressito.badgeYellow,
-        'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const InsigniasAdminScreen())),
+        'onTap': () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const InsigniasAdminScreen())),
       },
       {
         'title': 'Gestión Usuarios',
         'subtitle': 'Actualizar roles y eliminar usuarios',
         'icon': Icons.people,
         'color': Coloressito.badgeRed,
-        'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UserManagementScreen())),
+        'onTap': () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const UserManagementScreen())),
       },
     ];
 
@@ -57,21 +60,26 @@ class ManagementCardsRow extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                          padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (it['color'] as Color).withOpacity(0.12),
+                    color:
+                        (it['color'] as Color).withAlpha((0.12 * 255).round()),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                          child: Icon(it['icon'] as IconData, color: it['color'] as Color, size: 22),
+                  child: Icon(it['icon'] as IconData,
+                      color: it['color'] as Color, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(it['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(it['title'] as String,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 6),
-                      Text(it['subtitle'] as String, style: TextStyle(color: Colors.grey[600])),
+                      Text(it['subtitle'] as String,
+                          style: TextStyle(color: Colors.grey[600])),
                     ],
                   ),
                 )

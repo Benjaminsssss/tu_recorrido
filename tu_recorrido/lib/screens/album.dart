@@ -95,15 +95,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   Future<void> _loadPhotos() async {
     _prefs = await SharedPreferences.getInstance();
-    
+
     // Clear existing photos
     _items.removeWhere((item) => item.type == AlbumItemType.photo);
-    
+
     try {
       // 1. Cargar fotos desde Firebase (nuevo sistema)
       final firebasePhotos = await _loadPhotosFromFirebase();
       _items.addAll(firebasePhotos);
-      
+
       // 2. Cargar fotos desde SharedPreferences (sistema legacy) solo si no hay fotos en Firebase
       if (firebasePhotos.isEmpty) {
         final legacyPhotos = await _loadPhotosFromSharedPrefs();
@@ -111,7 +111,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
       }
     } catch (e) {
       // print('Error cargando fotos desde Firebase: $e');
-      
+
       // Fallback: cargar desde SharedPreferences
       try {
         final legacyPhotos = await _loadPhotosFromSharedPrefs();
@@ -120,7 +120,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
         // print('Error cargando fotos desde SharedPrefs: $e2');
       }
     }
-    
+
     _items.sort((a, b) => b.date.compareTo(a.date));
     if (mounted) setState(() => _loading = false);
   }
@@ -130,18 +130,20 @@ class _AlbumScreenState extends State<AlbumScreen> {
     try {
       // Usar AlbumPhotosService para obtener fotos del usuario
       final albumPhotos = await AlbumPhotosService.getUserPhotos();
-      
-      return albumPhotos.map((photo) => AlbumItem(
-        id: photo.id,
-        type: AlbumItemType.photo,
-        title: 'Experiencia', // Título genérico para fotos
-        parentId: photo.badgeId,
-        imagePath: photo.imageUrl, // URL de Firebase Storage
-        base64: null, // No necesitamos base64 con Firebase
-        location: photo.location,
-        date: photo.uploadDate,
-        description: photo.description,
-      )).toList();
+
+      return albumPhotos
+          .map((photo) => AlbumItem(
+                id: photo.id,
+                type: AlbumItemType.photo,
+                title: 'Experiencia', // Título genérico para fotos
+                parentId: photo.badgeId,
+                imagePath: photo.imageUrl, // URL de Firebase Storage
+                base64: null, // No necesitamos base64 con Firebase
+                location: photo.location,
+                date: photo.uploadDate,
+                description: photo.description,
+              ))
+          .toList();
     } catch (e) {
       // print('Error obteniendo fotos de Firebase: $e');
       rethrow;
@@ -152,7 +154,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
   Future<List<AlbumItem>> _loadPhotosFromSharedPrefs() async {
     final raw = _prefs.getStringList('album_items') ?? [];
     final photos = <AlbumItem>[];
-    
+
     for (final s in raw) {
       try {
         final m = jsonDecode(s) as Map<String, dynamic>;
@@ -164,7 +166,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
         print('Error parsing legacy photo: $e');
       }
     }
-    
+
     return photos;
   }
 
@@ -173,14 +175,14 @@ class _AlbumScreenState extends State<AlbumScreen> {
     try {
       // Remover fotos existentes
       _items.removeWhere((item) => item.type == AlbumItemType.photo);
-      
+
       // Cargar fotos desde Firebase
       final firebasePhotos = await _loadPhotosFromFirebase();
       _items.addAll(firebasePhotos);
-      
+
       // Reordenar por fecha
       _items.sort((a, b) => b.date.compareTo(a.date));
-      
+
       // Actualizar UI
       if (mounted) setState(() {});
     } catch (e) {
@@ -235,17 +237,19 @@ class _AlbumScreenState extends State<AlbumScreen> {
   Future<void> _addPhotoFor(String parentId) async {
     try {
       // Verificar límite con Firebase
-      final hasReachedLimit = await AlbumPhotosService.hasReachedPhotoLimit(maxPhotos: 50);
+      final hasReachedLimit =
+          await AlbumPhotosService.hasReachedPhotoLimit(maxPhotos: 50);
       if (hasReachedLimit) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Has alcanzado el límite de 50 fotos de experiencia')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content:
+                Text('Has alcanzado el límite de 50 fotos de experiencia')));
         return;
       }
 
       // Seleccionar imagen
       final XFile? file = await _picker.pickImage(
-        source: ImageSource.gallery, 
+        source: ImageSource.gallery,
         imageQuality: 85,
         maxWidth: 1920,
         maxHeight: 1080,
@@ -258,7 +262,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
           const SnackBar(
             content: Row(
               children: [
-                SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
                 SizedBox(width: 16),
                 Text('Subiendo imagen...'),
               ],
@@ -359,9 +366,11 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       // Botón de eliminar solo para fotos del usuario
                       if (item.type == AlbumItemType.photo)
                         TextButton.icon(
-                          onPressed: () => _showDeleteConfirmation(context, item),
+                          onPressed: () =>
+                              _showDeleteConfirmation(context, item),
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                          label: const Text('Eliminar',
+                              style: TextStyle(color: Colors.red)),
                         )
                       else
                         const SizedBox(), // Espacio vacío si no es foto
@@ -395,12 +404,13 @@ class _AlbumScreenState extends State<AlbumScreen> {
     if (edited != null) {
       // Actualizar Firebase si la foto proviene de Firebase
       try {
-        await AlbumPhotosService.updatePhotoDescription(edited.id, edited.description);
+        await AlbumPhotosService.updatePhotoDescription(
+            edited.id, edited.description);
         print('✅ Descripción actualizada en Firebase para foto ${edited.id}');
       } catch (e) {
         print('❌ Error actualizando descripción en Firebase: $e');
       }
-      
+
       // Actualizar lista local y SharedPreferences (para compatibilidad)
       final idx = _items.indexWhere((e) => e.id == edited.id);
       if (idx != -1) {
@@ -463,7 +473,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                         alignment: Alignment.topRight,
                         child: IconButton(
                           onPressed: () => Navigator.of(dialogContext).pop(),
-                          icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                          icon: const Icon(Icons.close,
+                              color: Colors.white, size: 28),
                         ),
                       ),
                       // Botones Ver y Editar
@@ -480,7 +491,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                                 height: 60,
                                 margin: const EdgeInsets.only(right: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withAlpha((0.8 * 255).round()),
+                                  color: Colors.blue
+                                      .withAlpha((0.8 * 255).round()),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
@@ -507,7 +519,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                                 height: 60,
                                 margin: const EdgeInsets.only(left: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.orange.withAlpha((0.8 * 255).round()),
+                                  color: Colors.orange
+                                      .withAlpha((0.8 * 255).round()),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
@@ -551,82 +564,94 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 Center(
                   child: SingleChildScrollView(
                     child: GestureDetector(
-                      onTap: () {}, // Prevenir que se cierre cuando se toca la imagen/descripción
+                      onTap:
+                          () {}, // Prevenir que se cierre cuando se toca la imagen/descripción
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                    // Imagen grande
-                    Container(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.98,
-                        maxHeight: item.description != null && item.description!.isNotEmpty
-                            ? MediaQuery.of(context).size.height * 0.75
-                            : MediaQuery.of(context).size.height * 0.90,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha((0.5 * 255).round()),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: _buildItemImage(item),
-                      ),
-                    ),
-                    // Descripción solo si existe
-                    if (item.description != null && item.description!.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 35),
-                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              const Color(0xFFFAF9F6).withAlpha((0.98 * 255).round()),
-                              const Color(0xFFF5F5DC).withAlpha((0.95 * 255).round()),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFD4C5A9).withAlpha((0.3 * 255).round()),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF8B4513).withAlpha((0.08 * 255).round()),
-                              blurRadius: 15,
-                              offset: const Offset(0, 4),
-                              spreadRadius: 1,
+                          // Imagen grande
+                          Container(
+                            constraints: BoxConstraints(
+                              maxWidth:
+                                  MediaQuery.of(context).size.width * 0.98,
+                              maxHeight: item.description != null &&
+                                      item.description!.isNotEmpty
+                                  ? MediaQuery.of(context).size.height * 0.75
+                                  : MediaQuery.of(context).size.height * 0.90,
                             ),
-                            BoxShadow(
-                              color: Colors.black.withAlpha((0.03 * 255).round()),
-                              blurRadius: 25,
-                              offset: const Offset(0, 8),
-                              spreadRadius: 0,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black
+                                      .withAlpha((0.5 * 255).round()),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: _buildItemImage(item),
+                            ),
+                          ),
+                          // Descripción solo si existe
+                          if (item.description != null &&
+                              item.description!.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 35),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 18, horizontal: 24),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    const Color(0xFFFAF9F6)
+                                        .withAlpha((0.98 * 255).round()),
+                                    const Color(0xFFF5F5DC)
+                                        .withAlpha((0.95 * 255).round()),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFFD4C5A9)
+                                      .withAlpha((0.3 * 255).round()),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF8B4513)
+                                        .withAlpha((0.08 * 255).round()),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 4),
+                                    spreadRadius: 1,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.black
+                                        .withAlpha((0.03 * 255).round()),
+                                    blurRadius: 25,
+                                    offset: const Offset(0, 8),
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                item.description!,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: const Color(0xFF2C3E50),
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.5,
+                                  fontFamily: 'serif',
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ],
-                        ),
-                        child: Text(
-                          item.description!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: const Color(0xFF2C3E50),
-                            height: 1.5,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
-                            fontFamily: 'serif',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
                         ],
                       ),
                     ),
@@ -646,7 +671,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Eliminar imagen'),
-          content: const Text('¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.'),
+          content: const Text(
+              '¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -672,13 +698,16 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
     try {
       // Detectar si es una foto de Firebase (URL de Firebase Storage)
-      if (item.imagePath != null && item.imagePath!.startsWith('http') && 
+      if (item.imagePath != null &&
+          item.imagePath!.startsWith('http') &&
           item.imagePath!.contains('firebasestorage.googleapis.com')) {
         // Eliminar desde Firebase
         await AlbumPhotosService.deletePhoto(item.id);
       } else {
         // Eliminar archivo local (fotos antiguas)
-        if (!kIsWeb && item.imagePath != null && !item.imagePath!.startsWith('http')) {
+        if (!kIsWeb &&
+            item.imagePath != null &&
+            !item.imagePath!.startsWith('http')) {
           try {
             final file = File(item.imagePath!);
             if (await file.exists()) {
@@ -694,7 +723,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
       setState(() {
         _items.removeWhere((e) => e.id == item.id);
       });
-      
+
       await _saveItems();
 
       if (!mounted) return;
@@ -754,7 +783,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
           ),
         );
       }
-      
+
       // Fallback: mostrar desde base64 (fotos antiguas)
       if (item.base64 != null && item.base64!.isNotEmpty) {
         try {
@@ -763,14 +792,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
               width: width, height: height, fit: BoxFit.cover);
         } catch (_) {}
       }
-      
+
       // Fallback: mostrar desde archivo local (fotos muy antiguas)
       if (item.imagePath != null && !item.imagePath!.startsWith('http')) {
         final f = File(item.imagePath!);
         if (f.existsSync()) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.file(f, width: width, height: height, fit: BoxFit.cover),
+            child:
+                Image.file(f, width: width, height: height, fit: BoxFit.cover),
           );
         }
       }
@@ -823,8 +853,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFFFD700).withAlpha((0.3 * 255).round()), // Dorado suave
-            const Color(0xFFFFA500).withAlpha((0.5 * 255).round()), // Naranja suave
+            const Color(0xFFFFD700)
+                .withAlpha((0.3 * 255).round()), // Dorado suave
+            const Color(0xFFFFA500)
+                .withAlpha((0.5 * 255).round()), // Naranja suave
           ],
         ),
       ),
@@ -921,12 +953,14 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       child: Text(
                         'Mi Álbum',
                         style: TextStyle(
-                          color: const Color(0xFFB8860B), // Amarillo mostaza original
+                          color: const Color(
+                              0xFFB8860B), // Amarillo mostaza original
                           fontSize: 16, // Más pequeño
                           fontWeight: FontWeight.w600,
                           shadows: [
                             Shadow(
-                              color: Colors.black.withAlpha((0.7 * 255).round()),
+                              color:
+                                  Colors.black.withAlpha((0.7 * 255).round()),
                               blurRadius: 3,
                               offset: const Offset(1, 1),
                             ),
@@ -937,7 +971,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   ],
                 ),
               ),
-              
+
               // Contenido principal
               Expanded(
                 child: _loading
@@ -957,8 +991,6 @@ class _AlbumScreenState extends State<AlbumScreen> {
           BottomNavBar(currentIndex: _currentIndex, onChanged: _onNavChanged),
     );
   }
-
-
 
   Widget _buildEmptyStateNoBadges(ThemeData theme) {
     return Center(
@@ -998,7 +1030,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96), // Igual que Home
       itemCount: badges.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16), // Espaciado más consistente
+      separatorBuilder: (_, __) =>
+          const SizedBox(height: 16), // Espaciado más consistente
       itemBuilder: (context, index) {
         final badge = badges[index];
         final photos = _items
@@ -1006,7 +1039,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 (i) => i.type == AlbumItemType.photo && i.parentId == badge.id)
             .toList();
         final canAdd = _totalPhotosCount() < 10;
-        
+
         return _PremiumBadgeCard(
           badge: badge,
           photos: photos,
@@ -1029,8 +1062,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
       estacionCodigo: 'QR_${badge.id}',
       estacionNombre: badge.title,
       fechaVisita: badge.date,
-      badgeImage: badge.imagePath != null ? 
-        PlaceImage(url: badge.imagePath, alt: badge.title) : null,
+      badgeImage: badge.imagePath != null
+          ? PlaceImage(url: badge.imagePath, alt: badge.title)
+          : null,
     );
 
     Navigator.of(context).push(
@@ -1066,7 +1100,8 @@ class _PremiumBadgeCard extends StatefulWidget {
   final VoidCallback onTapInsignia;
   final VoidCallback onAddPhoto;
   final Function(AlbumItem) onTapPhoto;
-  final Widget Function(AlbumItem, {required double width, required double height}) buildItemImage;
+  final Widget Function(AlbumItem,
+      {required double width, required double height}) buildItemImage;
 
   const _PremiumBadgeCard({
     required this.badge,
@@ -1082,12 +1117,12 @@ class _PremiumBadgeCard extends StatefulWidget {
   State<_PremiumBadgeCard> createState() => _PremiumBadgeCardState();
 }
 
-class _PremiumBadgeCardState extends State<_PremiumBadgeCard> 
+class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _hoverController;
   late Animation<double> _elevationAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   bool _isHovered = false;
 
   @override
@@ -1097,11 +1132,11 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _elevationAnimation = Tween<double>(begin: 8, end: 20).animate(
       CurvedAnimation(parent: _hoverController, curve: Curves.easeOutCubic),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
       CurvedAnimation(parent: _hoverController, curve: Curves.easeOutCubic),
     );
@@ -1146,13 +1181,13 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                     spreadRadius: _elevationAnimation.value * 0.3,
                     offset: Offset(0, _elevationAnimation.value * 0.5),
                   ),
-
                 ],
                 // Bordes marrones claros sutiles
                 border: Border.all(
-                  color: _isHovered 
-                    ? const Color(0xFFD2B48C) // Tan claro
-                    : const Color(0xFFDDD0C0).withAlpha((0.8 * 255).round()), // Beige muy sutil
+                  color: _isHovered
+                      ? const Color(0xFFD2B48C) // Tan claro
+                      : const Color(0xFFDDD0C0)
+                          .withAlpha((0.8 * 255).round()), // Beige muy sutil
                   width: _isHovered ? 2 : 1,
                 ),
               ),
@@ -1184,16 +1219,13 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                               onTap: widget.onTapInsignia,
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: widget.buildItemImage(
-                                  widget.badge, 
-                                  width: 90, 
-                                  height: 90
-                                ),
+                                child: widget.buildItemImage(widget.badge,
+                                    width: 90, height: 90),
                               ),
                             ),
-                            
+
                             const SizedBox(width: 20),
-                            
+
                             // Título con tipografía elegante
                             Expanded(
                               child: Column(
@@ -1208,7 +1240,8 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                                       letterSpacing: 0.5,
                                       shadows: [
                                         Shadow(
-                                          color: Colors.black.withAlpha((0.1 * 255).round()),
+                                          color: Colors.black
+                                              .withAlpha((0.1 * 255).round()),
                                           blurRadius: 2,
                                           offset: const Offset(1, 1),
                                         ),
@@ -1218,27 +1251,28 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                                 ],
                               ),
                             ),
-                            
+
                             // Botón de agregar foto simple
                             if (widget.canAdd)
                               IconButton(
                                 onPressed: widget.onAddPhoto,
                                 icon: const Icon(
-                                  Icons.photo_library, 
-                                  size: 28, 
+                                  Icons.photo_library,
+                                  size: 28,
                                   color: Color(0xFF87CEEB), // Azul celeste
                                 ),
                                 tooltip: 'Agregar foto desde galería',
                               ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Galería de fotos que llega casi al límite del card
                         Container(
                           height: 180,
-                          width: double.infinity, // Ocupa todo el ancho disponible
+                          width:
+                              double.infinity, // Ocupa todo el ancho disponible
                           decoration: BoxDecoration(
                             color: Colors.white.withAlpha((0.5 * 255).round()),
                             borderRadius: BorderRadius.circular(15),
@@ -1247,7 +1281,8 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                               width: 1,
                             ),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 12),
                           child: widget.photos.isEmpty
                               ? Center(
                                   child: Column(
@@ -1274,7 +1309,8 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                               : ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: widget.photos.length,
-                                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 8),
                                   itemBuilder: (context, i) {
                                     final photo = widget.photos[i];
                                     return GestureDetector(
@@ -1285,16 +1321,19 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                                           width: 220,
                                           height: 160,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withAlpha((0.1 * 255).round()),
+                                                color: Colors.black.withAlpha(
+                                                    (0.1 * 255).round()),
                                                 blurRadius: 8,
                                                 offset: const Offset(0, 4),
                                               ),
                                             ],
                                           ),
-                                          child: widget.buildItemImage(photo, width: 220, height: 160),
+                                          child: widget.buildItemImage(photo,
+                                              width: 220, height: 160),
                                         ),
                                       ),
                                     );
@@ -1313,5 +1352,3 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
     );
   }
 }
-
-

@@ -74,11 +74,20 @@ class InsigniaService {
 
   static Future<List<Insignia>> obtenerTodas() async {
     try {
-      final snapshot =
-          await _collection.orderBy('fechaCreacion', descending: true).get();
-      debugPrint(
-          'InsigniaService.obtenerTodas: fetched ${snapshot.docs.length} docs');
-      return snapshot.docs.map((d) => Insignia.fromFirestore(d)).toList();
+      try {
+        final snapshot =
+            await _collection.orderBy('fechaCreacion', descending: true).get();
+        debugPrint(
+            'InsigniaService.obtenerTodas: fetched ${snapshot.docs.length} docs');
+        return snapshot.docs.map((d) => Insignia.fromFirestore(d)).toList();
+      } catch (e) {
+        // fallback to createdAt
+        final snapshot =
+            await _collection.orderBy('createdAt', descending: true).get();
+        debugPrint(
+            'InsigniaService.obtenerTodas (fallback): fetched ${snapshot.docs.length} docs');
+        return snapshot.docs.map((d) => Insignia.fromFirestore(d)).toList();
+      }
     } catch (e, st) {
       // Log error para facilitar diagnóstico en runtime
       // ignore: avoid_print

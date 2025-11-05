@@ -9,7 +9,7 @@ import '../models/album_photo.dart';
 class AlbumPhotosService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseStorage _storage = FirebaseStorage.instance;
-  
+
   static const String _usersCollection = 'users';
   static const String _albumPhotosSubcollection = 'album_photos';
   static const String _storageFolder = 'album_photos';
@@ -20,7 +20,7 @@ class AlbumPhotosService {
       // Intentar obtener usuario de Firebase
       var firebaseUser = FirebaseAuth.instance.currentUser;
       print('🔍 Usuario actual: ${firebaseUser?.uid}');
-      
+
       // Si no hay usuario autenticado, crear uno anónimo
       if (firebaseUser == null) {
         print('🔑 Creando usuario anónimo...');
@@ -28,20 +28,21 @@ class AlbumPhotosService {
         firebaseUser = userCredential.user;
         print('✅ Usuario anónimo creado: ${firebaseUser?.uid}');
       }
-      
+
       if (firebaseUser == null) {
         print('❌ No se pudo obtener usuario después de autenticación');
         return null;
       }
-      
+
       // Verificar/crear documento de usuario en Firestore si no existe
       print('📝 Verificando documento de usuario en Firestore...');
-      final userDocRef = _firestore.collection(_usersCollection).doc(firebaseUser.uid);
+      final userDocRef =
+          _firestore.collection(_usersCollection).doc(firebaseUser.uid);
       final userDoc = await userDocRef.get();
-      
+
       if (!userDoc.exists) {
         print('📝 Creando documento de usuario en Firestore...');
-        
+
         final userData = {
           'uid': firebaseUser.uid,
           'email': firebaseUser.email ?? 'anonimo@ejemplo.com',
@@ -53,26 +54,25 @@ class AlbumPhotosService {
           'updatedAt': FieldValue.serverTimestamp(),
           'role': null, // Usuario normal sin rol específico
         };
-        
+
         await userDocRef.set(userData);
-        
+
         // Esperar un momento para asegurar que el documento se ha creado
         await Future.delayed(const Duration(milliseconds: 500));
-        
+
         // Verificar que el documento se creó correctamente
         final verifyDoc = await userDocRef.get();
         if (!verifyDoc.exists) {
           print('❌ El documento de usuario no se creó correctamente');
           return null;
         }
-        
+
         print('✅ Documento de usuario creado y verificado en Firestore');
       } else {
         print('✅ Documento de usuario ya existe en Firestore');
       }
-      
+
       return firebaseUser.uid;
-      
     } catch (e) {
       print('❌ Error en _getCurrentUserId: $e');
       return null;
@@ -88,7 +88,7 @@ class AlbumPhotosService {
     Map<String, dynamic>? metadata,
   }) async {
     print('🚀 Iniciando subida de foto...');
-    
+
     final userId = await _getCurrentUserId();
     if (userId == null) {
       throw Exception('Usuario no autenticado');
@@ -100,20 +100,20 @@ class AlbumPhotosService {
       // Generar ID único para la foto
       final photoId = _firestore.collection('temp').doc().id;
       print('📸 ID de foto generado: $photoId');
-      
+
       // Leer bytes de la imagen
       final imageBytes = await imageFile.readAsBytes();
       print('📁 Imagen leída: ${imageBytes.length} bytes');
-      
+
       // Subir imagen a Firebase Storage
       final storageRef = _storage
           .ref()
           .child(_storageFolder)
           .child(userId)
           .child('$photoId.jpg');
-      
+
       print('☁️ Subiendo a Storage: ${storageRef.fullPath}');
-      
+
       final uploadTask = await storageRef.putData(
         imageBytes,
         SettableMetadata(
@@ -151,13 +151,12 @@ class AlbumPhotosService {
           .doc(userId)
           .collection(_albumPhotosSubcollection)
           .doc(photoId);
-      
+
       print('💾 Guardando en Firestore: ${docRef.path}');
       await docRef.set(firestoreData);
-      
+
       print('✅ Foto subida exitosamente');
       return albumPhoto;
-      
     } catch (e) {
       print('❌ Error detallado en uploadPhoto: $e');
       print('❌ Stack trace: ${StackTrace.current}');
@@ -184,7 +183,7 @@ class AlbumPhotosService {
       if (docSnapshot.exists) {
         final photoData = docSnapshot.data();
         final imageUrl = photoData?['imageUrl'] as String?;
-        
+
         // Eliminar de Storage si existe la URL
         if (imageUrl != null) {
           try {
@@ -255,7 +254,8 @@ class AlbumPhotosService {
   }
 
   /// Actualizar la descripción de una foto
-  static Future<void> updatePhotoDescription(String photoId, String? description) async {
+  static Future<void> updatePhotoDescription(
+      String photoId, String? description) async {
     final userId = await _getCurrentUserId();
     if (userId == null) {
       throw Exception('Usuario no autenticado');

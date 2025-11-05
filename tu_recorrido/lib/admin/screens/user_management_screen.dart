@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/app_user.dart';
-import '../../models/user_role.dart';
 import '../../services/user_role_service.dart';
 import '../../utils/colores.dart';
 import '../../widgets/role_protected_widget.dart';
@@ -27,7 +25,6 @@ class _UserManagementContent extends StatefulWidget {
 }
 
 class _UserManagementContentState extends State<_UserManagementContent> {
-  List<AppUser> _users = [];
   Map<String, int> _roleStats = {};
   bool _loading = true;
 
@@ -41,14 +38,9 @@ class _UserManagementContentState extends State<_UserManagementContent> {
     setState(() => _loading = true);
 
     try {
-      final [users, stats] = await Future.wait([
-        UserRoleService.getAllUsers(),
-        UserRoleService.getUserRoleStats(),
-      ]);
-
+      final stats = await UserRoleService.getUserRoleStats();
       setState(() {
-        _users = users as List<AppUser>;
-        _roleStats = stats as Map<String, int>;
+        _roleStats = stats;
         _loading = false;
       });
     } catch (e) {
@@ -64,30 +56,7 @@ class _UserManagementContentState extends State<_UserManagementContent> {
     }
   }
 
-  Future<void> _changeUserRole(AppUser user, UserRole newRole) async {
-    try {
-      await UserRoleService.changeUserRole(user.uid, newRole);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Rol actualizado para ${user.nombre}'),
-            backgroundColor: Coloressito.adventureGreen,
-          ),
-        );
-        _loadData(); // Recargar datos
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cambiar rol: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
+  // Changing user roles is done via UsuariosTable; keep logic there for single-responsibility.
 
   @override
   Widget build(BuildContext context) {

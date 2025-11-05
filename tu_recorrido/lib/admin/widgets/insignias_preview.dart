@@ -13,7 +13,10 @@ class InsigniasPreview extends StatelessWidget {
     if (insignias.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(12),
-  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Coloressito.borderLight)),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Coloressito.borderLight)),
         child: const Center(child: Text('No hay insignias aún')),
       );
     }
@@ -30,19 +33,30 @@ class InsigniasPreview extends StatelessWidget {
           return Container(
             width: 150,
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Coloressito.borderLight)),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Coloressito.borderLight)),
             child: Column(
               children: [
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: ins.imagenUrl.isNotEmpty
-                        ? Image.network(ins.imagenUrl, fit: BoxFit.cover, width: double.infinity)
-                        : Container(color: Colors.grey[200], child: const Center(child: Icon(Icons.emoji_events, size: 34, color: Colors.grey))),
+                        ? Image.network(ins.imagenUrl,
+                            fit: BoxFit.cover, width: double.infinity)
+                        : Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                                child: Icon(Icons.emoji_events,
+                                    size: 34, color: Colors.grey))),
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(ins.nombre, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                Text(ins.nombre,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           );

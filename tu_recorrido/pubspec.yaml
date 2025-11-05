@@ -43,6 +43,7 @@ dependencies:
   crypto: ^3.0.2
   permission_handler: ^11.3.1
   qr_flutter: ^4.1.0
+  async: ^2.9.0
   logger: ^2.6.2
   flutter_rating_bar: ^4.0.1
   # NOTA: Si necesitas la librería 'js' que se mencionó como eliminada, agrégala aquí con la versión correcta.

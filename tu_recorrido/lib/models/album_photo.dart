@@ -23,26 +23,27 @@ class AlbumPhoto {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'badgeId': badgeId,
-    'imageUrl': imageUrl,
-    'thumbnailUrl': thumbnailUrl,
-    'description': description,
-    'uploadDate': Timestamp.fromDate(uploadDate),
-    'location': location,
-    'metadata': metadata,
-  };
+        'id': id,
+        'badgeId': badgeId,
+        'imageUrl': imageUrl,
+        'thumbnailUrl': thumbnailUrl,
+        'description': description,
+        'uploadDate': Timestamp.fromDate(uploadDate),
+        'location': location,
+        'metadata': metadata,
+      };
 
   static AlbumPhoto fromJson(Map<String, dynamic> json) => AlbumPhoto(
-    id: json['id'] ?? '',
-    badgeId: json['badgeId'] ?? '',
-    imageUrl: json['imageUrl'] ?? '',
-    thumbnailUrl: json['thumbnailUrl'],
-    description: json['description'],
-    uploadDate: (json['uploadDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    location: json['location'],
-    metadata: json['metadata'],
-  );
+        id: json['id'] ?? '',
+        badgeId: json['badgeId'] ?? '',
+        imageUrl: json['imageUrl'] ?? '',
+        thumbnailUrl: json['thumbnailUrl'],
+        description: json['description'],
+        uploadDate:
+            (json['uploadDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        location: json['location'],
+        metadata: json['metadata'],
+      );
 
   AlbumPhoto copyWith({
     String? id,

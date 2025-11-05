@@ -27,12 +27,12 @@ class _OrbitingParticlesState extends State<OrbitingParticles>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(seconds: 8),
       vsync: this,
     );
-    
+
     if (widget.isActive) {
       _controller.repeat();
     }
@@ -71,7 +71,7 @@ class _OrbitingParticlesState extends State<OrbitingParticles>
                       (_controller.value * 2 * math.pi);
                   final x = math.cos(angle) * widget.orbitRadius;
                   final y = math.sin(angle) * widget.orbitRadius;
-                  
+
                   return Transform.translate(
                     offset: Offset(x, y),
                     child: Container(
@@ -82,7 +82,8 @@ class _OrbitingParticlesState extends State<OrbitingParticles>
                         color: const Color(0xFFFFD700),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFD700).withAlpha((0.6 * 255).round()),
+                            color: const Color(0xFFFFD700)
+                                .withAlpha((0.6 * 255).round()),
                             blurRadius: 8,
                             spreadRadius: 2,
                           ),
@@ -128,17 +129,17 @@ class _ShakeEffectState extends State<ShakeEffect>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _shakeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(_controller);
-    
+
     if (widget.isActive) {
       _controller.forward();
     }
@@ -167,7 +168,7 @@ class _ShakeEffectState extends State<ShakeEffect>
   @override
   Widget build(BuildContext context) {
     if (!widget.isActive) return widget.child;
-    
+
     return AnimatedBuilder(
       animation: _shakeAnimation,
       builder: (context, child) {
@@ -205,12 +206,12 @@ class _EpicGoldenTextState extends State<EpicGoldenText>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.5,
       end: 1.0,
@@ -218,7 +219,7 @@ class _EpicGoldenTextState extends State<EpicGoldenText>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
+
     if (widget.isAnimated) {
       _controller.repeat(reverse: true);
     }
@@ -237,9 +238,9 @@ class _EpicGoldenTextState extends State<EpicGoldenText>
       fontWeight: FontWeight.bold,
       color: Colors.white,
     );
-    
+
     final style = widget.baseStyle ?? defaultStyle;
-    
+
     if (!widget.isAnimated) {
       return Text(
         widget.text,
@@ -258,7 +259,7 @@ class _EpicGoldenTextState extends State<EpicGoldenText>
         textAlign: TextAlign.center,
       );
     }
-    
+
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
@@ -267,15 +268,18 @@ class _EpicGoldenTextState extends State<EpicGoldenText>
           style: style.copyWith(
             shadows: [
               Shadow(
-                color: const Color(0xFFFFD700).withAlpha((_glowAnimation.value * 255).round()),
+                color: const Color(0xFFFFD700)
+                    .withAlpha((_glowAnimation.value * 255).round()),
                 blurRadius: 10 * _glowAnimation.value,
               ),
               Shadow(
-                color: const Color(0xFFB8860B).withAlpha(((_glowAnimation.value * 0.7) * 255).round()),
+                color: const Color(0xFFB8860B)
+                    .withAlpha(((_glowAnimation.value * 0.7) * 255).round()),
                 blurRadius: 20 * _glowAnimation.value,
               ),
               Shadow(
-                color: Colors.orange.withAlpha(((_glowAnimation.value * 0.5) * 255).round()),
+                color: Colors.orange
+                    .withAlpha(((_glowAnimation.value * 0.5) * 255).round()),
                 blurRadius: 30 * _glowAnimation.value,
               ),
             ],

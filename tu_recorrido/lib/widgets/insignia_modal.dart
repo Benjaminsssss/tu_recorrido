@@ -17,7 +17,6 @@ class InsigniaModal extends StatefulWidget {
 
 class _InsigniaModalState extends State<InsigniaModal>
     with SingleTickerProviderStateMixin {
-  
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -73,7 +72,7 @@ class _InsigniaModalState extends State<InsigniaModal>
               ),
             ),
           ),
-          
+
           // Contenido principal - exactamente como en la imagen
           Center(
             child: AnimatedBuilder(
@@ -143,9 +142,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Insignia circular - exactamente como en la imagen
           Container(
             width: 200,
@@ -190,9 +189,9 @@ class _InsigniaModalState extends State<InsigniaModal>
                     ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Nombre de la estación
           Text(
             widget.estacion.nombre,
@@ -204,9 +203,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               letterSpacing: 0.5,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Ubicación
           const Text(
             'SANTIAGO • CHILE',
@@ -217,9 +216,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               letterSpacing: 1.5,
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Botón de continuar
           Container(
             decoration: BoxDecoration(
@@ -236,7 +235,8 @@ class _InsigniaModalState extends State<InsigniaModal>
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),

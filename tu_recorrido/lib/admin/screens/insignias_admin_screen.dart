@@ -1,10 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 // dart:typed_data not required here
 import 'package:tu_recorrido/models/insignia.dart';
 import 'package:tu_recorrido/models/estacion.dart';
@@ -12,7 +8,7 @@ import 'package:tu_recorrido/services/insignia_service.dart';
 import 'package:tu_recorrido/services/estacion_service.dart';
 import 'package:tu_recorrido/services/coleccion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+// removed unused import
 import 'package:tu_recorrido/admin/widgets/insignias_table.dart';
 
 /// Pantalla básica de administración de insignias.
@@ -26,7 +22,7 @@ class InsigniasAdminScreen extends StatefulWidget {
 
 class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   List<Insignia> _insignias = [];
-  bool _loading = true;
+  // removed unused loading flag (InsigniasTable handles its own loading)
   // Mapa para saber por insigniaId qué estación la tiene asignada
   final Map<String, Estacion> _estacionPorInsignia = {};
 
@@ -36,10 +32,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  
-
   Future<void> _load() async {
-    setState(() => _loading = true);
+    // loading handled by InsigniasTable; skip local loading flag
     // debug: iniciar carga
     // ignore: avoid_print
     print('InsigniasAdminScreen._load: starting');
@@ -83,73 +77,11 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
             content: Text('Error inesperado al cargar insignias: $e')));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      // no local loading state to update
     }
   }
 
-  Future<void> _crearInsignia() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final nombreController = TextEditingController();
-    final descripcionController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Crear insignia'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-                controller: nombreController,
-                decoration: const InputDecoration(labelText: 'Nombre')),
-            TextField(
-                controller: descripcionController,
-                decoration: const InputDecoration(labelText: 'Descripcion')),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final nombre = nombreController.text.trim();
-              final descripcion = descripcionController.text.trim();
-              if (nombre.isEmpty || descripcion.isEmpty) return;
-
-              Navigator.of(dialogContext).pop();
-
-              // En web usamos bytes; en mobile/desktop usamos File
-              if (kIsWeb) {
-                final bytes = await picked.readAsBytes();
-                await InsigniaService.createInsigniaWithImage(
-                  imageBytes: bytes,
-                  fileName: picked.name,
-                  nombre: nombre,
-                  descripcion: descripcion,
-                );
-              } else {
-                final file = File(picked.path);
-                await InsigniaService.createInsigniaWithImage(
-                  imageFile: file,
-                  nombre: nombre,
-                  descripcion: descripcion,
-                );
-              }
-
-              await _load();
-            },
-            child: const Text('Crear'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  
+  // _crearInsignia removed: InsigniasTable implements create flows
 
   Future<void> _migrarInsigniasExistentes() async {
     final messenger = ScaffoldMessenger.of(context);
@@ -177,7 +109,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     if (confirmar != true) return;
 
     try {
-      setState(() => _loading = true);
+      // no local loading state to update
       messenger.showSnackBar(
         const SnackBar(content: Text('Iniciando migración...')),
       );
@@ -202,9 +134,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      // no local loading state to update
     }
   }
 

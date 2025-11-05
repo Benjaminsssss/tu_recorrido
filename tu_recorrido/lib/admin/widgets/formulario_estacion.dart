@@ -8,9 +8,11 @@ class EncabezadoEstacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Determine readable colors depending on scaffold background (light vs dark)
-    final isLightBg = Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
+    final isLightBg =
+        Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
     final primaryTextColor = isLightBg ? Colors.black : Coloressito.textPrimary;
-    final secondaryTextColor = isLightBg ? Colors.black54 : Coloressito.textSecondary;
+    final secondaryTextColor =
+        isLightBg ? Colors.black54 : Coloressito.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -51,9 +53,11 @@ class InfoUbicacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLightBg = Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
+    final isLightBg =
+        Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
     final bgColor = isLightBg ? Colors.white : Coloressito.surfaceLight;
-    final borderColor = isLightBg ? Colors.grey.shade300 : Coloressito.borderLight;
+    final borderColor =
+        isLightBg ? Colors.grey.shade300 : Coloressito.borderLight;
     final textColor = ubicacion != null
         ? (isLightBg ? Colors.black : Coloressito.textPrimary)
         : (isLightBg ? Colors.black54 : Coloressito.textSecondary);
@@ -110,11 +114,13 @@ class CampoFormulario extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLightBg = Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
+    final isLightBg =
+        Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
     final textColor = isLightBg ? Colors.black : Coloressito.textPrimary;
     final labelColor = isLightBg ? Colors.black54 : Coloressito.textSecondary;
     final hintColor = isLightBg ? Colors.black38 : Coloressito.textMuted;
-    final enabledBorderColor = isLightBg ? Colors.grey.shade300 : Coloressito.borderLight;
+    final enabledBorderColor =
+        isLightBg ? Colors.grey.shade300 : Coloressito.borderLight;
 
     return TextFormField(
       controller: controller,

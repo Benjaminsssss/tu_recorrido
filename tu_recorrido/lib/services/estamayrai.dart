@@ -16,27 +16,28 @@ class EstacionesService {
           return [];
         }
 
-        return snapshot.docs.map((doc) {
-          try {
-            final data = doc.data();
-            return PlaceResult(
-              placeId: doc.id,
-              nombre: data['nombre'] ?? 'Estación sin nombre',
-              ubicacion: LatLng(
-                (data['latitud'] as num?)?.toDouble() ?? 0.0,
-                (data['longitud'] as num?)?.toDouble() ?? 0.0,
-              ),
-              rating: (data['rating'] as num?)?.toDouble(),
-              esGenerado: false,
-            );
-          } catch (e) {
-            print('❌ Error al procesar documento ${doc.id}: $e');
-            return null;
-          }
-        })
-        .where((station) => station != null)
-        .cast<PlaceResult>()
-        .toList();
+        return snapshot.docs
+            .map((doc) {
+              try {
+                final data = doc.data();
+                return PlaceResult(
+                  placeId: doc.id,
+                  nombre: data['nombre'] ?? 'Estación sin nombre',
+                  ubicacion: LatLng(
+                    (data['latitud'] as num?)?.toDouble() ?? 0.0,
+                    (data['longitud'] as num?)?.toDouble() ?? 0.0,
+                  ),
+                  rating: (data['rating'] as num?)?.toDouble(),
+                  esGenerado: false,
+                );
+              } catch (e) {
+                print('❌ Error al procesar documento ${doc.id}: $e');
+                return null;
+              }
+            })
+            .where((station) => station != null)
+            .cast<PlaceResult>()
+            .toList();
       });
     } catch (e) {
       print('❌ Error al obtener estaciones: $e');
@@ -51,7 +52,8 @@ class EstacionesService {
       throw Exception('Usuario no autenticado');
     }
     if (!user.emailVerified) {
-      throw Exception('Debes verificar tu correo electrónico antes de calificar lugares');
+      throw Exception(
+          'Debes verificar tu correo electrónico antes de calificar lugares');
     }
     final userId = user.uid;
     try {
@@ -62,36 +64,33 @@ class EstacionesService {
       // Verificar si la estación existe
       final estacionRef = _firestore.collection('estaciones').doc(estacionId);
       final estacionDoc = await estacionRef.get();
-      
+
       print('🏢 Estación existe: ${estacionDoc.exists}');
       if (estacionDoc.exists) {
         print('📍 Datos de la estación: ${estacionDoc.data()}');
       }
-      
+
       if (!estacionDoc.exists) {
         throw Exception('La estación no existe');
       }
 
       // Guardar el rating individual en la subcolección ratings
-      await estacionRef
-          .collection('ratings')
-          .doc(userId)
-          .set({
-            'rating': rating,
-            'fecha': FieldValue.serverTimestamp(),
-            'userId': userId,
-            'userEmail': user.email,
-          }, SetOptions(merge: true));
+      await estacionRef.collection('ratings').doc(userId).set({
+        'rating': rating,
+        'fecha': FieldValue.serverTimestamp(),
+        'userId': userId,
+        'userEmail': user.email,
+      }, SetOptions(merge: true));
 
       print('✅ Rating individual guardado correctamente');
 
       // Calcular el nuevo promedio
       final ratingsSnapshot = await estacionRef.collection('ratings').get();
-      
+
       if (ratingsSnapshot.docs.isNotEmpty) {
         double suma = 0;
         int totalRatings = 0;
-        
+
         for (var doc in ratingsSnapshot.docs) {
           final ratingValue = doc.data()['rating'];
           if (ratingValue != null) {
@@ -99,21 +98,20 @@ class EstacionesService {
             totalRatings++;
           }
         }
-        
+
         if (totalRatings > 0) {
           double promedio = suma / totalRatings;
-          
+
           // Actualizar el promedio en el documento principal
           await estacionRef.set({
             'rating': promedio,
             'totalRatings': totalRatings,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
-              
+
           print('✅ Promedio actualizado: $promedio (Total: $totalRatings)');
         }
       }
-
     } catch (e) {
       print('❌ Error al calificar estación: $e');
       rethrow;
@@ -127,11 +125,11 @@ class EstacionesService {
 
     try {
       final doc = await _firestore
-        .collection('estaciones')
-        .doc(estacionId)
-        .collection('ratings')
-        .doc(userId)
-        .get();
+          .collection('estaciones')
+          .doc(estacionId)
+          .collection('ratings')
+          .doc(userId)
+          .get();
 
       if (doc.exists) {
         return (doc.data()?['rating'] as num?)?.toDouble();
@@ -160,7 +158,7 @@ class EstacionesService {
 
         double suma = 0;
         int totalRatings = 0;
-        
+
         for (var doc in snapshot.docs) {
           final ratingValue = doc.data()['rating'];
           if (ratingValue != null) {
@@ -168,7 +166,7 @@ class EstacionesService {
             totalRatings++;
           }
         }
-        
+
         if (totalRatings > 0) {
           yield suma / totalRatings;
         } else {

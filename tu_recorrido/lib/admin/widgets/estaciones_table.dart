@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import '../../models/estacion.dart';
 import '../../services/estacion_service.dart';
@@ -24,15 +26,33 @@ class _EstacionesTableState extends State<EstacionesTable> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
+    // debug
+    // ignore: avoid_print
+    print('EstacionesTable._load: starting');
     try {
       final list = await EstacionService.obtenerEstacionesActivas();
-      if (mounted) setState(() => _estaciones = list);
-    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar estaciones: $e')));
+        // debug
+        // ignore: avoid_print
+        print('EstacionesTable._load: fetched ${list.length} estaciones');
+        setState(() => _estaciones = list);
       }
+    } catch (e) {
+      // debug
+      // ignore: avoid_print
+      print('EstacionesTable._load: error -> $e');
+      // Show snackbar after first frame to avoid inherited widget lookup during init
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al cargar estaciones: $e')),
+          );
+        }
+      });
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -52,24 +72,40 @@ class _EstacionesTableState extends State<EstacionesTable> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre')),
-              TextFormField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Descripción')),
-              TextFormField(controller: comunaCtrl, decoration: const InputDecoration(labelText: 'Comuna')),
+              TextFormField(
+                  controller: nombreCtrl,
+                  decoration: const InputDecoration(labelText: 'Nombre')),
+              TextFormField(
+                  controller: descCtrl,
+                  decoration: const InputDecoration(labelText: 'Descripción')),
+              TextFormField(
+                  controller: comunaCtrl,
+                  decoration: const InputDecoration(labelText: 'Comuna')),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancelar')),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Coloressito.adventureGreen),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Coloressito.adventureGreen),
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
-                final updated = est.copyWith(nombre: nombreCtrl.text.trim(), descripcion: descCtrl.text.trim(), comuna: comunaCtrl.text.trim());
+                final updated = est.copyWith(
+                    nombre: nombreCtrl.text.trim(),
+                    descripcion: descCtrl.text.trim(),
+                    comuna: comunaCtrl.text.trim());
                 try {
+                  final navigator = Navigator.of(ctx);
                   await EstacionService.actualizarEstacion(est.id, updated);
-                  if (mounted) Navigator.of(ctx).pop(true);
+                  if (mounted) navigator.pop(true);
                 } catch (e) {
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error al actualizar: $e')));
+                  }
                 }
               },
               child: const Text('Guardar'))
@@ -85,24 +121,37 @@ class _EstacionesTableState extends State<EstacionesTable> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmar eliminación'),
-        content: Text('¿Desactivar la estación "${est.nombre}"? Esta acción la ocultará del sistema.'),
+        content: Text(
+            '¿Desactivar la estación "${est.nombre}"? Esta acción la ocultará del sistema.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Coloressito.badgeRed), child: const Text('Desactivar'))
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancelar')),
+          ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Coloressito.badgeRed),
+              child: const Text('Desactivar'))
         ],
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true) {
+      return;
+    }
 
     try {
       await EstacionService.desactivarEstacion(est.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Estación desactivada')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Estación desactivada')));
         await _load();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al desactivar: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error al desactivar: $e')));
+      }
     }
   }
 
@@ -116,7 +165,8 @@ class _EstacionesTableState extends State<EstacionesTable> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Coloressito.borderLight),
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+              color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -126,12 +176,18 @@ class _EstacionesTableState extends State<EstacionesTable> {
             children: [
               const Icon(Icons.location_city),
               const SizedBox(width: 8),
-              Text('Gestión de Estaciones', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              Text('Gestión de Estaciones',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold)),
               const Spacer(),
               ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Coloressito.adventureGreen),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Coloressito.adventureGreen),
                 onPressed: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CrearEstacionScreen()));
+                  await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const CrearEstacionScreen()));
                   await _load();
                 },
                 icon: const Icon(Icons.add),
@@ -147,9 +203,13 @@ class _EstacionesTableState extends State<EstacionesTable> {
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 // make header row slightly grey and increase spacing so the table reads better
-                headingRowColor: MaterialStateProperty.all(Colors.grey[100]),
-                headingTextStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                dataRowHeight: 64,
+                headingRowColor: MaterialStatePropertyAll(Colors.grey.shade100),
+                headingTextStyle: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.copyWith(fontWeight: FontWeight.w600),
+                dataRowMinHeight: 64,
+                dataRowMaxHeight: 64,
                 columnSpacing: 24,
                 columns: const [
                   DataColumn(label: Text('Nombre')),
@@ -159,36 +219,82 @@ class _EstacionesTableState extends State<EstacionesTable> {
                   DataColumn(label: Text('Acciones')),
                 ],
                 rows: _estaciones.map((e) {
-                final imageUrl = e.imagenes.isNotEmpty ? (e.imagenes[0]['url']?.toString() ?? '') : '';
-                return DataRow(cells: [
-                  DataCell(SizedBox(width: 200, child: Text(e.nombre, overflow: TextOverflow.ellipsis))),
-                  DataCell(SizedBox(width: 300, child: Text(e.descripcion, overflow: TextOverflow.ellipsis))),
-                  DataCell(Text(e.comuna ?? '-')),
-                  DataCell(
-                    imageUrl.isNotEmpty
-                        ? ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.network(imageUrl, width: 80, height: 48, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 80, height: 48, color: Colors.grey)))
-                        : Container(width: 80, height: 48, decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.grey.shade200))),
-                  ),
-                  DataCell(Row(children: [
-                    Container(
-                      decoration: BoxDecoration(color: Coloressito.badgeBlue.withOpacity(0.08), shape: BoxShape.circle),
-                      child: IconButton(onPressed: () => showDialog(context: context, builder: (_) => EstacionImageManagerDialog(estacionId: e.id)), icon: const Icon(Icons.image), color: Coloressito.badgeBlue, tooltip: 'Gestionar imágenes'),
+                  final imageUrl = e.imagenes.isNotEmpty
+                      ? (e.imagenes[0]['url']?.toString() ?? '')
+                      : '';
+                  return DataRow(cells: [
+                    DataCell(SizedBox(
+                        width: 200,
+                        child:
+                            Text(e.nombre, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(
+                        width: 300,
+                        child: Text(e.descripcion,
+                            overflow: TextOverflow.ellipsis))),
+                    DataCell(Text(e.comuna ?? '-')),
+                    DataCell(
+                      imageUrl.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(imageUrl,
+                                  width: 80,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                      width: 80,
+                                      height: 48,
+                                      color: Colors.grey)))
+                          : Container(
+                              width: 80,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border:
+                                      Border.all(color: Colors.grey.shade200))),
                     ),
-                    const SizedBox(width: 6),
-                    Container(
-                      decoration: BoxDecoration(color: Coloressito.badgeBlue.withOpacity(0.08), shape: BoxShape.circle),
-                      child: IconButton(onPressed: () => _showEditDialog(e), icon: const Icon(Icons.edit), color: Coloressito.badgeBlue),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      decoration: BoxDecoration(color: Coloressito.badgeRed.withOpacity(0.08), shape: BoxShape.circle),
-                      child: IconButton(onPressed: () => _confirmDeactivate(e), icon: const Icon(Icons.delete), color: Coloressito.badgeRed),
-                    ),
-                  ])),
-                ]);
-              }).toList(),
+                    DataCell(Row(children: [
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Coloressito.badgeBlue
+                                .withAlpha((0.08 * 255).round()),
+                            shape: BoxShape.circle),
+                        child: IconButton(
+                            onPressed: () => showDialog(
+                                context: context,
+                                builder: (_) => EstacionImageManagerDialog(
+                                    estacionId: e.id)),
+                            icon: const Icon(Icons.image),
+                            color: Coloressito.badgeBlue,
+                            tooltip: 'Gestionar imágenes'),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Coloressito.badgeBlue
+                                .withAlpha((0.08 * 255).round()),
+                            shape: BoxShape.circle),
+                        child: IconButton(
+                            onPressed: () => _showEditDialog(e),
+                            icon: const Icon(Icons.edit),
+                            color: Coloressito.badgeBlue),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Coloressito.badgeRed
+                                .withAlpha((0.08 * 255).round()),
+                            shape: BoxShape.circle),
+                        child: IconButton(
+                            onPressed: () => _confirmDeactivate(e),
+                            icon: const Icon(Icons.delete),
+                            color: Coloressito.badgeRed),
+                      ),
+                    ])),
+                  ]);
+                }).toList(),
+              ),
             ),
-          ),
         ],
       ),
     );

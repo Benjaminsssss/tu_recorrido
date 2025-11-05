@@ -15,7 +15,7 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
 
   Future<void> _runAuthDiagnosis() async {
     if (_isRunning) return;
-    
+
     setState(() {
       _isRunning = true;
       _diagnosisResult = 'Ejecutando diagnóstico de autenticación...';
@@ -24,7 +24,7 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
     try {
       final diagnosis = await DebugAuthService.diagnoseAuth();
       final formattedResult = DebugAuthService.formatDiagnosis(diagnosis);
-      
+
       setState(() {
         _diagnosisResult = formattedResult;
         _isRunning = false;
@@ -39,7 +39,7 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
 
   Future<void> _runAlbumDiagnosis() async {
     if (_isRunning) return;
-    
+
     setState(() {
       _isRunning = true;
       _diagnosisResult = 'Ejecutando diagnóstico del álbum...';
@@ -48,7 +48,7 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
     try {
       final diagnosis = await AlbumMigrationService.diagnoseAlbum();
       final formattedResult = AlbumMigrationService.formatDiagnosis(diagnosis);
-      
+
       setState(() {
         _diagnosisResult = formattedResult;
         _isRunning = false;
@@ -63,7 +63,7 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
 
   Future<void> _migratePhotos() async {
     if (_isRunning) return;
-    
+
     // Confirmar migración
     final confirmar = await showDialog<bool>(
       context: context,
@@ -87,7 +87,7 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
     );
 
     if (confirmar != true) return;
-    
+
     setState(() {
       _isRunning = true;
       _diagnosisResult = 'Migrando fotos a Firebase...';
@@ -95,8 +95,9 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
 
     try {
       final result = await AlbumMigrationService.migratePhotosToFirebase();
-      final formattedResult = AlbumMigrationService.formatMigrationResult(result);
-      
+      final formattedResult =
+          AlbumMigrationService.formatMigrationResult(result);
+
       setState(() {
         _diagnosisResult = formattedResult;
         _isRunning = false;
@@ -138,7 +139,8 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         ),
                         SizedBox(width: 8),
@@ -147,7 +149,8 @@ class _DebugAuthScreenState extends State<DebugAuthScreen> {
                     )
                   : const Text(
                       'Diagnóstico de Autenticación',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             ),
             const SizedBox(height: 12),

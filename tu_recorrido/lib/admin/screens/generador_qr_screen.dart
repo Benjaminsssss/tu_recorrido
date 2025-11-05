@@ -177,14 +177,19 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
           return Card(
             color: Colors.white,
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 2,
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: tieneQR ? Coloressito.adventureGreen.withOpacity(0.08) : Colors.orange.withOpacity(0.08),
+                  color: tieneQR
+                      ? Coloressito.adventureGreen
+                          .withAlpha((0.08 * 255).round())
+                      : Colors.orange.withAlpha((0.08 * 255).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -194,7 +199,8 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
               ),
               title: Text(
                 estacion.nombre,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: Colors.black87),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,9 +208,12 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                   const SizedBox(height: 4),
                   // QR line highlighted in a subtle rounded box to make it stand out
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: tieneQR ? Coloressito.surfaceLight : Colors.orange.withOpacity(0.06),
+                      color: tieneQR
+                          ? Coloressito.surfaceLight
+                          : Colors.orange.withAlpha((0.06 * 255).round()),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Coloressito.borderLight),
                     ),
@@ -267,7 +276,8 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                 const SizedBox(height: 8),
                 // QR code text inside a highlighted pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Coloressito.surfaceLight,
                     borderRadius: BorderRadius.circular(8),

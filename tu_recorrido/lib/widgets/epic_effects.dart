@@ -29,12 +29,12 @@ class _StarburstEffectState extends State<StarburstEffect>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _radiusAnimation = Tween<double>(
       begin: 0.0,
       end: widget.maxRadius,
@@ -42,7 +42,7 @@ class _StarburstEffectState extends State<StarburstEffect>
       parent: _controller,
       curve: Curves.easeOut,
     ));
-    
+
     _opacityAnimation = Tween<double>(
       begin: 0.8,
       end: 0.0,
@@ -50,7 +50,7 @@ class _StarburstEffectState extends State<StarburstEffect>
       parent: _controller,
       curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
     ));
-    
+
     if (widget.isActive) {
       _controller.forward();
     }
@@ -74,7 +74,7 @@ class _StarburstEffectState extends State<StarburstEffect>
   @override
   Widget build(BuildContext context) {
     if (!widget.isActive) return const SizedBox.shrink();
-    
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -109,7 +109,7 @@ class _StarburstPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
-  ..color = color.withAlpha((opacity * 255).round())
+      ..color = color.withAlpha((opacity * 255).round())
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round;
 
@@ -123,7 +123,7 @@ class _StarburstPainter extends CustomPainter {
         center.dx + math.cos(angle) * radius,
         center.dy + math.sin(angle) * radius,
       );
-      
+
       canvas.drawLine(start, end, paint);
     }
   }
@@ -158,12 +158,12 @@ class _RingExpansionState extends State<RingExpansion>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _radiusAnimation = Tween<double>(
       begin: 50.0,
       end: widget.maxRadius,
@@ -171,7 +171,7 @@ class _RingExpansionState extends State<RingExpansion>
       parent: _controller,
       curve: Curves.easeOut,
     ));
-    
+
     _opacityAnimation = Tween<double>(
       begin: 0.6,
       end: 0.0,
@@ -179,7 +179,7 @@ class _RingExpansionState extends State<RingExpansion>
       parent: _controller,
       curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
     ));
-    
+
     if (widget.isActive) {
       _controller.forward();
     }
@@ -203,7 +203,7 @@ class _RingExpansionState extends State<RingExpansion>
   @override
   Widget build(BuildContext context) {
     if (!widget.isActive) return const SizedBox.shrink();
-    
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -235,7 +235,7 @@ class _RingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
-  ..color = color.withAlpha((opacity * 255).round())
+      ..color = color.withAlpha((opacity * 255).round())
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.0;
 

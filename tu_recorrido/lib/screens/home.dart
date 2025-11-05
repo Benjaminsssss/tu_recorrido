@@ -72,14 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Place(
       id: doc.id,
-  nombre: d['nombre']?.toString() ?? d['name']?.toString() ?? 'Sin nombre',
+      nombre: d['nombre']?.toString() ?? d['name']?.toString() ?? 'Sin nombre',
       region: d['country']?.toString() ?? d['region']?.toString() ?? 'Chile',
       comuna:
           d['city']?.toString() ?? d['comuna']?.toString() ?? 'Sin ubicación',
       shortDesc: d['shortDesc']?.toString() ?? d['category']?.toString() ?? '',
-    descripcion: d['descripcion']?.toString() ??
-      d['description']?.toString() ??
-      'Sin descripción disponible.',
+      descripcion: d['descripcion']?.toString() ??
+          d['description']?.toString() ??
+          'Sin descripción disponible.',
       mejorMomento: d['bestTime']?.toString() ??
           d['mejorMomento']?.toString() ??
           'Todo el año',
@@ -270,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     final createdAt = d['createdAt'] ?? d['fechaCreacion'];
                     final lat = d['lat'] ?? d['latitud'];
                     final lng = d['lng'] ?? d['longitud'];
-                    debugPrint('  doc: $id  nombre=$nombre  createdAt=$createdAt  lat=$lat  lng=$lng');
+                    debugPrint(
+                        '  doc: $id  nombre=$nombre  createdAt=$createdAt  lat=$lat  lng=$lng');
                   }
                 } catch (e) {
                   debugPrint('Home: error debug print snapshot: $e');
@@ -283,7 +284,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (_selectedCountry != null) {
                   filtered = filtered.where((d) {
                     final data = d.data();
-                    final country = (data['country'] ?? data['region'] ?? data['pais'])?.toString();
+                    final country =
+                        (data['country'] ?? data['region'] ?? data['pais'])
+                            ?.toString();
                     return country == _selectedCountry;
                   }).toList();
                 }
@@ -301,8 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 final q = _searchCtrl.text.trim().toLowerCase();
                 if (q.isNotEmpty) {
                   filtered = filtered.where((d) {
-                    final name =
-                        (d.data()['nombre'] ?? d.data()['name'] ?? '').toString().toLowerCase();
+                    final name = (d.data()['nombre'] ?? d.data()['name'] ?? '')
+                        .toString()
+                        .toLowerCase();
                     return name.contains(q);
                   }).toList();
                 }
@@ -326,12 +330,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Usar los valores ya normalizados en el view-model para evitar
                     // discrepancias entre 'd' y 'place' (nombre/descripcion vacíos)
-                    final name = place.nombre.isNotEmpty ? place.nombre : (d['nombre'] ?? d['name'] ?? '—').toString();
-                    final imageUrl = (place.imagenes.isNotEmpty ? place.imagenes[0].url : null) ?? d['imageUrl']?.toString();
+                    final name = place.nombre.isNotEmpty
+                        ? place.nombre
+                        : (d['nombre'] ?? d['name'] ?? '—').toString();
+                    final imageUrl = (place.imagenes.isNotEmpty
+                            ? place.imagenes[0].url
+                            : null) ??
+                        d['imageUrl']?.toString();
 
                     String? subtitle;
-                    final city = place.comuna.isNotEmpty ? place.comuna : (d['city'] ?? d['comuna'])?.toString();
-                    final country = place.region.isNotEmpty ? place.region : (d['country'] ?? d['region'])?.toString();
+                    final city = place.comuna.isNotEmpty
+                        ? place.comuna
+                        : (d['city'] ?? d['comuna'])?.toString();
+                    final country = place.region.isNotEmpty
+                        ? place.region
+                        : (d['country'] ?? d['region'])?.toString();
                     final category = d['category']?.toString() ?? '';
 
                     if (city != null && country != null) {
@@ -345,7 +358,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: _PlaceCard(
                         title: name,
                         subtitle: subtitle,
