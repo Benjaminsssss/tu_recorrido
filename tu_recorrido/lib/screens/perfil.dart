@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 import '../models/user_state.dart';
+import '../models/regioycomu.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../utils/colores.dart';
 import 'escanerqr.dart';
@@ -25,6 +26,7 @@ enum PerfilModo { hub, editar, configuracion }
 class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   PerfilModo _modo = PerfilModo.hub;
   double _sheetFraction = 0.92; // 92% alto al abrir
+  bool _showingGeneralProgress = false;
   static const double minFraction = 0.7;
   static const double maxFraction = 0.92;
   late AnimationController _controller;
@@ -34,7 +36,10 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   String? _nombre;
   String? _correo;
   String? _nivel;
-  double _progreso = 0.0;
+  String _selectedRegion = '';
+  String _selectedComuna = '';
+  List<String> _comunas = [];
+  Stream<Map<String, dynamic>>? _progresoStream;
   List<String> _sellos = [];
   List<String> _amigos = [];
   Locale? _selectedLocale;
@@ -65,17 +70,36 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     String? base64img;
     if (user != null) {
       base64img = await ProfileService.getAvatarBase64(user.uid);
+      
+      // Inicializar regiones y comunas
+      setState(() {
+        // Obtener la lista de regiones del mapa
+        if (_selectedRegion.isEmpty && regionesYComunas.isNotEmpty) {
+          _selectedRegion = regionesYComunas.keys.first;
+          _comunas = regionesYComunas[_selectedRegion] ?? [];
+          if (_selectedComuna.isEmpty && _comunas.isNotEmpty) {
+            _selectedComuna = _comunas.first;
+            _updateProgresoStream(user.uid);
+          }
+        }
+      });
     }
+    
     setState(() {
       _photoBase64 = base64img;
       _nombre = user?.displayName ?? '';
       _correo = user?.email ?? '';
       _nivel = 'Nivel Viajero 1';
-      _progreso = 0.62; // Placeholder, reemplazar por real
       _sellos = [];
       _amigos = [];
       _selectedLocale = Locale('es');
       _nameCtrl.text = _nombre ?? '';
+    });
+  }
+
+  void _updateProgresoStream(String uid) {
+    setState(() {
+      _progresoStream = ProfileService.getComunaProgress(uid, _selectedComuna);
     });
   }
 
@@ -413,7 +437,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             thickness: 1,
             color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
         const SizedBox(height: 14),
-        _buildProgressCard(),
+        _buildComunaProgressCard(),
         const SizedBox(height: 10),
         Divider(
             height: 1,
@@ -765,38 +789,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     }
   }
 
-  Widget _buildProgressCard() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      elevation: 0,
-      color: Coloressito.surfaceLight,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Progreso del Pasaporte',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: LinearProgressIndicator(
-                    value: _progreso,
-                    backgroundColor: Colors.grey[200],
-                    color: Coloressito.adventureGreen,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text('${(_progreso * 100).toInt()}%',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildSavedPlacesCard() {
     return Card(
@@ -897,6 +890,221 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     );
   }
 
+  Widget _buildComunaProgressCard() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      elevation: 0,
+      color: Coloressito.surfaceLight,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Progreso',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      icon: Icon(
+                        _showingGeneralProgress ? Icons.location_on : Icons.public,
+                        size: 20,
+                      ),
+                      label: Text(
+                        _showingGeneralProgress ? 'Ver por comuna' : 'Ver total país',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _showingGeneralProgress = !_showingGeneralProgress;
+                          if (_showingGeneralProgress) {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              _progresoStream = ProfileService.getTotalProgress(user.uid);
+                            }
+                          } else if (_selectedComuna.isNotEmpty) {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              _updateProgresoStream(user.uid);
+                            }
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (!_showingGeneralProgress) ...[
+              Row(
+                children: [
+                  Text(
+                    'Región: ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedRegion.isEmpty ? null : _selectedRegion,
+                      hint: const Text('Selecciona una región'),
+                      selectedItemBuilder: (context) {
+                        final list = regionesYComunas.keys.toList();
+                        return list
+                            .map((region) => Text(
+                                  region,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ))
+                            .toList();
+                      },
+                      items: regionesYComunas.keys.map((region) {
+                        return DropdownMenuItem(
+                          value: region,
+                          child: Text(region),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedRegion = newValue;
+                            _comunas = regionesYComunas[newValue] ?? [];
+                            _selectedComuna = _comunas.isNotEmpty ? _comunas.first : '';
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              _updateProgresoStream(user.uid);
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    'Comuna: ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedComuna.isEmpty ? null : _selectedComuna,
+                      hint: const Text('Selecciona una comuna'),
+                      selectedItemBuilder: (context) {
+                        final list = _comunas;
+                        return list
+                            .map((comuna) => Text(
+                                  comuna,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ))
+                            .toList();
+                      },
+                      items: _comunas.map((comuna) {
+                        return DropdownMenuItem(
+                          value: comuna,
+                          child: Text(comuna),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedComuna = newValue;
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              _updateProgresoStream(user.uid);
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (_progresoStream != null) ...[
+              const SizedBox(height: 18),
+              SizedBox(
+                width: MediaQuery.of(context).size.width - 40,
+                child: StreamBuilder<Map<String, dynamic>>(
+                  stream: _progresoStream,
+                  builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
+
+                  if (!snapshot.hasData) {
+                    return const CircularProgressIndicator();
+                  }
+
+                  final progress = snapshot.data!;
+                  final visitados = progress['visitados'] ?? 0;
+                  final total = progress['total'] ?? 0;
+                  final porcentaje = total > 0 ? (visitados / total * 100) : 0.0;
+
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - 32,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                        _showingGeneralProgress 
+                            ? 'Progreso total en Chile'
+                            : 'Progreso en $_selectedComuna',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: porcentaje / 100,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$visitados de $total lugares visitados (${porcentaje.toStringAsFixed(1)}%)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                    ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ],
+      ),
+    )
+    );
+  }
   Widget _buildStreakCard() {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),

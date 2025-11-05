@@ -9,7 +9,6 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:tu_recorrido/models/lugares.dart';
-import 'package:tu_recorrido/models/marcadores.dart';
 import 'package:tu_recorrido/services/estamayrai.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
@@ -39,8 +38,8 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
   final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
 
-  static const double _cardHeight = 120;
-  static const double _cardWidth = 400;
+  static const double _cardHeight = 140;
+  static const double _cardWidth = 480;
 
   final PageController _pageController = PageController(viewportFraction: 0.90);
   int _currentPage = 0;
@@ -171,13 +170,13 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
           _lugares = estaciones;
           _markers.clear();
           
-          // Primero agregamos los lugares de Firestore
+          // Agregar los lugares de Firestore
           for (final estacion in estaciones) {
             _markers.add(
               Marker(
                 markerId: MarkerId(estacion.placeId),
                 position: estacion.ubicacion,
-                icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(200.0), // Gris claro azulado
+                icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(200.0),
                 infoWindow: InfoWindow(
                   title: estacion.nombre,
                   snippet: estacion.rating != null 
@@ -188,23 +187,10 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
             );
           }
           
-          // Como respaldo, si no hay lugares en Firestore, usamos los marcadores locales
+          // Si no hay lugares en Firestore, mostramos un mensaje
           if (estaciones.isEmpty) {
-            print('⚠️ No hay estaciones en Firestore, usando marcadores locales...');
-            for (final lugar in MarcadoresData.lugaresMarcados) {
-              _markers.add(
-                Marker(
-                  markerId: MarkerId(lugar.placeId),
-                  position: lugar.ubicacion,
-                  infoWindow: InfoWindow(
-                    title: lugar.nombre,
-                    snippet: lugar.rating != null 
-                        ? '⭐ ${lugar.rating!.toStringAsFixed(1)}'
-                        : 'Sin calificación',
-                  ),
-                ),
-              );
-            }
+            print('⚠️ No hay estaciones en Firestore');
+            _showSnackBar('No hay estaciones disponibles');
           }
           
           // Siempre agregamos el marcador del usuario si existe
@@ -215,39 +201,19 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
       },
       onError: (e) {
         print('❌ Error al cargar estaciones de Firestore: $e');
-        print('⚠️ Usando marcadores locales como respaldo...');
-        
         if (mounted) {
           setState(() {
             _markers.clear();
-            // Usar marcadores locales como respaldo
-            for (final lugar in MarcadoresData.lugaresMarcados) {
-              _markers.add(
-                Marker(
-                  markerId: MarkerId(lugar.placeId),
-                  position: lugar.ubicacion,
-                  infoWindow: InfoWindow(
-                    title: lugar.nombre,
-                    snippet: lugar.rating != null 
-                        ? '⭐ ${lugar.rating!.toStringAsFixed(1)}'
-                        : 'Sin calificación',
-                  ),
-                ),
-              );
-            }
             if (_userMarker != null) {
               _markers.add(_userMarker!);
             }
           });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Usando datos locales (sin conexión)')),
-          );
+          _showSnackBar('Error al cargar estaciones');
         }
       },
     );
   }
-
+    
   PolylinePoints polylinePoints = PolylinePoints(apiKey: googleApiKeyInline);
 
   void _pageControllerListener() {
@@ -1292,7 +1258,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                                     size: 20,
                                     color: colorAmarillo,
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   Text(
                                     displayRating,
                                     style: TextStyle(
@@ -1301,7 +1267,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  const SizedBox(width: 6),
                                   if (_currentPosition != null)
                                     Expanded(
                                       child: Row(
@@ -1311,7 +1277,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                                             size: 20,
                                             color: colorVerdeOliva,
                                           ),
-                                          const SizedBox(width: 6),
+                                          const SizedBox(width: 2),
                                           Flexible(
                                             child: Text(
                                               _getDistanceText(place.ubicacion),
@@ -1341,4 +1307,5 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
         ),
       ),
     );
-  }  }
+  }
+}

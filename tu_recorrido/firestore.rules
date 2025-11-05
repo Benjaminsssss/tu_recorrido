@@ -1,9 +1,7 @@
-// DEV - firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Funciones auxiliares de validación
+    // --- FUNCIONES GLOBALES ---
     function isAuthenticated() {
       return request.auth != null && request.auth.uid != null;
     }
@@ -12,66 +10,27 @@ service cloud.firestore {
       return request.auth.token.email_verified == true;
     }
 
+    // Función para verificar si un usuario es administrador
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Función para validar el valor del rating
     function isValidRating() {
       return request.resource.data.rating is number &&
              request.resource.data.rating >= 0 &&
              request.resource.data.rating <= 5;
     }
 
-    // ----- ESTACIONES -----
-    match /estaciones/{estacionId} {
-      // Cualquiera puede leer las estaciones
-      allow read: if true;
-      
-      // Solo los administradores pueden crear/borrar estaciones
-      allow create, delete: if isAdmin();
-      
-      // Permitir actualizar solo los campos de rating
-      allow update: if isAuthenticated() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['rating', 'totalRatings', 'updatedAt']) ||
-        isAdmin();
-        
-      // Subcolección de ratings
-      match /ratings/{ratingId} {
-        // Cualquiera puede ver los ratings
-        allow read: if true;
-        
-        // Solo usuarios autenticados y verificados pueden crear/actualizar su propio rating
-        allow create: if isAuthenticated() && isEmailVerified() &&
-          ratingId == request.auth.uid &&
-          request.resource.data.keys().hasAll(['rating', 'userId', 'fecha']) &&
-          request.resource.data.userId == request.auth.uid &&
-          isValidRating();
-          
-        allow update: if isAuthenticated() && isEmailVerified() &&
-          ratingId == request.auth.uid &&
-          request.resource.data.userId == request.auth.uid &&
-          resource.data.userId == request.auth.uid &&
-          isValidRating();
-          
-        // Solo el dueño del rating o un admin pueden borrarlo
-        allow delete: if isAuthenticated() &&
-          (ratingId == request.auth.uid || isAdmin());
-      }
-    }
-
-    // ----- USERS -----
+    // --- COLECCIÓN: USERS ---
     match /users/{uid} {
-      // El dueño puede leer/escribir su documento
-      // Los administradores pueden leer todos los usuarios y modificar roles
-      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      // Reglas básicas (Lectura/Escritura)
+      allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
       allow delete: if request.auth != null && request.auth.uid == uid;
 
-      // Validación simple de esquema (evita tipos raros)
+      // Validación de esquema para el documento user
       function isValidUser(data) {
         return
           (data.keys().hasOnly([
@@ -91,27 +50,27 @@ service cloud.firestore {
           (data.role is string || data.role == null);
       }
 
-      allow create: if request.auth != null
-                    && request.auth.uid == uid
-                    && isValidUser(request.resource.data);
+      // Creación: Sólo el propio usuario puede crearse y debe pasar validación
+      allow create: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidUser(request.resource.data);
 
-      allow update: if request.auth != null
-                    && isValidUser(request.resource.data)
-                    && (
-                      // El usuario puede actualizar su propio perfil (excepto role)
-                      (request.auth.uid == uid && 
-                       (request.resource.data.role == resource.data.role || request.resource.data.role == null)) ||
-                      // Los administradores pueden cambiar cualquier rol
-                      isAdmin()
-                    )
-                    // No permitir que el cliente cambie createdAt
-                    && (request.resource.data.createdAt == resource.data.createdAt);
+      // Actualización: Debe pasar validación y ser dueño o admin.
+      allow update: if isAuthenticated()
+                       && isValidUser(request.resource.data)
+                       && (
+                         // DUEÑO: Puede actualizar su perfil, PERO no cambiar el 'role' (o establecerlo como null)
+                         (request.auth.uid == uid &&
+                          (request.resource.data.role == resource.data.role || request.resource.data.role == null))
+                         // ADMIN: Puede cambiar todo
+                         || isAdmin()
+                       )
+                       // No permitir que el cliente cambie 'createdAt'
+                       && (request.resource.data.createdAt == resource.data.createdAt);
 
-      // ----- ESTACIONES VISITADAS (subcollection) -----
+
+      // --- SUBCOLECCIÓN: estaciones_visitadas ---
       match /estaciones_visitadas/{estacionVisitadaId} {
-        // Solo el dueño puede leer/escribir sus estaciones visitadas
-        allow read, create, update, delete: if request.auth != null && request.auth.uid == uid;
-
         // Validación de esquema para estaciones visitadas
         function isValidEstacionVisitada(data) {
           return
@@ -128,23 +87,22 @@ service cloud.firestore {
             (data.longitudVisita is number || data.longitudVisita == null);
         }
 
-        allow create: if request.auth != null 
-                      && request.auth.uid == uid 
-                      && isValidEstacionVisitada(request.resource.data);
-        
-        allow update: if request.auth != null 
-                      && request.auth.uid == uid 
-                      && isValidEstacionVisitada(request.resource.data);
+        // Solo el dueño puede leer/escribir sus estaciones visitadas
+        allow read, create, update, delete: if isAuthenticated() && request.auth.uid == uid;
+
+        allow create: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidEstacionVisitada(request.resource.data);
+
+        allow update: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidEstacionVisitada(request.resource.data);
       }
 
-      // ----- INSIGNIAS POR USUARIO (subcollection) -----
-      // Permite que el propio usuario o un administrador creen/lean las insignias
+      // --- SUBCOLECCIÓN: insignias ---
       match /insignias/{insigniaId} {
         // Validación simple para el documento de insignia del usuario
         function isValidUserInsignia(data) {
-          // Validamos únicamente la presencia de fechaObtenida (timestamp).
-          // No comprobamos el tipo de `estacionRef` porque el tipo `reference`
-          // puede causar errores de análisis en algunos entornos de reglas.
           return (
             data.keys().hasOnly(['fechaObtenida']) ||
             data.keys().hasOnly(['fechaObtenida','estacionRef'])
@@ -153,27 +111,58 @@ service cloud.firestore {
         }
 
         // Lectura: dueño o admin
-        allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+        allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
 
-        // Crear: dueño o admin
-        allow create: if request.auth != null
-                      && (request.auth.uid == uid || isAdmin())
-                      && isValidUserInsignia(request.resource.data);
+        // Crear: dueño o admin, y debe pasar validación de esquema
+        allow create: if isAuthenticated()
+                       && (request.auth.uid == uid || isAdmin())
+                       && isValidUserInsignia(request.resource.data);
 
         // Update/Delete: dueño o admin
-        allow update, delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
+        allow update, delete: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
+      }
+
+      // --- SUBCOLECCIÓN: album_photos ---
+      match /album_photos/{photoId} {
+        // Validación de esquema para fotos del álbum
+        function isValidAlbumPhoto(data) {
+          return
+            (data.keys().hasOnly([
+              'id', 'badgeId', 'imageUrl', 'thumbnailUrl', 'description',
+              'uploadDate', 'location', 'metadata'
+            ])) &&
+            (data.id is string) &&
+            (data.badgeId is string) &&
+            (data.imageUrl is string) &&
+            (data.thumbnailUrl is string || data.thumbnailUrl == null) &&
+            (data.description is string || data.description == null) &&
+            (data.uploadDate is timestamp) &&
+            (data.location is string || data.location == null) &&
+            (data.metadata is map || data.metadata == null);
+        }
+
+        // Solo el dueño puede leer/escribir sus fotos del álbum con validación
+        allow read: if isAuthenticated() && request.auth.uid == uid;
+
+        allow create: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidAlbumPhoto(request.resource.data);
+
+        allow update: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidAlbumPhoto(request.resource.data);
+
+        allow delete: if isAuthenticated() && request.auth.uid == uid;
       }
     }
 
-    // ----- PLACES (legacy) -----
-    // Mantener reglas para compatibilidad con documentos históricos bajo 'places'.
+    // --- COLECCIÓN: PLACES (legado) ---
     match /places/{placeId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null;
+      allow create, update, delete: if isAuthenticated();
     }
 
-    // ----- INSIGNIAS -----
-    // Colección de insignias (top-level)
+    // --- COLECCIÓN: INSIGNIAS (top-level) ---
     match /insignias/{insigniaId} {
       function isValidInsignia(data) {
         return data.keys().hasOnly(['nombre','descripcion','imagenUrl','fechaCreacion'])
@@ -184,14 +173,87 @@ service cloud.firestore {
       }
 
       // Lectura: cualquiera autenticado puede leer la lista de insignias
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
 
       // Crear/Actualizar/Borrar: solo administradores
-      allow create: if request.auth != null && isAdmin() && isValidInsignia(request.resource.data);
-      allow update, delete: if request.auth != null && isAdmin();
+      allow create: if isAdmin() && isValidInsignia(request.resource.data);
+      allow update, delete: if isAdmin();
     }
 
-    // No necesitamos esta sección duplicada ya que las reglas de estaciones 
-    // están definidas arriba
+    // --- COLECCIÓN: ESTACIONES ---
+    match /estaciones/{estacionId} {
+
+      // Validación de esquema para estaciones
+      function isValidEstacion(data) {
+        // Aceptar dos variantes de keys: con o sin `insigniaID` (es opcional)
+        return (
+          data.keys().hasOnly([
+            'codigo', 'codigoQR', 'nombre', 'descripcion',
+            'latitud', 'longitud', 'fechaCreacion', 'activa', 'rating', 'totalRatings', 'updatedAt'
+          ])
+        ||
+          data.keys().hasOnly([
+            'codigo', 'codigoQR', 'nombre', 'descripcion',
+            'latitud', 'longitud', 'fechaCreacion', 'activa', 'insigniaID', 'rating', 'totalRatings', 'updatedAt'
+          ])
+        )
+        && (data.codigo is string)
+        && (data.codigoQR is string)
+        && (data.nombre is string)
+        && (data.descripcion is string)
+        && (data.latitud is number)
+        && (data.longitud is number)
+        && (data.fechaCreacion is timestamp)
+        && (data.activa is bool)
+        // Añadir validación de tipos para los campos de rating
+        && (data.rating is number)
+        && (data.totalRatings is number)
+        && (data.updatedAt is timestamp);
+      }
+
+      // Cualquiera autenticado puede leer las estaciones
+      allow read: if isAuthenticated();
+
+      // Creación: Solo administradores y pasa validación
+      allow create: if isAdmin()
+                       && isValidEstacion(request.resource.data)
+                       // en creación, solo permitir insigniaID si es null o el creador es admin
+                       && (request.resource.data.insigniaID == null || isAdmin());
+
+      // Actualización: Solo campos de rating (para el público) o ser admin
+      allow update: if isAuthenticated() &&
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['rating', 'totalRatings', 'updatedAt'])
+          // Si no está actualizando solo el rating, debe ser un administrador
+          || isAdmin()
+        );
+
+      // Borrar: Solo administradores
+      allow delete: if isAdmin();
+
+      // --- SUBCOLECCIÓN: ratings ---
+      match /ratings/{ratingId} {
+        // Cualquiera puede ver los ratings
+        allow read: if true;
+
+        // Solo usuarios autenticados y verificados pueden crear/actualizar su propio rating
+        allow create: if isAuthenticated() && isEmailVerified() &&
+          ratingId == request.auth.uid &&
+          request.resource.data.keys().hasAll(['rating', 'userId', 'fecha']) &&
+          request.resource.data.userId == request.auth.uid &&
+          isValidRating();
+
+        allow update: if isAuthenticated() && isEmailVerified() &&
+          ratingId == request.auth.uid &&
+          request.resource.data.userId == request.auth.uid &&
+          resource.data.userId == request.auth.uid &&
+          isValidRating();
+
+        // Solo el dueño del rating o un admin pueden borrarlo
+        allow delete: if isAuthenticated() &&
+          (ratingId == request.auth.uid || isAdmin());
+      }
+    }
   }
 }
