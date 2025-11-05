@@ -10,6 +10,8 @@ class PantallaBase extends StatelessWidget {
   final Future<void> Function()? onRefresh;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
+  final Color? backgroundColor;
+  final Color? appBarBackgroundColor;
 
   const PantallaBase({
     super.key,
@@ -19,19 +21,29 @@ class PantallaBase extends StatelessWidget {
     this.onRefresh,
     this.actions,
     this.floatingActionButton,
+    this.backgroundColor,
+    this.appBarBackgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Coloressito.backgroundDark,
+      backgroundColor: backgroundColor ?? Coloressito.backgroundDark,
       appBar: AppBar(
         title: Text(
           titulo,
-          style: const TextStyle(color: Coloressito.textPrimary),
+          style: const TextStyle(color: Colors.black),
         ),
-        backgroundColor: Coloressito.surfaceDark,
-        iconTheme: const IconThemeData(color: Coloressito.textPrimary),
+        backgroundColor: appBarBackgroundColor ?? Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black),
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Coloressito.borderLight,
+          ),
+        ),
         actions: actions,
       ),
       body: mostrarCargando

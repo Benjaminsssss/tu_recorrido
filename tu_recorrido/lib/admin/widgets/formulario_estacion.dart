@@ -7,10 +7,15 @@ class EncabezadoEstacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine readable colors depending on scaffold background (light vs dark)
+    final isLightBg = Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
+    final primaryTextColor = isLightBg ? Colors.black : Coloressito.textPrimary;
+    final secondaryTextColor = isLightBg ? Colors.black54 : Coloressito.textSecondary;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Coloressito.surfaceDark,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Coloressito.borderLight),
       ),
@@ -18,19 +23,19 @@ class EncabezadoEstacion extends StatelessWidget {
         children: [
           Icon(Icons.location_on, size: 48, color: Coloressito.adventureGreen),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Nueva Estación Patrimonial',
             style: TextStyle(
-              color: Coloressito.textPrimary,
+              color: primaryTextColor,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Crea puntos de interés histórico para que los usuarios puedan visitar',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Coloressito.textSecondary, fontSize: 14),
+            style: TextStyle(color: secondaryTextColor, fontSize: 14),
           ),
         ],
       ),
@@ -46,12 +51,19 @@ class InfoUbicacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLightBg = Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
+    final bgColor = isLightBg ? Colors.white : Coloressito.surfaceLight;
+    final borderColor = isLightBg ? Colors.grey.shade300 : Coloressito.borderLight;
+    final textColor = ubicacion != null
+        ? (isLightBg ? Colors.black : Coloressito.textPrimary)
+        : (isLightBg ? Colors.black54 : Coloressito.textSecondary);
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Coloressito.surfaceLight,
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Coloressito.borderLight),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
@@ -68,9 +80,7 @@ class InfoUbicacion extends StatelessWidget {
                   ? 'Ubicación: ${ubicacion.latitude.toStringAsFixed(6)}, ${ubicacion.longitude.toStringAsFixed(6)}'
                   : 'Obteniendo ubicación GPS...',
               style: TextStyle(
-                color: ubicacion != null
-                    ? Coloressito.textPrimary
-                    : Coloressito.textSecondary,
+                color: textColor,
                 fontSize: 12,
               ),
             ),
@@ -100,24 +110,30 @@ class CampoFormulario extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLightBg = Theme.of(context).scaffoldBackgroundColor.computeLuminance() > 0.5;
+    final textColor = isLightBg ? Colors.black : Coloressito.textPrimary;
+    final labelColor = isLightBg ? Colors.black54 : Coloressito.textSecondary;
+    final hintColor = isLightBg ? Colors.black38 : Coloressito.textMuted;
+    final enabledBorderColor = isLightBg ? Colors.grey.shade300 : Coloressito.borderLight;
+
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Coloressito.textPrimary),
+      style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Coloressito.textSecondary),
+        labelStyle: TextStyle(color: labelColor),
         hintText: hint,
-        hintStyle: const TextStyle(color: Coloressito.textMuted),
+        hintStyle: TextStyle(color: hintColor),
         filled: true,
-        fillColor: Coloressito.surfaceDark,
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Coloressito.borderLight),
+          borderSide: BorderSide(color: enabledBorderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

@@ -283,6 +283,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     return AdminProtectedWidget(
       child: PantallaBase(
         titulo: 'Crear Estación Patrimonial',
+        backgroundColor: Colors.white,
+        appBarBackgroundColor: Colors.white,
         body: Form(
           key: _formKey,
           child: Column(
