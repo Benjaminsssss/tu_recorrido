@@ -122,7 +122,7 @@ class _ManageEstacionesScreenState extends State<ManageEstacionesScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Coloressito.surfaceDark,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(

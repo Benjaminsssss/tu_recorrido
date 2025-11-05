@@ -29,12 +29,12 @@ class _PulseGlowState extends State<PulseGlow>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: widget.pulseDuration,
       vsync: this,
     );
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 1.0,
@@ -42,7 +42,7 @@ class _PulseGlowState extends State<PulseGlow>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
+
     if (widget.isActive) {
       _controller.repeat(reverse: true);
     }
@@ -69,7 +69,7 @@ class _PulseGlowState extends State<PulseGlow>
     if (!widget.isActive) {
       return widget.child;
     }
-    
+
     return AnimatedBuilder(
       animation: _glowAnimation,
       builder: (context, child) {
@@ -78,14 +78,18 @@ class _PulseGlowState extends State<PulseGlow>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withAlpha(((0.3 * _glowAnimation.value) * 255).round()),
+                color: widget.glowColor
+                    .withAlpha(((0.3 * _glowAnimation.value) * 255).round()),
                 blurRadius: widget.maxGlowRadius * _glowAnimation.value,
-                spreadRadius: (widget.maxGlowRadius * 0.3) * _glowAnimation.value,
+                spreadRadius:
+                    (widget.maxGlowRadius * 0.3) * _glowAnimation.value,
               ),
               BoxShadow(
-                color: widget.glowColor.withAlpha(((0.1 * _glowAnimation.value) * 255).round()),
+                color: widget.glowColor
+                    .withAlpha(((0.1 * _glowAnimation.value) * 255).round()),
                 blurRadius: (widget.maxGlowRadius * 1.5) * _glowAnimation.value,
-                spreadRadius: (widget.maxGlowRadius * 0.5) * _glowAnimation.value,
+                spreadRadius:
+                    (widget.maxGlowRadius * 0.5) * _glowAnimation.value,
               ),
             ],
           ),

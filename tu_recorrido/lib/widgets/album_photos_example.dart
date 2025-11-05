@@ -8,7 +8,7 @@ import '../models/album_photo.dart';
 /// Puedes usar este código como referencia para integrar con el álbum existente
 class AlbumPhotosExample extends StatefulWidget {
   final String badgeId; // ID de la insignia para asociar la foto
-  
+
   const AlbumPhotosExample({
     super.key,
     required this.badgeId,
@@ -49,11 +49,13 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
   Future<void> _addPhoto() async {
     try {
       // Verificar límite de fotos
-      final hasReachedLimit = await AlbumPhotosService.hasReachedPhotoLimit(maxPhotos: 50);
+      final hasReachedLimit =
+          await AlbumPhotosService.hasReachedPhotoLimit(maxPhotos: 50);
       if (hasReachedLimit) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Has alcanzado el límite de 50 fotos')),
+            const SnackBar(
+                content: Text('Has alcanzado el límite de 50 fotos')),
           );
         }
         return;
@@ -75,7 +77,10 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
           const SnackBar(
             content: Row(
               children: [
-                SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
                 SizedBox(width: 16),
                 Text('Subiendo foto...'),
               ],
@@ -126,7 +131,7 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
 
   Future<void> _editPhotoDescription(AlbumPhoto photo) async {
     final controller = TextEditingController(text: photo.description ?? '');
-    
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -154,13 +159,15 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
 
     if (result != null) {
       try {
-        await AlbumPhotosService.updatePhotoDescription(photo.id, result.isEmpty ? null : result);
-        
+        await AlbumPhotosService.updatePhotoDescription(
+            photo.id, result.isEmpty ? null : result);
+
         // Actualizar lista local
         setState(() {
           final index = _photos.indexWhere((p) => p.id == photo.id);
           if (index != -1) {
-            _photos[index] = photo.copyWith(description: result.isEmpty ? null : result);
+            _photos[index] =
+                photo.copyWith(description: result.isEmpty ? null : result);
           }
         });
 
@@ -184,7 +191,8 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar foto'),
-        content: const Text('¿Estás seguro de que quieres eliminar esta foto? Esta acción no se puede deshacer.'),
+        content: const Text(
+            '¿Estás seguro de que quieres eliminar esta foto? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -202,7 +210,7 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
     if (confirmed == true) {
       try {
         await AlbumPhotosService.deletePhoto(photo.id);
-        
+
         // Remover de lista local
         setState(() {
           _photos.removeWhere((p) => p.id == photo.id);
@@ -245,11 +253,14 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey),
+                      Icon(Icons.photo_library_outlined,
+                          size: 64, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text('No tienes fotos aún', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      Text('No tienes fotos aún',
+                          style: TextStyle(fontSize: 18, color: Colors.grey)),
                       SizedBox(height: 8),
-                      Text('Toca + para agregar tu primera foto de experiencia'),
+                      Text(
+                          'Toca + para agregar tu primera foto de experiencia'),
                     ],
                   ),
                 )
@@ -272,13 +283,15 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
                           children: [
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(4)),
                                 child: Image.network(
                                   photo.imageUrl,
                                   fit: BoxFit.cover,
                                   loadingBuilder: (context, child, progress) {
                                     if (progress == null) return child;
-                                    return const Center(child: CircularProgressIndicator());
+                                    return const Center(
+                                        child: CircularProgressIndicator());
                                   },
                                   errorBuilder: (context, error, stackTrace) {
                                     return const Icon(Icons.error);
@@ -292,22 +305,24 @@ class _AlbumPhotosExampleState extends State<AlbumPhotosExample> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    photo.description?.isNotEmpty == true 
-                                        ? photo.description! 
+                                    photo.description?.isNotEmpty == true
+                                        ? photo.description!
                                         : 'Sin descripción',
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: photo.description?.isNotEmpty == true 
-                                          ? null 
-                                          : Colors.grey,
+                                      color:
+                                          photo.description?.isNotEmpty == true
+                                              ? null
+                                              : Colors.grey,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${photo.uploadDate.day}/${photo.uploadDate.month}/${photo.uploadDate.year}',
-                                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                    style: const TextStyle(
+                                        fontSize: 10, color: Colors.grey),
                                   ),
                                 ],
                               ),

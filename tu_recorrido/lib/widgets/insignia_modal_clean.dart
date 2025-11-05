@@ -17,7 +17,6 @@ class InsigniaModal extends StatefulWidget {
 
 class _InsigniaModalState extends State<InsigniaModal>
     with SingleTickerProviderStateMixin {
-  
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -25,12 +24,12 @@ class _InsigniaModalState extends State<InsigniaModal>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.7,
       end: 1.0,
@@ -38,7 +37,7 @@ class _InsigniaModalState extends State<InsigniaModal>
       parent: _animationController,
       curve: Curves.elasticOut,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -46,7 +45,7 @@ class _InsigniaModalState extends State<InsigniaModal>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _animationController.forward();
   }
 
@@ -65,7 +64,7 @@ class _InsigniaModalState extends State<InsigniaModal>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-  backgroundColor: Colors.black.withAlpha((0.8 * 255).round()),
+      backgroundColor: Colors.black.withAlpha((0.8 * 255).round()),
       body: GestureDetector(
         onTap: _closeModal,
         child: Center(
@@ -77,7 +76,8 @@ class _InsigniaModalState extends State<InsigniaModal>
                 child: Opacity(
                   opacity: _fadeAnimation.value,
                   child: GestureDetector(
-                    onTap: () {}, // Evita que se cierre cuando tocas la insignia
+                    onTap:
+                        () {}, // Evita que se cierre cuando tocas la insignia
                     child: _buildInsigniaCard(),
                   ),
                 ),
@@ -129,9 +129,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Insignia
           Container(
             width: 150,
@@ -167,9 +167,9 @@ class _InsigniaModalState extends State<InsigniaModal>
                     ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Nombre de la estación
           Text(
             widget.estacion.nombre,
@@ -180,9 +180,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Mensaje
           Container(
             padding: const EdgeInsets.all(16),
@@ -204,9 +204,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Botón de continuar
           SizedBox(
             width: double.infinity,

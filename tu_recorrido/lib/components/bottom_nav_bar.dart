@@ -80,39 +80,46 @@ class BottomNavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            selected 
-              ? Stack(
-                  children: [
-                    // Borde gris
-                    Icon(
-                      icon, 
-                      color: Colors.grey.shade600,
-                    ),
-                    // Ícono amarillo llamativo encima
-                    Icon(
-                      icon, 
-                      color: const Color(0xFFFFD700), // Amarillo oro llamativo
-                      size: 22, // Ligeramente más pequeño para mostrar el borde gris
-                    ),
-                  ],
-                )
-              : Icon(
-                  icon, 
-                  color: Colors.white,
-                ),
+            selected
+                ? Stack(
+                    children: [
+                      // Borde gris
+                      Icon(
+                        icon,
+                        color: Colors.grey.shade600,
+                      ),
+                      // Ícono amarillo llamativo encima
+                      Icon(
+                        icon,
+                        color:
+                            const Color(0xFFFFD700), // Amarillo oro llamativo
+                        size:
+                            22, // Ligeramente más pequeño para mostrar el borde gris
+                      ),
+                    ],
+                  )
+                : Icon(
+                    icon,
+                    color: Colors.white,
+                  ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: selected ? const Color(0xFFFFD700) : Colors.white, // Amarillo oro llamativo cuando seleccionado
+                color: selected
+                    ? const Color(0xFFFFD700)
+                    : Colors
+                        .white, // Amarillo oro llamativo cuando seleccionado
                 fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                shadows: selected ? [
-                  Shadow(
-                    color: Colors.grey.shade600,
-                    blurRadius: 1,
-                    offset: const Offset(1, 1),
-                  ),
-                ] : null,
+                shadows: selected
+                    ? [
+                        Shadow(
+                          color: Colors.grey.shade600,
+                          blurRadius: 1,
+                          offset: const Offset(1, 1),
+                        ),
+                      ]
+                    : null,
               ),
             ),
           ],

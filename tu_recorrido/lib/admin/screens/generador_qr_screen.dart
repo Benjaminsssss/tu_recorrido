@@ -175,37 +175,58 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
           final tieneQR = estacion.codigoQR.isNotEmpty;
 
           return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            color: Colors.white,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 2,
             child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: tieneQR
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.orange.withValues(alpha: 0.1),
+                      ? Coloressito.adventureGreen
+                          .withAlpha((0.08 * 255).round())
+                      : Colors.orange.withAlpha((0.08 * 255).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   tieneQR ? Icons.qr_code : Icons.qr_code_scanner,
-                  color: tieneQR ? Colors.green : Colors.orange,
+                  color: tieneQR ? Coloressito.adventureGreen : Colors.orange,
                 ),
               ),
               title: Text(
                 estacion.nombre,
-                style: const TextStyle(fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: Colors.black87),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    tieneQR ? 'QR: ${estacion.codigoQR}' : 'Sin código QR',
-                    style: TextStyle(
-                      color: tieneQR ? Colors.black54 : Colors.orange,
-                      fontSize: 12,
-                      fontFamily: 'monospace',
+                  const SizedBox(height: 4),
+                  // QR line highlighted in a subtle rounded box to make it stand out
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: tieneQR
+                          ? Coloressito.surfaceLight
+                          : Colors.orange.withAlpha((0.06 * 255).round()),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Coloressito.borderLight),
+                    ),
+                    child: Text(
+                      tieneQR ? 'QR: ${estacion.codigoQR}' : 'Sin código QR',
+                      style: TextStyle(
+                        color: tieneQR ? Colors.black87 : Colors.orange,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     'ID: ${estacion.codigo}',
                     style: const TextStyle(
@@ -233,12 +254,13 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Header de la estación
+          // Header de la estación — usar fondo claro y texto oscuro para legibilidad
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Coloressito.primary.withValues(alpha: 0.1),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Coloressito.borderLight),
             ),
             child: Column(
               children: [
@@ -247,18 +269,29 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Código QR: ${estacion.codigoQR}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    color: Colors.grey,
+                // QR code text inside a highlighted pill
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Coloressito.surfaceLight,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Coloressito.borderLight),
                   ),
-                  textAlign: TextAlign.center,
+                  child: Text(
+                    'Código QR: ${estacion.codigoQR}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
@@ -289,10 +322,10 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                 gapless: false,
                 backgroundColor: Colors.white,
                 errorStateBuilder: (cxt, err) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                      children: const [
                         Icon(Icons.error, size: 48, color: Colors.red),
                         SizedBox(height: 8),
                         Text(

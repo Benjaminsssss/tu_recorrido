@@ -53,7 +53,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   @override
   void dispose() {
     _nombreController.dispose();
-  _descripcionController.dispose();
+    _descripcionController.dispose();
     _comunaController.dispose();
     super.dispose();
   }
@@ -147,8 +147,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
               'path': imagePath,
               'alt': nombreCard
             };
-      await FirestoreService.instance
-        .addPlaceImage(placeId: newId, image: imageObj);
+            await FirestoreService.instance
+                .addPlaceImage(placeId: newId, image: imageObj);
           } catch (e) {
             debugPrint('Error subiendo imagen $idx de la estación: $e');
             continue;
@@ -283,6 +283,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     return AdminProtectedWidget(
       child: PantallaBase(
         titulo: 'Crear Estación Patrimonial',
+        backgroundColor: Colors.white,
+        appBarBackgroundColor: Colors.white,
         body: Form(
           key: _formKey,
           child: Column(

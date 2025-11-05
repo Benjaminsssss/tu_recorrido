@@ -1,10 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 // dart:typed_data not required here
 import 'package:tu_recorrido/models/insignia.dart';
 import 'package:tu_recorrido/models/estacion.dart';
@@ -12,7 +8,8 @@ import 'package:tu_recorrido/services/insignia_service.dart';
 import 'package:tu_recorrido/services/estacion_service.dart';
 import 'package:tu_recorrido/services/coleccion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+// removed unused import
+import 'package:tu_recorrido/admin/widgets/insignias_table.dart';
 
 /// Pantalla básica de administración de insignias.
 /// Esta pantalla provee un listado y un formulario simple para crear insignias.
@@ -25,7 +22,7 @@ class InsigniasAdminScreen extends StatefulWidget {
 
 class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   List<Insignia> _insignias = [];
-  bool _loading = true;
+  // removed unused loading flag (InsigniasTable handles its own loading)
   // Mapa para saber por insigniaId qué estación la tiene asignada
   final Map<String, Estacion> _estacionPorInsignia = {};
 
@@ -35,83 +32,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _otorgarInsignia(String insigniaId) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final emailController = TextEditingController();
-    final uidController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Otorgar insignia a usuario'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-                controller: emailController,
-                decoration:
-                    const InputDecoration(labelText: 'Email (opcional)')),
-            const SizedBox(height: 8),
-            Text('O ingresa UID si no tienes email',
-                style: Theme.of(dialogContext).textTheme.bodySmall),
-            TextField(
-                controller: uidController,
-                decoration: const InputDecoration(labelText: 'UID (opcional)')),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final email = emailController.text.trim();
-              final uid = uidController.text.trim();
-              if (email.isEmpty && uid.isEmpty) return;
-
-              Navigator.of(dialogContext).pop();
-
-              String? targetUid = uid.isNotEmpty ? uid : null;
-
-              if (targetUid == null && email.isNotEmpty) {
-                // Buscar usuario por email
-                final query = await FirebaseFirestore.instance
-                    .collection('users')
-                    .where('email', isEqualTo: email)
-                    .limit(1)
-                    .get();
-
-                if (query.docs.isEmpty) {
-                  if (!mounted) return;
-                  messenger.showSnackBar(const SnackBar(
-                      content: Text('Usuario no encontrado por email')));
-                  return;
-                }
-
-                targetUid = query.docs.first.id;
-              }
-
-              try {
-                await InsigniaService.otorgarInsigniaAUsuario(
-                    userId: targetUid!, insigniaId: insigniaId);
-                if (!mounted) return;
-                messenger.showSnackBar(
-                    const SnackBar(content: Text('Insignia otorgada')));
-              } catch (e) {
-                if (!mounted) return;
-                messenger.showSnackBar(
-                    SnackBar(content: Text('Error al otorgar insignia: $e')));
-              }
-            },
-            child: const Text('Otorgar'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _load() async {
-    setState(() => _loading = true);
+    // loading handled by InsigniasTable; skip local loading flag
     // debug: iniciar carga
     // ignore: avoid_print
     print('InsigniasAdminScreen._load: starting');
@@ -155,137 +77,11 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
             content: Text('Error inesperado al cargar insignias: $e')));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      // no local loading state to update
     }
   }
 
-  Future<void> _crearInsignia() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final nombreController = TextEditingController();
-    final descripcionController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Crear insignia'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-                controller: nombreController,
-                decoration: const InputDecoration(labelText: 'Nombre')),
-            TextField(
-                controller: descripcionController,
-                decoration: const InputDecoration(labelText: 'Descripcion')),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              final nombre = nombreController.text.trim();
-              final descripcion = descripcionController.text.trim();
-              if (nombre.isEmpty || descripcion.isEmpty) return;
-
-              Navigator.of(dialogContext).pop();
-
-              // En web usamos bytes; en mobile/desktop usamos File
-              if (kIsWeb) {
-                final bytes = await picked.readAsBytes();
-                await InsigniaService.createInsigniaWithImage(
-                  imageBytes: bytes,
-                  fileName: picked.name,
-                  nombre: nombre,
-                  descripcion: descripcion,
-                );
-              } else {
-                final file = File(picked.path);
-                await InsigniaService.createInsigniaWithImage(
-                  imageFile: file,
-                  nombre: nombre,
-                  descripcion: descripcion,
-                );
-              }
-
-              await _load();
-            },
-            child: const Text('Crear'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _asignarInsignia(String insigniaId) async {
-    // Cargar estaciones disponibles: sólo las que no tienen insignia asignada
-    final todas = await EstacionService.obtenerEstacionesActivas();
-    final estaciones = todas.where((e) => e.insigniaID == null).toList();
-
-    // Si no hay estaciones libres, informar al admin
-    if (estaciones.isEmpty) {
-      await showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Asignar insignia a estación'),
-          content: const Text(
-              'No hay estaciones disponibles sin una insignia asignada.'),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Aceptar'))
-          ],
-        ),
-      );
-      return;
-    }
-
-    String? estacionSeleccionadaId;
-
-    await showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Asignar insignia a estación'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: estaciones.length,
-            itemBuilder: (context, i) {
-              final e = estaciones[i];
-              return RadioListTile<String>(
-                title: Text(e.nombre),
-                subtitle: Text(e.codigo),
-                value: e.id,
-                groupValue: estacionSeleccionadaId,
-                onChanged: (v) => setState(() => estacionSeleccionadaId = v),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              if (estacionSeleccionadaId == null) return;
-              Navigator.of(dialogContext).pop();
-              // Actualizar estación con referencia a la insignia
-              await InsigniaService.assignInsigniaToEstacion(
-                  insigniaId: insigniaId, estacionId: estacionSeleccionadaId!);
-              await _load();
-            },
-            child: const Text('Asignar'),
-          ),
-        ],
-      ),
-    );
-  }
+  // _crearInsignia removed: InsigniasTable implements create flows
 
   Future<void> _migrarInsigniasExistentes() async {
     final messenger = ScaffoldMessenger.of(context);
@@ -313,7 +109,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     if (confirmar != true) return;
 
     try {
-      setState(() => _loading = true);
+      // no local loading state to update
       messenger.showSnackBar(
         const SnackBar(content: Text('Iniciando migración...')),
       );
@@ -338,9 +134,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      // no local loading state to update
     }
   }
 
@@ -436,181 +230,11 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : (_insignias.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.emoji_events_outlined,
-                          size: 64, color: Colors.grey),
-                      const SizedBox(height: 12),
-                      const Text('No hay insignias creadas aún',
-                          style: TextStyle(fontSize: 16, color: Colors.grey)),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: _crearInsignia,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Crear primera insignia'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _insignias.length,
-                  itemBuilder: (context, i) {
-                    final ins = _insignias[i];
-                    return ListTile(
-                      leading: SizedBox(
-                        width: 56,
-                        height: 56,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            ins.imagenUrl,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                            // If image fails (CORS or network), show a gray placeholder instead
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              color: Colors.grey.shade200,
-                              child: Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.broken_image,
-                                        color: Colors.grey, size: 28),
-                                    const SizedBox(height: 6),
-                                    TextButton.icon(
-                                      icon: const Icon(Icons.open_in_new,
-                                          size: 16),
-                                      label: const Text('Abrir URL'),
-                                      onPressed: () {
-                                        // Mostrar diálogo con la URL y opción de copiar
-                                        final messenger =
-                                            ScaffoldMessenger.of(context);
-                                        showDialog(
-                                          context: context,
-                                          builder: (dialogContext) =>
-                                              AlertDialog(
-                                            title:
-                                                const Text('URL de la imagen'),
-                                            content:
-                                                SelectableText(ins.imagenUrl),
-                                            actions: [
-                                              TextButton(
-                                                  onPressed: () async {
-                                                    // Capture navigator before the async gap to avoid using
-                                                    // the dialog BuildContext after an await.
-                                                    final navigator =
-                                                        Navigator.of(
-                                                            dialogContext);
-                                                    await Clipboard.setData(
-                                                      ClipboardData(
-                                                        text: ins.imagenUrl,
-                                                      ),
-                                                    );
-                                                    navigator.pop();
-                                                    if (!mounted) return;
-                                                    messenger.showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text(
-                                                            'URL copiada al portapapeles'),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: const Text('Copiar')),
-                                              TextButton(
-                                                  onPressed: () => Navigator.of(
-                                                          dialogContext)
-                                                      .pop(),
-                                                  child: const Text('Cerrar')),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                color: Colors.grey.shade100,
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      title: Text(ins.nombre),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(ins.descripcion),
-                          const SizedBox(height: 6),
-                          if (_estacionPorInsignia.containsKey(ins.id))
-                            Row(
-                              children: [
-                                const Icon(Icons.place,
-                                    size: 14, color: Colors.grey),
-                                const SizedBox(width: 6),
-                                Text(
-                                    'Asignada a: ${_estacionPorInsignia[ins.id]!.nombre}',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.black54)),
-                              ],
-                            ),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Mostrar botón de asignar sólo si la insignia no está ya asignada
-                          if (!_estacionPorInsignia.containsKey(ins.id))
-                            IconButton(
-                              icon: const Icon(Icons.link),
-                              tooltip: 'Asignar a estación',
-                              onPressed: () async {
-                                await _asignarInsignia(ins.id);
-                              },
-                            ),
-                          IconButton(
-                            icon: const Icon(Icons.emoji_events),
-                            tooltip: 'Otorgar a usuario',
-                            onPressed: () async {
-                              await _otorgarInsignia(ins.id);
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_forever),
-                            onPressed: () async {
-                              await InsigniaService.deleteInsignia(ins.id);
-                              await _load();
-                            },
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        // TODO: Abrir detalle/editar y asignar a estación desde aquí (implementación futura)
-                      },
-                    );
-                  },
-                )),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _crearInsignia,
-        child: const Icon(Icons.add),
+      body: const Padding(
+        padding: EdgeInsets.all(16),
+        child: InsigniasTable(),
       ),
+      // InsigniasTable includes its own create button
     );
   }
 }
