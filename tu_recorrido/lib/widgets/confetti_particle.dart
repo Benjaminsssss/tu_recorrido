@@ -106,7 +106,7 @@ class _ConfettiParticleState extends State<ConfettiParticle>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: widget.color.withOpacity(0.3),
+                      color: widget.color.withAlpha((0.3 * 255).round()),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),

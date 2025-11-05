@@ -109,6 +109,8 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
 
     setState(() {
+      // fromBytes está deprecado en versiones recientes; mantener compatibilidad
+      // ignore: deprecated_member_use
       _customMarkerIcon = BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
     });
   }
@@ -569,7 +571,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorVerdeEsmeralda.withOpacity(0.2),
+                      color: colorVerdeEsmeralda.withAlpha((0.2 * 255).round()),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -601,7 +603,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                         return Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withAlpha((0.1 * 255).round()),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -655,7 +657,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                               allowHalfRating: true, // Permite medias estrellas
                               itemCount: 5, // Número total de estrellas a mostrar
                               itemSize: 36, // Tamaño de cada estrella
-                              unratedColor: Colors.grey.withOpacity(0.3),
+                              unratedColor: Colors.grey.withAlpha((0.3 * 255).round()),
                               itemBuilder: (context, _) => const Icon(
                                 Icons.star_rounded,
                                 color: Colors.amber,
@@ -708,25 +710,33 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                         place.placeId,
                         currentRating,
                       );
-                      Navigator.pop(dialogContext);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('¡Gracias por tu calificación!'),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: Colors.green,
-                        ),
-                      );
+                      if (!mounted) return;
+                      // Ejecutar en el siguiente frame para evitar usar el BuildContext a través
+                      // de gaps async y satisfacer el lint use_build_context_synchronously.
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('¡Gracias por tu calificación!'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      });
                     } catch (error) {
                       print('❌ Error al calificar: $error');
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error al guardar la calificación. Por favor intenta nuevamente.'),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      if (!mounted) return;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error al guardar la calificación. Por favor intenta nuevamente.'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      });
                     }
                   },
                   child: const Text(
@@ -1233,7 +1243,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
               height: _cardHeight,
               child: Card(
                 elevation: 6,
-                shadowColor: Colors.black.withOpacity(0.2),
+                shadowColor: Colors.black.withAlpha((0.2 * 255).round()),
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -1253,7 +1263,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
-                            color: colorVerdeOliva.withOpacity(0.2),
+                            color: colorVerdeOliva.withAlpha((0.2 * 255).round()),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(

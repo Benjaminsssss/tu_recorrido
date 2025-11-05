@@ -65,7 +65,7 @@ class _InsigniaModalState extends State<InsigniaModal>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.8),
+  backgroundColor: Colors.black.withAlpha((0.8 * 255).round()),
       body: GestureDetector(
         onTap: _closeModal,
         child: Center(
@@ -99,7 +99,7 @@ class _InsigniaModalState extends State<InsigniaModal>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withAlpha((0.3 * 255).round()),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -190,7 +190,7 @@ class _InsigniaModalState extends State<InsigniaModal>
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: const Color(0xFFFFD700).withOpacity(0.3),
+                color: const Color(0xFFFFD700).withAlpha((0.3 * 255).round()),
                 width: 1,
               ),
             ),

@@ -116,7 +116,7 @@ class EstacionesService {
 
     } catch (e) {
       print('❌ Error al calificar estación: $e');
-      throw e;
+      rethrow;
     }
   }
 

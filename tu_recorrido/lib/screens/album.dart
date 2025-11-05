@@ -444,10 +444,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withAlpha((0.7 * 255).round()),
                       Colors.transparent,
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withAlpha((0.7 * 255).round()),
                     ],
                   ),
                 ),
@@ -480,7 +480,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                                 height: 60,
                                 margin: const EdgeInsets.only(right: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withOpacity(0.8),
+                                  color: Colors.blue.withAlpha((0.8 * 255).round()),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
@@ -507,7 +507,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                                 height: 60,
                                 margin: const EdgeInsets.only(left: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.8),
+                                  color: Colors.orange.withAlpha((0.8 * 255).round()),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Center(
@@ -567,7 +567,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withAlpha((0.5 * 255).round()),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -589,24 +589,24 @@ class _AlbumScreenState extends State<AlbumScreen> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              const Color(0xFFFAF9F6).withOpacity(0.98),
-                              const Color(0xFFF5F5DC).withOpacity(0.95),
+                              const Color(0xFFFAF9F6).withAlpha((0.98 * 255).round()),
+                              const Color(0xFFF5F5DC).withAlpha((0.95 * 255).round()),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFFD4C5A9).withOpacity(0.3),
+                            color: const Color(0xFFD4C5A9).withAlpha((0.3 * 255).round()),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF8B4513).withOpacity(0.08),
+                              color: const Color(0xFF8B4513).withAlpha((0.08 * 255).round()),
                               blurRadius: 15,
                               offset: const Offset(0, 4),
                               spreadRadius: 1,
                             ),
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: Colors.black.withAlpha((0.03 * 255).round()),
                               blurRadius: 25,
                               offset: const Offset(0, 8),
                               spreadRadius: 0,
@@ -823,8 +823,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFFFD700).withOpacity(0.3), // Dorado suave
-            const Color(0xFFFFA500).withOpacity(0.5), // Naranja suave
+            const Color(0xFFFFD700).withAlpha((0.3 * 255).round()), // Dorado suave
+            const Color(0xFFFFA500).withAlpha((0.5 * 255).round()), // Naranja suave
           ],
         ),
       ),
@@ -908,8 +908,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withOpacity(0.1),
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withAlpha((0.1 * 255).round()),
+                            Colors.black.withAlpha((0.4 * 255).round()),
                           ],
                         ),
                       ),
@@ -926,7 +926,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                           fontWeight: FontWeight.w600,
                           shadows: [
                             Shadow(
-                              color: Colors.black.withOpacity(0.7),
+                              color: Colors.black.withAlpha((0.7 * 255).round()),
                               blurRadius: 3,
                               offset: const Offset(1, 1),
                             ),
@@ -1141,7 +1141,7 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                 // Sombras profundas para sensación de profundidad
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withAlpha((0.15 * 255).round()),
                     blurRadius: _elevationAnimation.value,
                     spreadRadius: _elevationAnimation.value * 0.3,
                     offset: Offset(0, _elevationAnimation.value * 0.5),
@@ -1152,7 +1152,7 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                 border: Border.all(
                   color: _isHovered 
                     ? const Color(0xFFD2B48C) // Tan claro
-                    : const Color(0xFFDDD0C0).withOpacity(0.8), // Beige muy sutil
+                    : const Color(0xFFDDD0C0).withAlpha((0.8 * 255).round()), // Beige muy sutil
                   width: _isHovered ? 2 : 1,
                 ),
               ),
@@ -1165,9 +1165,9 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withOpacity(0.1),
+                        Colors.white.withAlpha((0.1 * 255).round()),
                         Colors.transparent,
-                        Colors.black.withOpacity(0.02),
+                        Colors.black.withAlpha((0.02 * 255).round()),
                       ],
                     ),
                   ),
@@ -1208,7 +1208,7 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                                       letterSpacing: 0.5,
                                       shadows: [
                                         Shadow(
-                                          color: Colors.black.withOpacity(0.1),
+                                          color: Colors.black.withAlpha((0.1 * 255).round()),
                                           blurRadius: 2,
                                           offset: const Offset(1, 1),
                                         ),
@@ -1240,7 +1240,7 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                           height: 180,
                           width: double.infinity, // Ocupa todo el ancho disponible
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withAlpha((0.5 * 255).round()),
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
                               color: const Color(0xFFE0E0E0),
@@ -1288,7 +1288,7 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
                                             borderRadius: BorderRadius.circular(12),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(0.1),
+                                                color: Colors.black.withAlpha((0.1 * 255).round()),
                                                 blurRadius: 8,
                                                 offset: const Offset(0, 4),
                                               ),

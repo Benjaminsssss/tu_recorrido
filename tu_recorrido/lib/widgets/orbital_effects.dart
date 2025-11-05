@@ -82,7 +82,7 @@ class _OrbitingParticlesState extends State<OrbitingParticles>
                         color: const Color(0xFFFFD700),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFD700).withOpacity(0.6),
+                            color: const Color(0xFFFFD700).withAlpha((0.6 * 255).round()),
                             blurRadius: 8,
                             spreadRadius: 2,
                           ),
@@ -267,15 +267,15 @@ class _EpicGoldenTextState extends State<EpicGoldenText>
           style: style.copyWith(
             shadows: [
               Shadow(
-                color: const Color(0xFFFFD700).withOpacity(_glowAnimation.value),
+                color: const Color(0xFFFFD700).withAlpha((_glowAnimation.value * 255).round()),
                 blurRadius: 10 * _glowAnimation.value,
               ),
               Shadow(
-                color: const Color(0xFFB8860B).withOpacity(_glowAnimation.value * 0.7),
+                color: const Color(0xFFB8860B).withAlpha(((_glowAnimation.value * 0.7) * 255).round()),
                 blurRadius: 20 * _glowAnimation.value,
               ),
               Shadow(
-                color: Colors.orange.withOpacity(_glowAnimation.value * 0.5),
+                color: Colors.orange.withAlpha(((_glowAnimation.value * 0.5) * 255).round()),
                 blurRadius: 30 * _glowAnimation.value,
               ),
             ],

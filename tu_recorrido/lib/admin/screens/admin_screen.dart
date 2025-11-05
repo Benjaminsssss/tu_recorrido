@@ -51,7 +51,7 @@ class AdminScreen extends StatelessWidget {
     );
 
     if (confirmar != true) return;
-    if (!context.mounted) return;
+  if (!context.mounted) return;
 
     // Mostrar diálogo de progreso
     showDialog(
@@ -80,7 +80,7 @@ class AdminScreen extends StatelessWidget {
     try {
       final resultado = await QRManagementHelper.ejecutarDesdeAdmin();
 
-      if (!context.mounted) return;
+  if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
 
       if (resultado['success']) {
@@ -100,7 +100,7 @@ class AdminScreen extends StatelessWidget {
         throw Exception(resultado['message']);
       }
     } catch (e) {
-      if (!context.mounted) return;
+  if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
 
       // Mostrar error
@@ -142,7 +142,7 @@ class AdminScreen extends StatelessWidget {
     try {
       await QRManagementHelper.verificarEstadoQR();
 
-      if (!context.mounted) return;
+  if (!context.mounted) return;
       Navigator.of(context).pop(); // Cerrar diálogo de progreso
 
       // Mostrar información (en consola por ahora)

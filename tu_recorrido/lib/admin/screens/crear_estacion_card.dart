@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../services/firestore_service.dart';
-import '../../services/estacion_service.dart';
-import '../../models/estacion.dart';
 import '../../services/storage_service.dart';
 import '../../utils/colores.dart';
 import '../../widgets/pantalla_base.dart';
@@ -23,9 +21,8 @@ class CrearEstacionCardScreen extends StatefulWidget {
 class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   final _formKey = GlobalKey<FormState>();
   final _comunaCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  List<Estacion> _estaciones = [];
-  String? _selectedEstacionId;
+  final _nameCtrl = TextEditingController();
+  // No usamos _selectedEstacionId: la creación retorna el id de la estación creada.
   final ImagePicker _picker = ImagePicker();
   List<XFile> _pickedImages = [];
   List<Uint8List?> _pickedImagesBytes = [];
@@ -76,24 +73,19 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final name = _nameCtrl.text.trim();
-      final placeId = await FirestoreService.instance
-          .createPlace(name: name, lat: 0.0, lng: 0.0);
+    final name = _nameCtrl.text.trim();
+    final estacionId = await FirestoreService.instance
+        .createEstacion(nombre: name, lat: 0.0, lng: 0.0);
 
-      final comuna = _comunaCtrl.text.trim();
-      final descripcion = _descCtrl.text.trim();
-      await FirestoreService.instance
-          .updatePlacePartial(placeId: placeId, data: {
-        'comuna': comuna.isNotEmpty ? comuna : '',
-        'descripcion': descripcion,
-        'shortDesc': descripcion.isNotEmpty
-            ? (descripcion.length > 120
-                ? '${descripcion.substring(0, 120)}...'
-                : descripcion)
-            : '',
-        'mejorMomento': '',
-        // No duplicar 'description' legacy key; prefer 'descripcion' in the document
-      });
+    final comuna = _comunaCtrl.text.trim();
+    // Guardar comuna en el documento de la estación. La descripción del card
+    // debe provenir de la colección de estación (no la rellenamos aquí).
+    await FirestoreService.instance
+        .updatePlacePartial(placeId: estacionId, data: {
+      'comuna': comuna.isNotEmpty ? comuna : '',
+      'estacionId': estacionId,
+      // 'descripcion' se gestiona desde la colección de estación principal.
+    });
 
       if (_pickedImages.isNotEmpty) {
         final toUpload = _pickedImages.take(5).toList();
@@ -101,7 +93,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final path = 'estaciones/${_selectedEstacionId!}/img_$ts$ext';
+          final path = 'estaciones/$estacionId/img_$ts$ext';
           try {
             String url;
             if (kIsWeb &&
@@ -115,9 +107,9 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
               url = await StorageService.instance
                   .uploadFile(file, path, contentType: 'image/jpeg');
             }
-            final imageObj = {'url': url, 'path': path, 'alt': name};
-            await FirestoreService.instance
-                .addPlaceImage(placeId: placeId, image: imageObj);
+      final imageObj = {'url': url, 'path': path, 'alt': name};
+      await FirestoreService.instance
+        .addPlaceImage(placeId: estacionId, image: imageObj);
           } catch (e) {
             // ignore errors for single images
             debugPrint('Error subiendo imagen $idx: $e');
@@ -129,9 +121,8 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Estación (card) creada')));
-      _nameCtrl.clear();
-      _comunaCtrl.clear();
-      _descCtrl.clear();
+  _nameCtrl.clear();
+  _comunaCtrl.clear();
       setState(() {
         _pickedImages = [];
         _pickedImagesBytes = [];
@@ -147,8 +138,8 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _comunaCtrl.dispose();
-    _descCtrl.dispose();
     super.dispose();
   }
 
@@ -178,13 +169,6 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Ingresa la comuna o dirección breve'
                     : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Descripción (mostrar en Ver detalles)'),
-                maxLines: 4,
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
@@ -246,11 +230,11 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                  onPressed: _loading ? null : _createPlace,
-                  child: _loading
-                      ? const CircularProgressIndicator()
-                      : const Text('Crear')),
+        ElevatedButton(
+          onPressed: _loading ? null : _assignCardToEstacion,
+          child: _loading
+            ? const CircularProgressIndicator()
+            : const Text('Crear')),
             ],
           ),
         ),

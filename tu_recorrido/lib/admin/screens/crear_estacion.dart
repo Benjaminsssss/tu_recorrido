@@ -28,6 +28,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _comunaController = TextEditingController();
+  // Nota: el card usará la descripción de la colección de estación (_descripcionController)
   // Nota: usamos la misma descripción de la estación para el card.
 
   bool _cargando = false;
@@ -52,7 +53,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   @override
   void dispose() {
     _nombreController.dispose();
-    _descripcionController.dispose();
+  _descripcionController.dispose();
     _comunaController.dispose();
     super.dispose();
   }
@@ -106,32 +107,19 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       // Crear estación patrimonial y obtener el id generado
       final newId = await EstacionService.crearEstacion(estacion);
 
-      // AHORA TAMBIÉN CREAR EL LUGAR/CARD EN FIRESTORE (colección estaciones)
+      // Usar el mismo documento de la estación como "card" (no crear otro doc)
       final nombreCard = _nombreController.text.trim();
-      final cardId = await FirestoreService.instance.createPlace(
-        name: nombreCard,
-        lat: _ubicacionActual!.latitude,
-        lng: _ubicacionActual!.longitude,
-        category: 'patrimonio',
-        country: 'Chile',
-        city: 'Santiago', // Podrías hacer esto configurable
-      );
 
-      // Actualizar datos adicionales del card
+      // Actualizar datos adicionales en el documento de la estación
       final comuna = _comunaController.text.trim();
-      final descripcionCard = _descripcionCardController.text.trim();
-      await FirestoreService.instance
-          .updatePlacePartial(placeId: cardId, data: {
-        'comuna': comuna.isNotEmpty ? comuna : '',
-        'descripcion': descripcionCard,
-        'shortDesc': descripcionCard.isNotEmpty
-            ? (descripcionCard.length > 120
-                ? '${descripcionCard.substring(0, 120)}...'
-                : descripcionCard)
-            : '',
-        'mejorMomento': '',
-        'estacionId': newId, // Enlazar el card con la estación patrimonial
-      });
+      await FirestoreService.instance.updatePlacePartial(
+        placeId: newId,
+        data: {
+          'comuna': comuna.isNotEmpty ? comuna : '',
+          // Si necesitas campos específicos para la vista tipo "card",
+          // agrégalos aquí; por ejemplo: 'category': 'patrimonio'
+        },
+      );
 
       // Subir imágenes y guardarlas en el array `imagenes` del documento de la estación
       if (_pickedCardImages.isNotEmpty) {
@@ -147,20 +135,20 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 idx < _pickedCardImagesBytes.length &&
                 _pickedCardImagesBytes[idx] != null) {
               cardImageUrl = await StorageService.instance.uploadBytes(
-                  _pickedCardImagesBytes[idx]!, cardImagePath,
+                  _pickedCardImagesBytes[idx]!, imagePath,
                   contentType: 'image/jpeg');
             } else {
               final file = File(picked.path);
               cardImageUrl = await StorageService.instance
-                  .uploadFile(file, cardImagePath, contentType: 'image/jpeg');
+                  .uploadFile(file, imagePath, contentType: 'image/jpeg');
             }
             final imageObj = {
               'url': cardImageUrl,
-              'path': cardImagePath,
+              'path': imagePath,
               'alt': nombreCard
             };
-            await FirestoreService.instance
-                .addPlaceImage(placeId: cardId, image: imageObj);
+      await FirestoreService.instance
+        .addPlaceImage(placeId: newId, image: imageObj);
           } catch (e) {
             debugPrint('Error subiendo imagen $idx de la estación: $e');
             continue;
@@ -330,14 +318,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              // Separador visual
-              const Divider(thickness: 2),
-              const SizedBox(height: 16),
-              const Text(
-                'Información para el Card/Lugar',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
               const SizedBox(height: 16),
               CampoFormulario(
                 controller: _comunaController,
@@ -346,20 +326,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Ingresa la comuna donde se ubica';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              CampoFormulario(
-                controller: _descripcionCardController,
-                label: 'Descripción del card',
-                hint:
-                    'Descripción breve que aparecerá en la pantalla principal...',
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Agrega una descripción para el card';
                   }
                   return null;
                 },

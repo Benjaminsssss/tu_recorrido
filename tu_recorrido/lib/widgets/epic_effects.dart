@@ -109,7 +109,7 @@ class _StarburstPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+  ..color = color.withAlpha((opacity * 255).round())
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round;
 
@@ -235,7 +235,7 @@ class _RingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
-      ..color = color.withOpacity(opacity)
+  ..color = color.withAlpha((opacity * 255).round())
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.0;
 

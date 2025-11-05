@@ -82,7 +82,7 @@ class FirestoreService {
     String? city,
   }) async {
     final ref = await _db.collection('estaciones').add({
-      'name': name,
+      'name': nombre,
       'lat': lat,
       'lng': lng,
       'category': category,

@@ -69,7 +69,7 @@ class _InsigniaModalState extends State<InsigniaModal>
             child: GestureDetector(
               onTap: _closeModal,
               child: Container(
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withAlpha((0.8 * 255).round()),
               ),
             ),
           ),
@@ -108,12 +108,12 @@ class _InsigniaModalState extends State<InsigniaModal>
         boxShadow: [
           // Resplandor dorado como en la imagen
           BoxShadow(
-            color: const Color(0xFFFFD700).withOpacity(0.6),
+            color: const Color(0xFFFFD700).withAlpha((0.6 * 255).round()),
             blurRadius: 30,
             spreadRadius: 8,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withAlpha((0.5 * 255).round()),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -158,7 +158,7 @@ class _InsigniaModalState extends State<InsigniaModal>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withOpacity(0.4),
+                  color: const Color(0xFFFFD700).withAlpha((0.4 * 255).round()),
                   blurRadius: 20,
                   spreadRadius: 3,
                 ),

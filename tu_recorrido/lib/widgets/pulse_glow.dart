@@ -78,12 +78,12 @@ class _PulseGlowState extends State<PulseGlow>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: widget.glowColor.withOpacity(0.3 * _glowAnimation.value),
+                color: widget.glowColor.withAlpha(((0.3 * _glowAnimation.value) * 255).round()),
                 blurRadius: widget.maxGlowRadius * _glowAnimation.value,
                 spreadRadius: (widget.maxGlowRadius * 0.3) * _glowAnimation.value,
               ),
               BoxShadow(
-                color: widget.glowColor.withOpacity(0.1 * _glowAnimation.value),
+                color: widget.glowColor.withAlpha(((0.1 * _glowAnimation.value) * 255).round()),
                 blurRadius: (widget.maxGlowRadius * 1.5) * _glowAnimation.value,
                 spreadRadius: (widget.maxGlowRadius * 0.5) * _glowAnimation.value,
               ),

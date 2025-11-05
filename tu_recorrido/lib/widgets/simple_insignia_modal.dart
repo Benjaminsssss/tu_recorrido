@@ -185,7 +185,10 @@ class _SimpleInsigniaModalState extends State<SimpleInsigniaModal>
                           ..setEntry(3, 2, 0.001) // Perspectiva 3D
                           ..rotateX(_rotationX) // Rotación vertical
                           ..rotateY(_rotationY) // Rotación horizontal
-                          ..scale(_scaleAnimation.value),
+              ..multiply(Matrix4.diagonal3Values(
+                _scaleAnimation.value,
+                _scaleAnimation.value,
+                _scaleAnimation.value)),
                         child: GoldenGlow(
                           isActive: _showGlow,
                           intensity: 2.0,
@@ -200,12 +203,12 @@ class _SimpleInsigniaModalState extends State<SimpleInsigniaModal>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
+                                  color: Colors.black.withAlpha((0.5 * 255).round()),
                                   blurRadius: 20,
                                   spreadRadius: 5,
                                 ),
                                 BoxShadow(
-                                  color: const Color(0xFFFFD700).withOpacity(0.3),
+                                  color: const Color(0xFFFFD700).withAlpha((0.3 * 255).round()),
                                   blurRadius: 40,
                                   spreadRadius: 10,
                                 ),
