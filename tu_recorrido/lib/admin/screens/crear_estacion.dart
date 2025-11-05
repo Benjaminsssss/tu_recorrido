@@ -28,7 +28,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _comunaController = TextEditingController();
-  final _descripcionCardController = TextEditingController();
+  // Nota: el card usará la descripción de la colección de estación (_descripcionController)
+  // Nota: usamos la misma descripción de la estación para el card.
 
   bool _cargando = false;
   // Puede ser un Position (cuando usamos Geolocator) o un objeto con latitude/longitude (LatLng)
@@ -54,7 +55,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     _nombreController.dispose();
     _descripcionController.dispose();
     _comunaController.dispose();
-    _descripcionCardController.dispose();
     super.dispose();
   }
 
@@ -107,63 +107,50 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
       // Crear estación patrimonial y obtener el id generado
       final newId = await EstacionService.crearEstacion(estacion);
 
-      // AHORA TAMBIÉN CREAR EL LUGAR/CARD EN FIRESTORE (colección estaciones)
+      // Usar el mismo documento de la estación como "card" (no crear otro doc)
       final nombreCard = _nombreController.text.trim();
-      final cardId = await FirestoreService.instance.createPlace(
-        name: nombreCard,
-        lat: _ubicacionActual!.latitude,
-        lng: _ubicacionActual!.longitude,
-        category: 'patrimonio',
-        country: 'Chile',
-        city: 'Santiago', // Podrías hacer esto configurable
+
+      // Actualizar datos adicionales en el documento de la estación
+      final comuna = _comunaController.text.trim();
+      await FirestoreService.instance.updatePlacePartial(
+        placeId: newId,
+        data: {
+          'comuna': comuna.isNotEmpty ? comuna : '',
+          // Si necesitas campos específicos para la vista tipo "card",
+          // agrégalos aquí; por ejemplo: 'category': 'patrimonio'
+        },
       );
 
-      // Actualizar datos adicionales del card
-      final comuna = _comunaController.text.trim();
-      final descripcionCard = _descripcionCardController.text.trim();
-      await FirestoreService.instance
-          .updatePlacePartial(placeId: cardId, data: {
-        'comuna': comuna.isNotEmpty ? comuna : '',
-        'descripcion': descripcionCard,
-        'shortDesc': descripcionCard.isNotEmpty
-            ? (descripcionCard.length > 120
-                ? '${descripcionCard.substring(0, 120)}...'
-                : descripcionCard)
-            : '',
-        'mejorMomento': '',
-        'estacionId': newId, // Enlazar el card con la estación patrimonial
-      });
-
-      // Subir imágenes del card (múltiples)
+      // Subir imágenes y guardarlas en el array `imagenes` del documento de la estación
       if (_pickedCardImages.isNotEmpty) {
         final toUpload = _pickedCardImages.take(5).toList();
         for (var idx = 0; idx < toUpload.length; idx++) {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final cardImagePath = 'estaciones/$cardId/img_$ts$ext';
+          final imagePath = 'estaciones/$newId/img_$ts$ext';
           try {
             String cardImageUrl;
             if (kIsWeb &&
                 idx < _pickedCardImagesBytes.length &&
                 _pickedCardImagesBytes[idx] != null) {
               cardImageUrl = await StorageService.instance.uploadBytes(
-                  _pickedCardImagesBytes[idx]!, cardImagePath,
+                  _pickedCardImagesBytes[idx]!, imagePath,
                   contentType: 'image/jpeg');
             } else {
               final file = File(picked.path);
               cardImageUrl = await StorageService.instance
-                  .uploadFile(file, cardImagePath, contentType: 'image/jpeg');
+                  .uploadFile(file, imagePath, contentType: 'image/jpeg');
             }
             final imageObj = {
               'url': cardImageUrl,
-              'path': cardImagePath,
+              'path': imagePath,
               'alt': nombreCard
             };
             await FirestoreService.instance
-                .addPlaceImage(placeId: cardId, image: imageObj);
+                .addPlaceImage(placeId: newId, image: imageObj);
           } catch (e) {
-            debugPrint('Error subiendo imagen $idx del card: $e');
+            debugPrint('Error subiendo imagen $idx de la estación: $e');
             continue;
           }
         }
@@ -269,11 +256,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     _nombreController.clear();
     _descripcionController.clear();
     _comunaController.clear();
-    _descripcionCardController.clear();
     _formKey.currentState?.reset();
     setState(() {
-      _pickedBadge = null;
-      _pickedBadgeBytes = null;
       _pickedCardImages = [];
       _pickedCardImagesBytes = [];
     });
@@ -299,6 +283,8 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
     return AdminProtectedWidget(
       child: PantallaBase(
         titulo: 'Crear Estación Patrimonial',
+        backgroundColor: Colors.white,
+        appBarBackgroundColor: Colors.white,
         body: Form(
           key: _formKey,
           child: Column(
@@ -334,14 +320,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              // Separador visual
-              const Divider(thickness: 2),
-              const SizedBox(height: 16),
-              const Text(
-                'Información para el Card/Lugar',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
               const SizedBox(height: 16),
               CampoFormulario(
                 controller: _comunaController,
@@ -350,20 +328,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Ingresa la comuna donde se ubica';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              CampoFormulario(
-                controller: _descripcionCardController,
-                label: 'Descripción del card',
-                hint:
-                    'Descripción breve que aparecerá en la pantalla principal...',
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Agrega una descripción para el card';
                   }
                   return null;
                 },
@@ -406,12 +370,15 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                                       width: 100,
                                       height: 100,
                                     )
-                                  : Image.file(
-                                      File(_pickedCardImages[index].path),
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: 100,
-                                    ),
+                                  : (kIsWeb
+                                      ? const Icon(Icons.image,
+                                          size: 40, color: Colors.grey)
+                                      : Image.file(
+                                          File(_pickedCardImages[index].path),
+                                          fit: BoxFit.cover,
+                                          width: 100,
+                                          height: 100,
+                                        )),
                             ),
                             Positioned(
                               top: 4,

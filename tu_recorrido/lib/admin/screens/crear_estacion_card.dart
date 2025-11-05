@@ -20,9 +20,9 @@ class CrearEstacionCardScreen extends StatefulWidget {
 
 class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
   final _comunaCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  // No usamos _selectedEstacionId: la creación retorna el id de la estación creada.
   final ImagePicker _picker = ImagePicker();
   List<XFile> _pickedImages = [];
   List<Uint8List?> _pickedImagesBytes = [];
@@ -69,26 +69,22 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
     }
   }
 
-  Future<void> _createPlace() async {
+  Future<void> _assignCardToEstacion() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
       final name = _nameCtrl.text.trim();
-      final placeId = await FirestoreService.instance
-          .createPlace(name: name, lat: 0.0, lng: 0.0);
+      final estacionId = await FirestoreService.instance
+          .createEstacion(nombre: name, lat: 0.0, lng: 0.0);
 
       final comuna = _comunaCtrl.text.trim();
-      final descripcion = _descCtrl.text.trim();
+      // Guardar comuna en el documento de la estación. La descripción del card
+      // debe provenir de la colección de estación (no la rellenamos aquí).
       await FirestoreService.instance
-          .updatePlacePartial(placeId: placeId, data: {
+          .updatePlacePartial(placeId: estacionId, data: {
         'comuna': comuna.isNotEmpty ? comuna : '',
-        'descripcion': descripcion,
-        'shortDesc': descripcion.isNotEmpty
-            ? (descripcion.length > 120
-                ? '${descripcion.substring(0, 120)}...'
-                : descripcion)
-            : '',
-        'mejorMomento': '',
+        'estacionId': estacionId,
+        // 'descripcion' se gestiona desde la colección de estación principal.
       });
 
       if (_pickedImages.isNotEmpty) {
@@ -97,7 +93,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           final picked = toUpload[idx];
           final ts = DateTime.now().millisecondsSinceEpoch;
           final ext = kIsWeb ? _getExt(picked.name) : _getExt(picked.path);
-          final path = 'estaciones/$placeId/img_$ts$ext';
+          final path = 'estaciones/$estacionId/img_$ts$ext';
           try {
             String url;
             if (kIsWeb &&
@@ -113,7 +109,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
             }
             final imageObj = {'url': url, 'path': path, 'alt': name};
             await FirestoreService.instance
-                .addPlaceImage(placeId: placeId, image: imageObj);
+                .addPlaceImage(placeId: estacionId, image: imageObj);
           } catch (e) {
             // ignore errors for single images
             debugPrint('Error subiendo imagen $idx: $e');
@@ -127,7 +123,6 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
           const SnackBar(content: Text('Estación (card) creada')));
       _nameCtrl.clear();
       _comunaCtrl.clear();
-      _descCtrl.clear();
       setState(() {
         _pickedImages = [];
         _pickedImagesBytes = [];
@@ -145,7 +140,6 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _comunaCtrl.dispose();
-    _descCtrl.dispose();
     super.dispose();
   }
 
@@ -175,13 +169,6 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Ingresa la comuna o dirección breve'
                     : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Descripción (mostrar en Ver detalles)'),
-                maxLines: 4,
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
@@ -244,7 +231,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
                 ),
               const SizedBox(height: 16),
               ElevatedButton(
-                  onPressed: _loading ? null : _createPlace,
+                  onPressed: _loading ? null : _assignCardToEstacion,
                   child: _loading
                       ? const CircularProgressIndicator()
                       : const Text('Crear')),

@@ -29,10 +29,18 @@ class EstacionService {
       // Crear nueva estación con código QR
       final estacionConQR = estacion.copyWith(codigoQR: codigoQR);
 
+      // Preparar payload garantizando compatibilidad con consumidores (Home, UI)
+      final Map<String, dynamic> payload =
+          Map.from(estacionConQR.toFirestore());
+
+      // Algunos consumidores/consultas esperan 'createdAt', 'lat' y 'lng'
+      // Añadimos serverTimestamp para createdAt y duplicamos latitud/longitud a lat/lng
+      payload['createdAt'] = FieldValue.serverTimestamp();
+      payload['lat'] = estacionConQR.latitud;
+      payload['lng'] = estacionConQR.longitud;
+
       // Guardar en Firestore
-      final docRef = await _firestore
-          .collection(_collection)
-          .add(estacionConQR.toFirestore());
+      final docRef = await _firestore.collection(_collection).add(payload);
 
       return docRef.id;
     } catch (e) {
@@ -95,13 +103,25 @@ class EstacionService {
   /// Obtiene todas las estaciones activas
   static Future<List<Estacion>> obtenerEstacionesActivas() async {
     try {
-      final query = await _firestore
-          .collection(_collection)
-          .where('activa', isEqualTo: true)
-          .orderBy('fechaCreacion', descending: true)
-          .get();
+      // Prefer 'fechaCreacion' but some older documents may use 'createdAt'.
+      try {
+        final query = await _firestore
+            .collection(_collection)
+            .where('activa', isEqualTo: true)
+            .orderBy('fechaCreacion', descending: true)
+            .get();
 
-      return query.docs.map((doc) => Estacion.fromFirestore(doc)).toList();
+        return query.docs.map((doc) => Estacion.fromFirestore(doc)).toList();
+      } catch (e) {
+        // Fallback to createdAt if fechaCreacion is not available/indexed
+        final query = await _firestore
+            .collection(_collection)
+            .where('activa', isEqualTo: true)
+            .orderBy('createdAt', descending: true)
+            .get();
+
+        return query.docs.map((doc) => Estacion.fromFirestore(doc)).toList();
+      }
     } catch (e) {
       throw Exception('Error al obtener estaciones: $e');
     }

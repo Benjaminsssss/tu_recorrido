@@ -44,7 +44,7 @@ class ListaEstaciones extends StatelessWidget {
                         estacion.badgeImage!.url!.isNotEmpty
                     ? CircleAvatar(
                         radius: 25,
-                        backgroundColor: Coloressito.surfaceDark,
+                        backgroundColor: Colors.transparent,
                         backgroundImage: estacion.badgeImage!.imageProvider(),
                       )
                     : (estacion.badgeImage!.path != null &&
@@ -84,7 +84,7 @@ class ListaEstaciones extends StatelessWidget {
 
                               return CircleAvatar(
                                 radius: 25,
-                                backgroundColor: Coloressito.surfaceDark,
+                                backgroundColor: Colors.transparent,
                                 backgroundImage: NetworkImage(snap.data!),
                               );
                             },

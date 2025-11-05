@@ -72,8 +72,9 @@ class FirestoreService {
   // ESTACIONES (antes "places")
   // =========================
 
-  Future<String> createPlace({
-    required String name,
+  /// Crea un documento en la colección `estaciones` y devuelve su id.
+  Future<String> createEstacion({
+    required String nombre,
     required double lat,
     required double lng,
     String category = 'general',
@@ -81,7 +82,7 @@ class FirestoreService {
     String? city,
   }) async {
     final ref = await _db.collection('estaciones').add({
-      'name': name,
+      'name': nombre,
       'lat': lat,
       'lng': lng,
       'category': category,
@@ -92,15 +93,15 @@ class FirestoreService {
     return ref.id;
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> watchPlaces() {
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchEstaciones() {
     return _db
         .collection('estaciones')
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
 
-  Future<void> deletePlace(String placeId) async {
-    await _db.collection('estaciones').doc(placeId).delete();
+  Future<void> deleteEstacion(String estacionId) async {
+    await _db.collection('estaciones').doc(estacionId).delete();
   }
 
   /// Actualiza el campo `imageUrl` de un place.
