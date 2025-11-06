@@ -419,23 +419,32 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
       ),
       child: ClipOval(
         child: userState.avatarUrl != null && userState.avatarUrl!.isNotEmpty
-            ? (kIsWeb
-                ? Image.network(
-                    userState.avatarUrl!,
+            ? Image.network(
+                userState.avatarUrl!,
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
                     width: 120,
                     height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        _buildDefaultAvatar(),
-                  )
-                : Image.file(
-                    File(userState.avatarUrl!),
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        _buildDefaultAvatar(),
-                  ))
+                    color: Colors.grey[300],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('❌ Error cargando imagen de perfil: $error');
+                  return _buildDefaultAvatar();
+                },
+              )
             : _buildDefaultAvatar(),
       ),
     );
