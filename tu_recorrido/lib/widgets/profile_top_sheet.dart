@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/colores.dart';
 
 class ProfileTopSheet extends StatefulWidget {
@@ -112,7 +111,6 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final user = FirebaseAuth.instance.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
@@ -199,14 +197,6 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
                               ),
                             ),
                             const SizedBox(height: 24),
-                            // Header con avatar grande + hero
-                            _ProfileSheetHeader(
-                              uid: widget.uid,
-                              avatarUrl: widget.avatarUrl,
-                              user: user,
-                              isDark: isDark,
-                            ),
-                            const SizedBox(height: 24),
                             // Quick Actions
                             _QuickActionsRow(isDark: isDark),
                             const SizedBox(height: 16),
@@ -242,104 +232,7 @@ class _ProfileTopSheetState extends State<ProfileTopSheet>
   }
 }
 
-// Header del sheet con avatar grande y anillo
-class _ProfileSheetHeader extends StatelessWidget {
-  final String uid;
-  final String? avatarUrl;
-  final User? user;
-  final bool isDark;
 
-  const _ProfileSheetHeader({
-    required this.uid,
-    this.avatarUrl,
-    this.user,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Avatar con hero animation (40→80 px)
-        Hero(
-          tag: 'profile_avatar_$uid',
-          child: Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Coloressito.adventureGreen,
-                width: 3,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Coloressito.adventureGreen.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 37,
-              backgroundColor: const Color(0xFFD9F2E4),
-              backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                  ? NetworkImage(avatarUrl!)
-                  : null,
-              child: avatarUrl == null || avatarUrl!.isEmpty
-                  ? Icon(
-                      Icons.person,
-                      color: Coloressito.adventureGreen,
-                      size: 40,
-                    )
-                  : null,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Nombre
-        Text(
-          user?.displayName ?? 'Usuario',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
-        ),
-        const SizedBox(height: 4),
-        // @handle
-        Text(
-          '@${user?.email?.split('@').first ?? 'usuario'}',
-          style: TextStyle(
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Nivel viajero
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: Coloressito.adventureGreen.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Coloressito.adventureGreen.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Text(
-            'Nivel Viajero 4',
-            style: TextStyle(
-              color: Coloressito.adventureGreen,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // Quick Actions en chips 56px con accesibilidad
 class _QuickActionsRow extends StatelessWidget {

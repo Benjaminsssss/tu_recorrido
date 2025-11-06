@@ -6,14 +6,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 import '../services/coleccion_service.dart';
 import '../services/album_photos_service.dart';
 import '../models/estacion_visitada.dart';
 import '../models/place.dart';
+import '../models/user_state.dart';
 import '../widgets/simple_insignia_modal.dart';
 
 import '../components/bottom_nav_bar.dart';
+import '../widgets/user_profile_header.dart';
 
 /// Album/colección: muestra insignias (badges) y sus fotos asociadas.
 class AlbumScreen extends StatefulWidget {
@@ -898,94 +901,42 @@ class _AlbumScreenState extends State<AlbumScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: Container(
-        // Fondo blanco como el resto de la app
-        color: Colors.white,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header compacto con imagen - esquinas rectas
-              SizedBox(
-                height: 70, // Un poco más pequeño
-                width: double.infinity,
-                // Sin borderRadius para esquinas rectas
-                child: Stack(
-                  children: [
-                    // Imagen de fondo
-                    Image.asset(
-                      'assets/img/condorHeader.jpeg',
-                      width: double.infinity,
-                      height: 70,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Fallback con gradiente elegante
-                        return Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.grey[400]!,
-                                Colors.grey[600]!,
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    // Overlay sutil para mejorar legibilidad
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withAlpha((0.1 * 255).round()),
-                            Colors.black.withAlpha((0.4 * 255).round()),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Título pequeño abajo a la derecha
-                    Positioned(
-                      bottom: 8,
-                      right: 16,
-                      child: Text(
-                        'Mi Álbum',
-                        style: TextStyle(
-                          color: const Color(
-                              0xFFB8860B), // Amarillo mostaza original
-                          fontSize: 16, // Más pequeño
-                          fontWeight: FontWeight.w600,
-                          shadows: [
-                            Shadow(
-                              color:
-                                  Colors.black.withAlpha((0.7 * 255).round()),
-                              blurRadius: 3,
-                              offset: const Offset(1, 1),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Contenido principal
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _items.where((e) => e.type == AlbumItemType.badge).isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                            child: _buildEmptyStateNoBadges(theme),
-                          )
-                        : _buildPremiumBadgesList(context),
-              ),
-            ],
+      body: CustomScrollView(
+        slivers: [
+          // Header colapsable
+          SliverAppBar(
+            expandedHeight: 280, // Altura ajustada al contenido real del header
+            pinned: false, // No se queda fijo arriba
+            floating: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            automaticallyImplyLeading: false, // Elimina la flecha de volver
+            flexibleSpace: FlexibleSpaceBar(
+              background: const UserProfileHeader(),
+              collapseMode: CollapseMode.parallax,
+            ),
           ),
-        ),
+          
+          // Contador de insignias fijo
+          SliverPersistentHeader(
+            pinned: true, // Se queda fijo al hacer scroll
+            delegate: _InsigniasCounterDelegate(),
+          ),
+          
+          // Contenido principal
+          _loading
+              ? const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : _items.where((e) => e.type == AlbumItemType.badge).isEmpty
+                  ? SliverFillRemaining(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                        child: _buildEmptyStateNoBadges(theme),
+                      ),
+                    )
+                  : _buildPremiumBadgesListSliver(context),
+        ],
       ),
       bottomNavigationBar:
           BottomNavBar(currentIndex: _currentIndex, onChanged: _onNavChanged),
@@ -1021,6 +972,41 @@ class _AlbumScreenState extends State<AlbumScreen> {
             style: TextStyle(color: Colors.black45),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumBadgesListSliver(BuildContext context) {
+    final badges = _items.where((e) => e.type == AlbumItemType.badge).toList();
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index.isOdd) {
+              return const SizedBox(height: 16); // Separador
+            }
+            
+            final badgeIndex = index ~/ 2;
+            final badge = badges[badgeIndex];
+            final photos = _items
+                .where((i) =>
+                    i.type == AlbumItemType.photo && i.parentId == badge.id)
+                .toList();
+            final canAdd = _totalPhotosCount() < 10;
+
+            return _PremiumBadgeCard(
+              badge: badge,
+              photos: photos,
+              canAdd: canAdd,
+              onTapInsignia: () => _openInsigniaModal(badge),
+              onAddPhoto: () => _addPhotoFor(badge.id),
+              onTapPhoto: (photo) => _showPhotoOptionsOverlay(context, photo),
+              buildItemImage: _buildItemImage,
+            );
+          },
+          childCount: badges.length * 2 - 1, // badges + separadores
+        ),
       ),
     );
   }
@@ -1351,4 +1337,99 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
       ),
     );
   }
+}
+
+// Delegate para el contador de insignias fijo
+class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
+  @override
+  double get minExtent => 56.0; // Altura mínima cuando está colapsado
+  
+  @override
+  double get maxExtent => 56.0; // Altura máxima (igual que mínima porque no cambia)
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Consumer<UserState>(
+      builder: (context, userState, _) {
+        return FutureBuilder<int>(
+          future: userState.getInsigniasCount(),
+          builder: (context, snapshot) {
+            final count = snapshot.data ?? 0;
+            final isLoading = snapshot.connectionState == ConnectionState.waiting;
+            
+            return Container(
+              color: Colors.white,
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+                    top: BorderSide(color: Colors.grey[200]!, width: 1),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: isLoading
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.stars_rounded,
+                            color: Colors.amber[600],
+                            size: 28,
+                            shadows: [
+                              Shadow(
+                                color: Colors.amber.withOpacity(0.5),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '$count',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber[700],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              count == 1 ? 'Insignia obtenida' : 'Insignias obtenidas',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  bool shouldRebuild(_InsigniasCounterDelegate oldDelegate) => true;
 }

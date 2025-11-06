@@ -34,13 +34,14 @@ service cloud.firestore {
       function isValidUser(data) {
         return
           (data.keys().hasOnly([
-            'uid','email','displayName','photoURL','nombre','apodo',
+            'uid','email','displayName','photoURL','backgroundURL','nombre','apodo',
             'fechaNacimiento','region','comuna','activo','createdAt','updatedAt','role'
           ])) &&
           (data.uid is string) &&
           (data.email is string) &&
           (data.displayName is string || data.displayName == null) &&
           (data.photoURL is string || data.photoURL == null) &&
+          (data.backgroundURL is string || data.backgroundURL == null) &&
           (data.nombre is string || data.nombre == null) &&
           (data.apodo is string || data.apodo == null) &&
           (data.fechaNacimiento is string || data.fechaNacimiento == null) &&
@@ -50,6 +51,13 @@ service cloud.firestore {
           (data.role is string || data.role == null);
       }
 
+      // Función para validar actualizaciones parciales
+      function isValidPartialUpdate() {
+        let allowedKeys = ['nombre', 'apodo', 'displayName', 'photoURL', 'backgroundURL', 'region', 'comuna', 'updatedAt'];
+        let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return affectedKeys.hasOnly(allowedKeys);
+      }
+
       // Creación: Sólo el propio usuario puede crearse y debe pasar validación
       allow create: if isAuthenticated()
                        && request.auth.uid == uid
@@ -57,16 +65,21 @@ service cloud.firestore {
 
       // Actualización: Debe pasar validación y ser dueño o admin.
       allow update: if isAuthenticated()
-                       && isValidUser(request.resource.data)
                        && (
-                         // DUEÑO: Puede actualizar su perfil, PERO no cambiar el 'role' (o establecerlo como null)
-                         (request.auth.uid == uid &&
-                          (request.resource.data.role == resource.data.role || request.resource.data.role == null))
-                         // ADMIN: Puede cambiar todo
-                         || isAdmin()
-                       )
-                       // No permitir que el cliente cambie 'createdAt'
-                       && (request.resource.data.createdAt == resource.data.createdAt);
+                         // Actualización completa del documento
+                         (isValidUser(request.resource.data) && 
+                          (
+                            // DUEÑO: Puede actualizar su perfil, PERO no cambiar el 'role' (o establecerlo como null)
+                            (request.auth.uid == uid &&
+                             (request.resource.data.role == resource.data.role || request.resource.data.role == null))
+                            // ADMIN: Puede cambiar todo
+                            || isAdmin()
+                          )
+                          // No permitir que el cliente cambie 'createdAt'
+                          && (request.resource.data.createdAt == resource.data.createdAt))
+                         // O actualización parcial de campos permitidos
+                         || (request.auth.uid == uid && isValidPartialUpdate() && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                       );
 
 
       // --- SUBCOLECCIÓN: estaciones_visitadas ---
