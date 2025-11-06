@@ -1011,34 +1011,6 @@ class _AlbumScreenState extends State<AlbumScreen> {
     );
   }
 
-  Widget _buildPremiumBadgesList(BuildContext context) {
-    final badges = _items.where((e) => e.type == AlbumItemType.badge).toList();
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96), // Igual que Home
-      itemCount: badges.length,
-      separatorBuilder: (_, __) =>
-          const SizedBox(height: 16), // Espaciado más consistente
-      itemBuilder: (context, index) {
-        final badge = badges[index];
-        final photos = _items
-            .where(
-                (i) => i.type == AlbumItemType.photo && i.parentId == badge.id)
-            .toList();
-        final canAdd = _totalPhotosCount() < 10;
-
-        return _PremiumBadgeCard(
-          badge: badge,
-          photos: photos,
-          canAdd: canAdd,
-          onTapInsignia: () => _openInsigniaModal(badge),
-          onAddPhoto: () => _addPhotoFor(badge.id),
-          onTapPhoto: (photo) => _showPhotoOptionsOverlay(context, photo),
-          buildItemImage: _buildItemImage,
-        );
-      },
-    );
-  }
-
   /// Abre el modal épico de insignia con animaciones
   void _openInsigniaModal(AlbumItem badge) {
     // Crear EstacionVisitada temporal para el modal
