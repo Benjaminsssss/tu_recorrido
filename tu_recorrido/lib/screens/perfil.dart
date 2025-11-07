@@ -2,7 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/regioycomu.dart';
+import '../models/user_state.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../utils/colores.dart';
 import 'login.dart';
@@ -461,6 +463,10 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
       // Primero cerrar el bottom sheet con animación
       if (mounted) {
         _controller.reverse().then((_) async {
+          // Limpiar datos del UserState ANTES de cerrar sesión
+          final userState = context.read<UserState>();
+          await userState.clearUserData();
+          
           // Cerrar sesión en Firebase
           await FirebaseAuth.instance.signOut();
 

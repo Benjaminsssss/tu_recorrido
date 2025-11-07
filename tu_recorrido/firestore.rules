@@ -24,10 +24,17 @@ service cloud.firestore {
              request.resource.data.rating <= 5;
     }
 
+    // Función para verificar si el usuario sigue a otro usuario
+    function isFollowing(targetUserId) {
+      return exists(/databases/$(database)/documents/following/$(request.auth.uid)/following/$(targetUserId));
+    }
+
     // --- COLECCIÓN: USERS ---
     match /users/{uid} {
       // Reglas básicas (Lectura/Escritura)
-      allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
+      // Lectura: Cualquier usuario autenticado puede leer perfiles
+      // (la privacidad se maneja en la capa de aplicación basándose en isPublic)
+      allow read: if isAuthenticated();
       allow delete: if request.auth != null && request.auth.uid == uid;
 
       // Validación de esquema para el documento user
@@ -35,7 +42,9 @@ service cloud.firestore {
         return
           (data.keys().hasOnly([
             'uid','email','displayName','photoURL','backgroundURL','nombre','apodo',
-            'fechaNacimiento','region','comuna','activo','createdAt','updatedAt','role'
+            'fechaNacimiento','region','comuna','activo','createdAt','updatedAt','role',
+            'followersCount','followingCount','badgesCount','placesVisitedCount',
+            'isPublic','showBadges','showAlbum'
           ])) &&
           (data.uid is string) &&
           (data.email is string) &&
@@ -48,12 +57,27 @@ service cloud.firestore {
           (data.region is string || data.region == null) &&
           (data.comuna is string || data.comuna == null) &&
           (data.activo is bool || data.activo == null) &&
-          (data.role is string || data.role == null);
+          (data.role is string || data.role == null) &&
+          // Nuevos campos sociales
+          (data.get('followersCount', 0) is number) &&
+          (data.get('followingCount', 0) is number) &&
+          (data.get('badgesCount', 0) is number) &&
+          (data.get('placesVisitedCount', 0) is number) &&
+          (data.get('isPublic', true) is bool) &&
+          (data.get('showBadges', true) is bool) &&
+          (data.get('showAlbum', true) is bool);
       }
 
       // Función para validar actualizaciones parciales
       function isValidPartialUpdate() {
-        let allowedKeys = ['nombre', 'apodo', 'displayName', 'photoURL', 'backgroundURL', 'region', 'comuna', 'updatedAt'];
+        let allowedKeys = ['nombre', 'apodo', 'displayName', 'photoURL', 'backgroundURL', 'region', 'comuna', 'updatedAt', 'isPublic', 'showBadges', 'showAlbum', 'followersCount', 'followingCount', 'badgesCount', 'placesVisitedCount'];
+        let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return affectedKeys.hasOnly(allowedKeys);
+      }
+
+      // Función para validar actualización solo de contadores sociales
+      function isValidSocialCountersUpdate() {
+        let allowedKeys = ['followersCount', 'followingCount', 'badgesCount', 'placesVisitedCount', 'updatedAt'];
         let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
         return affectedKeys.hasOnly(allowedKeys);
       }
@@ -77,8 +101,10 @@ service cloud.firestore {
                           )
                           // No permitir que el cliente cambie 'createdAt'
                           && (request.resource.data.createdAt == resource.data.createdAt))
-                         // O actualización parcial de campos permitidos
+                         // O actualización parcial de campos permitidos (solo el dueño)
                          || (request.auth.uid == uid && isValidPartialUpdate() && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                         // O actualización de contadores sociales (cualquier usuario autenticado)
+                         || isValidSocialCountersUpdate()
                        );
 
 
@@ -100,9 +126,9 @@ service cloud.firestore {
             (data.longitudVisita is number || data.longitudVisita == null);
         }
 
-        // Solo el dueño puede leer/escribir sus estaciones visitadas
-        allow read, create, update, delete: if isAuthenticated() && request.auth.uid == uid;
-
+        // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
+        // Escritura: Solo el dueño
+        allow read: if isAuthenticated();
         allow create: if isAuthenticated()
                        && request.auth.uid == uid
                        && isValidEstacionVisitada(request.resource.data);
@@ -110,6 +136,8 @@ service cloud.firestore {
         allow update: if isAuthenticated()
                        && request.auth.uid == uid
                        && isValidEstacionVisitada(request.resource.data);
+        
+        allow delete: if isAuthenticated() && request.auth.uid == uid;
       }
 
       // --- SUBCOLECCIÓN: insignias ---
@@ -123,8 +151,9 @@ service cloud.firestore {
           && (data.fechaObtenida is timestamp);
         }
 
-        // Lectura: dueño o admin
-        allow read: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
+        // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
+        // Escritura: dueño o admin
+        allow read: if isAuthenticated();
 
         // Crear: dueño o admin, y debe pasar validación de esquema
         allow create: if isAuthenticated()
@@ -154,8 +183,9 @@ service cloud.firestore {
             (data.metadata is map || data.metadata == null);
         }
 
-        // Solo el dueño puede leer/escribir sus fotos del álbum con validación
-        allow read: if isAuthenticated() && request.auth.uid == uid;
+        // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
+        // Escritura: Solo el dueño
+        allow read: if isAuthenticated();
 
         allow create: if isAuthenticated()
                        && request.auth.uid == uid
@@ -297,6 +327,70 @@ service cloud.firestore {
         allow delete: if isAuthenticated() &&
           (ratingId == request.auth.uid || isAdmin());
       }
+    }
+
+    // --- COLECCIÓN: FOLLOWERS ---
+    match /followers/{userId}/followers/{followerId} {
+      // Validación de esquema para followers
+      function isValidFollower(data) {
+        return data.keys().hasOnly(['displayName', 'photoURL', 'timestamp']) &&
+               (data.displayName is string) &&
+               (data.photoURL is string || data.photoURL == null) &&
+               (data.timestamp is timestamp);
+      }
+
+      // Lectura: Cualquiera autenticado puede ver los seguidores
+      allow read: if isAuthenticated();
+
+      // Escritura: Solo el follower puede agregarse/quitarse como seguidor
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == followerId &&
+                       isValidFollower(request.resource.data);
+
+      allow delete: if isAuthenticated() && request.auth.uid == followerId;
+    }
+
+    // --- COLECCIÓN: FOLLOWING ---
+    match /following/{userId}/following/{followingId} {
+      // Validación de esquema para following
+      function isValidFollowing(data) {
+        return data.keys().hasOnly(['displayName', 'photoURL', 'timestamp']) &&
+               (data.displayName is string) &&
+               (data.photoURL is string || data.photoURL == null) &&
+               (data.timestamp is timestamp);
+      }
+
+      // Lectura: Cualquiera autenticado puede ver a quién sigue un usuario
+      allow read: if isAuthenticated();
+
+      // Escritura: Solo el usuario puede agregar/quitar a alguien que sigue
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       isValidFollowing(request.resource.data);
+
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // --- COLECCIÓN: FEED ---
+    match /feed/{userId}/items/{itemId} {
+      // Validación de esquema para items del feed
+      function isValidFeedItem(data) {
+        return data.keys().hasAny(['type', 'userId', 'userName', 'timestamp']) &&
+               (data.type is string) &&
+               (data.userId is string) &&
+               (data.userName is string) &&
+               (data.timestamp is timestamp);
+      }
+
+      // Lectura: Solo el dueño del feed puede leer sus items
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+
+      // Escritura: Sistema puede crear items (a través de Cloud Functions)
+      // Por ahora, permitimos que el usuario que realiza la acción cree su item
+      allow create: if isAuthenticated() && isValidFeedItem(request.resource.data);
+
+      // Borrar: El dueño del feed puede borrar items
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
   }
 }

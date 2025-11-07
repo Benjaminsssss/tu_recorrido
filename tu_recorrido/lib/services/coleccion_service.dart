@@ -93,17 +93,17 @@ class ColeccionService {
     }
   }
 
-  /// Obtiene todas las estaciones visitadas por el usuario actual
-  static Future<List<EstacionVisitada>> obtenerEstacionesVisitadas() async {
-    final userId = await _obtenerUserId();
-    if (userId == null) {
+  /// Obtiene todas las estaciones visitadas por el usuario especificado o el actual
+  static Future<List<EstacionVisitada>> obtenerEstacionesVisitadas({String? userId}) async {
+    final uid = userId ?? await _obtenerUserId();
+    if (uid == null) {
       return [];
     }
 
     try {
       final query = await _firestore
           .collection(_usersCollection)
-          .doc(userId)
+          .doc(uid)
           .collection(_estacionesVisitadasSubcollection)
           .orderBy('fechaVisita', descending: true)
           .get();
@@ -116,18 +116,18 @@ class ColeccionService {
     }
   }
 
-  /// Observa en tiempo real las estaciones visitadas por el usuario actual.
+  /// Observa en tiempo real las estaciones visitadas por el usuario especificado o el actual.
   /// Devuelve un Stream que emite la lista ordenada por fecha (desc).
-  static Stream<List<EstacionVisitada>> watchEstacionesVisitadas() async* {
-    final userId = await _obtenerUserId();
-    if (userId == null) {
+  static Stream<List<EstacionVisitada>> watchEstacionesVisitadas({String? userId}) async* {
+    final uid = userId ?? await _obtenerUserId();
+    if (uid == null) {
       yield [];
       return;
     }
 
     final coll = _firestore
         .collection(_usersCollection)
-        .doc(userId)
+        .doc(uid)
         .collection(_estacionesVisitadasSubcollection)
         .orderBy('fechaVisita', descending: true);
 

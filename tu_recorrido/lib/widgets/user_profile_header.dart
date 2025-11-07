@@ -6,9 +6,14 @@ import 'package:provider/provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 import '../models/user_state.dart';
+import '../services/user_profile_service.dart';
+import '../services/follow_service.dart';
+import '../models/user_profile.dart';
 
 class UserProfileHeader extends StatefulWidget {
-  const UserProfileHeader({super.key});
+  final String? userId; // ID del usuario a mostrar (null = usuario actual)
+  
+  const UserProfileHeader({super.key, this.userId});
 
   @override
   State<UserProfileHeader> createState() => _UserProfileHeaderState();
@@ -16,10 +21,19 @@ class UserProfileHeader extends StatefulWidget {
 
 class _UserProfileHeaderState extends State<UserProfileHeader> {
   final ImagePicker _picker = ImagePicker();
+  final _userProfileService = UserProfileService();
+  final _followService = FollowService();
+  
   int _seguidoresCount = 0;
   int _siguiendoCount = 0;
   bool _uploadingProfile = false;
   bool _uploadingBackground = false;
+  
+  // Datos del usuario a mostrar
+  UserProfile? _userProfile;
+  bool _loadingProfile = true;
+  bool _isOwnProfile = true;
+  bool _isFollowing = false;
 
   @override
   void initState() {
@@ -28,11 +42,109 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
   }
 
   Future<void> _loadUserData() async {
-    // Cargar contadores
-    setState(() {
-      _seguidoresCount = 0;
-      _siguiendoCount = 0;
-    });
+    if (widget.userId == null) {
+      // Es el perfil propio - cargar datos desde Firestore
+      try {
+        final currentUserId = _followService.currentUserId;
+        if (currentUserId != null) {
+          final profile = await _userProfileService.getUserProfile(currentUserId);
+          
+          if (profile != null) {
+            setState(() {
+              _isOwnProfile = true;
+              _loadingProfile = false;
+              _seguidoresCount = profile.followersCount;
+              _siguiendoCount = profile.followingCount;
+            });
+          } else {
+            setState(() {
+              _isOwnProfile = true;
+              _loadingProfile = false;
+              _seguidoresCount = 0;
+              _siguiendoCount = 0;
+            });
+          }
+        }
+      } catch (e) {
+        print('Error cargando perfil propio: $e');
+        setState(() {
+          _isOwnProfile = true;
+          _loadingProfile = false;
+          _seguidoresCount = 0;
+          _siguiendoCount = 0;
+        });
+      }
+    } else {
+      // Es el perfil de otro usuario
+      try {
+        final profile = await _userProfileService.getUserProfile(widget.userId!);
+        
+        if (profile != null) {
+          final following = await _followService.isFollowing(widget.userId!);
+          
+          setState(() {
+            _userProfile = profile;
+            _isOwnProfile = false;
+            _loadingProfile = false;
+            _isFollowing = following;
+            _seguidoresCount = profile.followersCount;
+            _siguiendoCount = profile.followingCount;
+          });
+        }
+      } catch (e) {
+        print('Error cargando perfil: $e');
+        setState(() => _loadingProfile = false);
+      }
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    if (widget.userId == null || _loadingProfile) return;
+
+    try {
+      if (_isFollowing) {
+        await _followService.unfollowUser(widget.userId!);
+        setState(() {
+          _isFollowing = false;
+          _seguidoresCount = (_seguidoresCount > 0) ? _seguidoresCount - 1 : 0;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Has dejado de seguir a ${_userProfile?.displayName ?? "este usuario"}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        await _followService.followUser(widget.userId!);
+        setState(() {
+          _isFollowing = true;
+          _seguidoresCount++;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ahora sigues a ${_userProfile?.displayName ?? "este usuario"}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error al cambiar estado de seguimiento: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar el seguimiento: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _changeBackgroundImage() async {
@@ -342,10 +454,18 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
   }
 
   Widget _buildBackgroundImage() {
-    final userState = context.watch<UserState>();
-    final backgroundUrl = userState.backgroundUrl;
+    String? backgroundUrl;
     
-    debugPrint('🖼️ Background URL: $backgroundUrl');
+    if (_isOwnProfile) {
+      // Perfil propio: usar UserState
+      final userState = context.watch<UserState>();
+      backgroundUrl = userState.backgroundUrl;
+    } else {
+      // Perfil de otro usuario: usar _userProfile
+      backgroundUrl = _userProfile?.backgroundURL;
+    }
+    
+    debugPrint('🖼️ Background URL: $backgroundUrl (isOwnProfile: $_isOwnProfile)');
     
     if (backgroundUrl != null && backgroundUrl.isNotEmpty) {
       // Verificar si es una URL de Firebase Storage o una ruta local antigua
@@ -402,7 +522,20 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
     );
   }
 
-  Widget _buildProfileImage(UserState userState) {
+  Widget _buildProfileImage() {
+    String? avatarUrl;
+    
+    if (_isOwnProfile) {
+      // Perfil propio: usar UserState
+      final userState = context.watch<UserState>();
+      avatarUrl = userState.avatarUrl;
+    } else {
+      // Perfil de otro usuario: usar _userProfile
+      avatarUrl = _userProfile?.photoURL;
+    }
+    
+    debugPrint('👤 Avatar URL: $avatarUrl (isOwnProfile: $_isOwnProfile)');
+    
     return Container(
       width: 120,
       height: 120,
@@ -418,9 +551,9 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
         ],
       ),
       child: ClipOval(
-        child: userState.avatarUrl != null && userState.avatarUrl!.isNotEmpty
+        child: avatarUrl != null && avatarUrl.isNotEmpty
             ? Image.network(
-                userState.avatarUrl!,
+                avatarUrl,
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
@@ -494,63 +627,103 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
                   Positioned(
                     top: 20,
                     left: 20,
-                    child: _buildProfileImage(userState),
+                    child: _buildProfileImage(),
                   ),
-                  // Edit button in top-right
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: Material(
-                      color: Colors.black.withOpacity(0.5),
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: _showEditOptions,
-                        customBorder: const CircleBorder(),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          child: const Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                            size: 20,
+                  // Edit button in top-right (only for own profile)
+                  if (_isOwnProfile)
+                    Positioned(
+                      top: 20,
+                      right: 20,
+                      child: Material(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: _showEditOptions,
+                          customBorder: const CircleBorder(),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  // Follow/Unfollow button (only for other users' profiles)
+                  if (!_isOwnProfile && !_loadingProfile)
+                    Positioned(
+                      top: 20,
+                      right: 20,
+                      child: Material(
+                        color: _isFollowing 
+                          ? Colors.grey[700]?.withOpacity(0.9) 
+                          : const Color(0xFFDAA520).withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        child: InkWell(
+                          onTap: _toggleFollow,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              _isFollowing ? 'Siguiendo' : 'Seguir',
+                              style: TextStyle(
+                                color: _isFollowing ? Colors.white : Colors.grey[900],
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   // User name positioned below profile picture
                   Positioned(
                     top: 150,
                     left: 20,
-                    child: Text(
-                      userState.nombre,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.grey[900]!,
-                            blurRadius: 0,
-                            offset: const Offset(-1, -1),
+                    child: _loadingProfile
+                      ? Container(
+                          padding: const EdgeInsets.all(8),
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
                           ),
-                          Shadow(
-                            color: Colors.grey[900]!,
-                            blurRadius: 0,
-                            offset: const Offset(1, -1),
+                        )
+                      : Text(
+                          _isOwnProfile 
+                            ? userState.nombre 
+                            : (_userProfile?.displayName?.isNotEmpty == true 
+                                ? _userProfile!.displayName! 
+                                : _userProfile?.nombre ?? 'Usuario'),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.grey[900]!,
+                                blurRadius: 0,
+                                offset: const Offset(-1, -1),
+                              ),
+                              Shadow(
+                                color: Colors.grey[900]!,
+                                blurRadius: 0,
+                                offset: const Offset(1, -1),
+                              ),
+                              Shadow(
+                                color: Colors.grey[900]!,
+                                blurRadius: 0,
+                                offset: const Offset(1, 1),
+                              ),
+                              Shadow(
+                                color: Colors.grey[900]!,
+                                blurRadius: 0,
+                                offset: const Offset(-1, 1),
+                              ),
+                            ],
                           ),
-                          Shadow(
-                            color: Colors.grey[900]!,
-                            blurRadius: 0,
-                            offset: const Offset(1, 1),
-                          ),
-                          Shadow(
-                            color: Colors.grey[900]!,
-                            blurRadius: 0,
-                            offset: const Offset(-1, 1),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
                   ),
                 ],
               ),

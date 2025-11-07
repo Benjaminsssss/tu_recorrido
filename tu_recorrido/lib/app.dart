@@ -12,6 +12,8 @@ import 'screens/perfil.dart';
 import 'screens/saved_places_screen.dart';
 import 'screens/coleccion.dart';
 import 'screens/debug_auth_screen.dart';
+import 'screens/album.dart';
+import 'screens/user_search_screen.dart';
 
 // Admin screens
 import 'admin/screens/admin_screen.dart';
@@ -49,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/perfil': (_) => const Perfil(),
         '/saved-places': (_) => const SavedPlacesScreen(),
         '/coleccion': (_) => const ColeccionScreen(),
+        '/user-search': (_) => const UserSearchScreen(),
 
         // Admin routes
         '/admin': (_) => const AdminScreen(),
@@ -57,6 +60,17 @@ class MyApp extends StatelessWidget {
 
         // Si ya tienes una pantalla de lugares, descomenta:
         // '/places': (_) => const PlacesScreen(),
+      },
+      onGenerateRoute: (settings) {
+        // Ruta dinámica para perfiles de usuario (álbum)
+        if (settings.name?.startsWith('/user-profile/') ?? false) {
+          final userId = settings.name!.split('/').last;
+          return MaterialPageRoute(
+            builder: (_) => AlbumScreen(userId: userId),
+            settings: settings,
+          );
+        }
+        return null;
       },
     );
   }

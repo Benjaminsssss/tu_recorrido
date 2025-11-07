@@ -58,13 +58,20 @@ class UserState extends ChangeNotifier {
         debugPrint('📥 Datos encontrados en Firestore: $data');
         
         if (data != null) {
-          // Cargar nombre
-          if (data['nombre'] != null) {
-            final firestoreName = data['nombre'] as String;
-            debugPrint('✅ Nombre desde Firestore: $firestoreName');
-            _nombre = firestoreName;
+          // Cargar nombre - priorizar displayName si existe, sino usar nombre
+          String? userName;
+          if (data['displayName'] != null && (data['displayName'] as String).isNotEmpty) {
+            userName = data['displayName'] as String;
+            debugPrint('✅ Usando displayName desde Firestore: $userName');
+          } else if (data['nombre'] != null) {
+            userName = data['nombre'] as String;
+            debugPrint('✅ Usando nombre desde Firestore: $userName');
+          }
+          
+          if (userName != null) {
+            _nombre = userName;
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('user_nombre', firestoreName);
+            await prefs.setString('user_nombre', userName);
           }
           
           // Cargar URLs de imágenes
@@ -147,8 +154,12 @@ class UserState extends ChangeNotifier {
             debugPrint('📄 Datos actuales del documento: ${docSnapshot.data()}');
           }
           
-          // Intentar actualizar
-          await docRef.update({'nombre': nuevoNombre});
+          // Intentar actualizar AMBOS campos para mantener sincronización
+          await docRef.update({
+            'nombre': nuevoNombre,
+            'displayName': nuevoNombre, // Mantener sincronizado
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
           debugPrint('✅ Firestore actualizado exitosamente con update()');
           
           // Verificar que se actualizó
@@ -163,7 +174,11 @@ class UserState extends ChangeNotifier {
             await FirebaseFirestore.instance
                 .collection('users')
                 .doc(_user!.uid)
-                .set({'nombre': nuevoNombre}, SetOptions(merge: true));
+                .set({
+                  'nombre': nuevoNombre,
+                  'displayName': nuevoNombre, // Mantener sincronizado
+                  'updatedAt': FieldValue.serverTimestamp(),
+                }, SetOptions(merge: true));
                 
             debugPrint('✅ Firestore actualizado exitosamente con set()');
             
@@ -293,6 +308,33 @@ class UserState extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Error obteniendo conteo de insignias: $e');
       return 0;
+    }
+  }
+
+  /// Limpia todos los datos del usuario al cerrar sesión
+  Future<void> clearUserData() async {
+    try {
+      debugPrint('🧹 Limpiando datos de usuario...');
+      
+      // Limpiar variables locales
+      _nombre = 'Usuario';
+      _avatarUrl = null;
+      _backgroundUrl = null;
+      _user = null;
+      
+      // Limpiar SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_nombre');
+      await prefs.remove('user_avatarUrl');
+      await prefs.remove('user_backgroundUrl');
+      
+      // Limpiar también el álbum (sistema legacy)
+      await prefs.remove('album_items');
+      
+      debugPrint('✅ Datos de usuario limpiados correctamente');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Error limpiando datos de usuario: $e');
     }
   }
 }

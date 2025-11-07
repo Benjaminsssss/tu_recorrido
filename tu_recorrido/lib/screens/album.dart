@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/coleccion_service.dart';
 import '../services/album_photos_service.dart';
@@ -19,8 +20,11 @@ import '../components/bottom_nav_bar.dart';
 import '../widgets/user_profile_header.dart';
 
 /// Album/colección: muestra insignias (badges) y sus fotos asociadas.
+/// Puede mostrar el álbum propio o de otro usuario según userId
 class AlbumScreen extends StatefulWidget {
-  const AlbumScreen({super.key});
+  final String? userId; // ID del usuario cuyo álbum se muestra (null = usuario actual)
+  
+  const AlbumScreen({super.key, this.userId});
 
   @override
   State<AlbumScreen> createState() => _AlbumScreenState();
@@ -82,12 +86,17 @@ class AlbumItem {
 
 class _AlbumScreenState extends State<AlbumScreen> {
   final List<AlbumItem> _items = [];
-  int _currentIndex = 1; // 0=Inicio,1=Colección,2=Mapa
   late SharedPreferences _prefs;
   final ImagePicker _picker = ImagePicker();
   bool _loading = true;
   Stream<List<EstacionVisitada>>? _visitasStream;
   StreamSubscription<List<EstacionVisitada>>? _visitasSub;
+  
+  // Variable para saber si es el perfil propio (puede editar) o de otro usuario (solo lectura)
+  bool get _isOwnProfile => widget.userId == null;
+  
+  // Índice de navegación: 0=Inicio cuando ves perfil de otro, 1=Colección cuando ves tu perfil
+  int get _currentIndex => _isOwnProfile ? 1 : 0;
 
   @override
   void initState() {
@@ -131,8 +140,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
   /// Cargar fotos desde Firebase (nuevo sistema)
   Future<List<AlbumItem>> _loadPhotosFromFirebase() async {
     try {
-      // Usar AlbumPhotosService para obtener fotos del usuario
-      final albumPhotos = await AlbumPhotosService.getUserPhotos();
+      // Usar AlbumPhotosService para obtener fotos del usuario especificado o actual
+      final albumPhotos = await AlbumPhotosService.getUserPhotos(userId: widget.userId);
 
       return albumPhotos
           .map((photo) => AlbumItem(
@@ -194,7 +203,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
   }
 
   void _startVisitasListener() {
-    _visitasStream = ColeccionService.watchEstacionesVisitadas();
+    _visitasStream = ColeccionService.watchEstacionesVisitadas(userId: widget.userId);
     _visitasSub = _visitasStream?.listen((visitas) async {
       // Convertir visitas a AlbumItem badges
       final badges = visitas.map((ev) {
@@ -480,10 +489,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
                               color: Colors.white, size: 28),
                         ),
                       ),
-                      // Botones Ver y Editar
+                      // Botones Ver y Editar (Editar solo para perfil propio)
                       Row(
                         children: [
-                          // Botón Ver (mitad izquierda)
+                          // Botón Ver (mitad izquierda o todo el ancho si no es perfil propio)
                           Expanded(
                             child: GestureDetector(
                               onTap: () {
@@ -492,7 +501,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                               },
                               child: Container(
                                 height: 60,
-                                margin: const EdgeInsets.only(right: 4),
+                                margin: EdgeInsets.only(right: _isOwnProfile ? 4 : 0),
                                 decoration: BoxDecoration(
                                   color: Colors.blue
                                       .withAlpha((0.8 * 255).round()),
@@ -511,34 +520,35 @@ class _AlbumScreenState extends State<AlbumScreen> {
                               ),
                             ),
                           ),
-                          // Botón Editar (mitad derecha)
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.of(dialogContext).pop();
-                                _openDetail(item);
-                              },
-                              child: Container(
-                                height: 60,
-                                margin: const EdgeInsets.only(left: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange
-                                      .withAlpha((0.8 * 255).round()),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'Editar',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                          // Botón Editar (mitad derecha) - Solo para perfil propio
+                          if (_isOwnProfile)
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(dialogContext).pop();
+                                  _openDetail(item);
+                                },
+                                child: Container(
+                                  height: 60,
+                                  margin: const EdgeInsets.only(left: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange
+                                        .withAlpha((0.8 * 255).round()),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Editar',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -889,11 +899,20 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   void _onNavChanged(int idx) {
     if (idx == 0) {
+      // Presionó Inicio
       Navigator.of(context).popUntil((route) => route.isFirst);
+    } else if (idx == 1) {
+      // Presionó Colección
+      if (!_isOwnProfile) {
+        // Si estás viendo el álbum de otra persona, navega a TU álbum
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AlbumScreen()),
+        );
+      }
+      // Si ya estás en tu propio álbum, no hacer nada
     } else if (idx == 2) {
+      // Presionó Mapa
       Navigator.pushNamed(context, '/menu');
-    } else {
-      setState(() => _currentIndex = idx);
     }
   }
 
@@ -912,7 +931,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
             elevation: 0,
             automaticallyImplyLeading: false, // Elimina la flecha de volver
             flexibleSpace: FlexibleSpaceBar(
-              background: const UserProfileHeader(),
+              background: UserProfileHeader(userId: widget.userId),
               collapseMode: CollapseMode.parallax,
             ),
           ),
@@ -920,7 +939,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
           // Contador de insignias fijo
           SliverPersistentHeader(
             pinned: true, // Se queda fijo al hacer scroll
-            delegate: _InsigniasCounterDelegate(),
+            delegate: _InsigniasCounterDelegate(userId: widget.userId),
           ),
           
           // Contenido principal
@@ -993,7 +1012,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 .where((i) =>
                     i.type == AlbumItemType.photo && i.parentId == badge.id)
                 .toList();
-            final canAdd = _totalPhotosCount() < 10;
+            // Solo permitir agregar fotos si es el perfil propio Y no ha alcanzado el límite
+            final canAdd = _isOwnProfile && _totalPhotosCount() < 10;
 
             return _PremiumBadgeCard(
               badge: badge,
@@ -1001,7 +1021,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
               canAdd: canAdd,
               onTapInsignia: () => _openInsigniaModal(badge),
               onAddPhoto: () => _addPhotoFor(badge.id),
-              onTapPhoto: (photo) => _showPhotoOptionsOverlay(context, photo),
+              onTapPhoto: (photo) {
+                // Si es perfil propio, mostrar opciones (Ver/Editar)
+                // Si es perfil de otro, mostrar directamente la foto
+                if (_isOwnProfile) {
+                  _showPhotoOptionsOverlay(context, photo);
+                } else {
+                  _showPhotoViewer(context, photo);
+                }
+              },
               buildItemImage: _buildItemImage,
             );
           },
@@ -1313,6 +1341,10 @@ class _PremiumBadgeCardState extends State<_PremiumBadgeCard>
 
 // Delegate para el contador de insignias fijo
 class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
+  final String? userId; // ID del usuario cuyas insignias contar
+  
+  _InsigniasCounterDelegate({this.userId});
+  
   @override
   double get minExtent => 56.0; // Altura mínima cuando está colapsado
   
@@ -1324,7 +1356,7 @@ class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
     return Consumer<UserState>(
       builder: (context, userState, _) {
         return FutureBuilder<int>(
-          future: userState.getInsigniasCount(),
+          future: _getInsigniasCount(userState),
           builder: (context, snapshot) {
             final count = snapshot.data ?? 0;
             final isLoading = snapshot.connectionState == ConnectionState.waiting;
@@ -1401,7 +1433,32 @@ class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
       },
     );
   }
+  
+  /// Obtiene el conteo de insignias para el usuario especificado
+  Future<int> _getInsigniasCount(UserState userState) async {
+    String? targetUserId = userId; // Usuario cuyo perfil estamos viendo
+    
+    // Si no hay userId especificado, usar el usuario actual
+    if (targetUserId == null) {
+      return userState.getInsigniasCount();
+    }
+    
+    // Contar insignias del usuario especificado
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUserId)
+          .collection('estaciones_visitadas')
+          .get();
+      
+      return snapshot.docs.length;
+    } catch (e) {
+      debugPrint('❌ Error obteniendo conteo de insignias para usuario $targetUserId: $e');
+      return 0;
+    }
+  }
 
   @override
-  bool shouldRebuild(_InsigniasCounterDelegate oldDelegate) => true;
+  bool shouldRebuild(_InsigniasCounterDelegate oldDelegate) => 
+    oldDelegate.userId != userId;
 }
