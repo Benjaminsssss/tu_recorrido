@@ -9,6 +9,7 @@ import '../models/user_state.dart';
 import '../services/user_profile_service.dart';
 import '../services/follow_service.dart';
 import '../models/user_profile.dart';
+import '../screens/followers_list_screen.dart';
 
 class UserProfileHeader extends StatefulWidget {
   final String? userId; // ID del usuario a mostrar (null = usuario actual)
@@ -734,10 +735,19 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
                   children: [
                     Expanded(
                       child: _buildStatItem('Siguiendo', _siguiendoCount, () {
-                        // TODO: Navegar a lista de siguiendo
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Lista de siguiendo - Próximamente')),
-                        );
+                        // Obtener el userId (si es perfil propio usa el actual, si no usa el pasado)
+                        final targetUserId = widget.userId ?? _followService.currentUserId;
+                        if (targetUserId != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FollowersListScreen(
+                                userId: targetUserId,
+                                type: 'following',
+                              ),
+                            ),
+                          );
+                        }
                       }),
                     ),
                     Container(
@@ -747,10 +757,19 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
                     ),
                     Expanded(
                       child: _buildStatItem('Seguidores', _seguidoresCount, () {
-                        // TODO: Navegar a lista de seguidores
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Lista de seguidores - Próximamente')),
-                        );
+                        // Obtener el userId (si es perfil propio usa el actual, si no usa el pasado)
+                        final targetUserId = widget.userId ?? _followService.currentUserId;
+                        if (targetUserId != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FollowersListScreen(
+                                userId: targetUserId,
+                                type: 'followers',
+                              ),
+                            ),
+                          );
+                        }
                       }),
                     ),
                   ],

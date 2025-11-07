@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firestore_service.dart';
 import '../models/place.dart';
 import '../widgets/place_modal.dart';
+import '../widgets/follow_suggestions_carousel.dart';
 
 /// Tab "Explorar" - Muestra lugares para descubrir (código del home original)
 class ExploreTab extends StatefulWidget {
@@ -22,6 +23,26 @@ class ExploreTab extends StatefulWidget {
 }
 
 class _ExploreTabState extends State<ExploreTab> {
+  // Número aleatorio para definir en qué posición aparecerá el carrusel de sugerencias
+  late int _suggestionPosition;
+  
+  @override
+  void initState() {
+    super.initState();
+    // TEMPORAL: Posición fija en 2 para pruebas (luego volver a aleatorio)
+    _suggestionPosition = 2;
+    debugPrint('🎯 ExploreTab: Carrusel aparecerá en posición $_suggestionPosition');
+  }
+  
+  /// Calcula el número total de items incluyendo el carrusel de sugerencias
+  int _calculateItemCount(int placesCount) {
+    // Si hay suficientes lugares, agregar 1 item para el carrusel
+    if (placesCount > _suggestionPosition) {
+      return placesCount + 1;
+    }
+    return placesCount;
+  }
+  
   /// Convierte un documento de Firestore al modelo Place
   Place _convertToPlace(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data();
@@ -137,12 +158,29 @@ class _ExploreTabState extends State<ExploreTab> {
           );
         }
 
-        // Lista de lugares
+        // Construir lista con carrusel de sugerencias intercalado
         return ListView.builder(
           padding: const EdgeInsets.only(bottom: 16),
-          itemCount: filtered.length,
+          itemCount: _calculateItemCount(filtered.length),
           itemBuilder: (context, i) {
-            final doc = filtered[i];
+            // Si es la posición del carrusel, mostrar el widget de sugerencias
+            // El widget se ocultará automáticamente si no hay sugerencias
+            if (i == _suggestionPosition && filtered.length > _suggestionPosition) {
+              debugPrint('🎨 Insertando FollowSuggestionsCarousel en posición $i');
+              // Sin padding, el widget maneja su propio margen
+              return const FollowSuggestionsCarousel();
+            }
+            
+            // Calcular el índice real en la lista de lugares
+            // Si ya pasamos el carrusel, ajustar el índice
+            final placeIndex = i > _suggestionPosition ? i - 1 : i;
+            
+            // Verificar que no excedamos la lista
+            if (placeIndex >= filtered.length) {
+              return const SizedBox.shrink();
+            }
+            
+            final doc = filtered[placeIndex];
             final d = doc.data();
 
             // Convertir documento Firestore a Place
