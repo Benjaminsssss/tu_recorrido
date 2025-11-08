@@ -19,11 +19,6 @@ class PlaceResult {
     this.esGenerado = false,
   });
 
-  // ⭐️ NUEVO: Método para actualizar el rating
-  void updateRating(double newRating) {
-    rating = newRating;
-  }
-
   factory PlaceResult.fromJson(Map<String, dynamic> json) {
     final geo = json['geometry']?['location'];
     return PlaceResult(

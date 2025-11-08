@@ -24,6 +24,7 @@ dependencies:
   google_maps_flutter: ^2.6.1
   geolocator: ^14.0.0
   google_sign_in: ^6.3.0
+  geocoding: ^4.0.0
 
   # UI / utilities
   provider: ^6.1.5+1
@@ -33,6 +34,7 @@ dependencies:
   http: ^1.2.1
   google_fonts: ^6.1.0
   shared_preferences: ^2.3.2
+  rxdart: ^0.27.7
 
   # i18n + media picker
   easy_localization: ^3.0.5
@@ -46,6 +48,7 @@ dependencies:
   async: ^2.9.0
   logger: ^2.6.2
   flutter_rating_bar: ^4.0.1
+  timeago: ^3.7.0
   # NOTA: Si necesitas la librería 'js' que se mencionó como eliminada, agrégala aquí con la versión correcta.
 
 dev_dependencies:

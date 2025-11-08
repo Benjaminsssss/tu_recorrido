@@ -43,6 +43,22 @@ service firebase.storage {
                     && request.resource.size < 5 * 1024 * 1024; // Máximo 5MB para avatares
     }
 
+    // ----- IMÁGENES DE PERFIL Y FONDO DE USUARIOS -----
+    // Estructura: users/{userId}/profile.jpg y users/{userId}/background.jpg
+    match /users/{userId}/{imageType} {
+      // Permitir solo profile.jpg y background.jpg
+      allow read: if true; // Cualquiera puede ver las imágenes de perfil
+      allow write, delete: if request.auth != null 
+                           && request.auth.uid == userId
+                           && (imageType == 'profile.jpg' || imageType == 'background.jpg');
+      
+      // Validar tipo de archivo y tamaño
+      allow create, update: if request.auth != null 
+                            && request.auth.uid == userId
+                            && request.resource.contentType.matches('image/.*')
+                            && request.resource.size < 5 * 1024 * 1024; // Máximo 5MB
+    }
+
     // ----- IMÁGENES GENERALES (legacy o futuras implementaciones) -----
     match /{allPaths=**} {
       // Por defecto, denegar acceso a rutas no especificadas

@@ -1,9 +1,7 @@
-// DEV - firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Funciones auxiliares de validación
+    // --- FUNCIONES GLOBALES ---
     function isAuthenticated() {
       return request.auth != null && request.auth.uid != null;
     }
@@ -12,106 +10,106 @@ service cloud.firestore {
       return request.auth.token.email_verified == true;
     }
 
+    // Función para verificar si un usuario es administrador
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Función para validar el valor del rating
     function isValidRating() {
       return request.resource.data.rating is number &&
              request.resource.data.rating >= 0 &&
              request.resource.data.rating <= 5;
     }
 
-    // ----- ESTACIONES -----
-    match /estaciones/{estacionId} {
-      // Cualquiera puede leer las estaciones
-      allow read: if true;
-      
-      // Solo los administradores pueden crear/borrar estaciones
-      allow create, delete: if isAdmin();
-      
-      // Permitir actualizar solo los campos de rating
-      allow update: if isAuthenticated() &&
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['rating', 'totalRatings', 'updatedAt']) ||
-        isAdmin();
-        
-      // Subcolección de ratings
-      match /ratings/{ratingId} {
-        // Cualquiera puede ver los ratings
-        allow read: if true;
-        
-        // Solo usuarios autenticados y verificados pueden crear/actualizar su propio rating
-        allow create: if isAuthenticated() && isEmailVerified() &&
-          ratingId == request.auth.uid &&
-          request.resource.data.keys().hasAll(['rating', 'userId', 'fecha']) &&
-          request.resource.data.userId == request.auth.uid &&
-          isValidRating();
-          
-        allow update: if isAuthenticated() && isEmailVerified() &&
-          ratingId == request.auth.uid &&
-          request.resource.data.userId == request.auth.uid &&
-          resource.data.userId == request.auth.uid &&
-          isValidRating();
-          
-        // Solo el dueño del rating o un admin pueden borrarlo
-        allow delete: if isAuthenticated() &&
-          (ratingId == request.auth.uid || isAdmin());
-      }
+    // Función para verificar si el usuario sigue a otro usuario
+    function isFollowing(targetUserId) {
+      return exists(/databases/$(database)/documents/following/$(request.auth.uid)/following/$(targetUserId));
     }
 
-    // ----- USERS -----
+    // --- COLECCIÓN: USERS ---
     match /users/{uid} {
-      // El dueño puede leer/escribir su documento
-      // Los administradores pueden leer todos los usuarios y modificar roles
-      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      // Reglas básicas (Lectura/Escritura)
+      // Lectura: Cualquier usuario autenticado puede leer perfiles
+      // (la privacidad se maneja en la capa de aplicación basándose en isPublic)
+      allow read: if isAuthenticated();
       allow delete: if request.auth != null && request.auth.uid == uid;
 
-      // Validación simple de esquema (evita tipos raros)
+      // Validación de esquema para el documento user
       function isValidUser(data) {
         return
           (data.keys().hasOnly([
-            'uid','email','displayName','photoURL','nombre','apodo',
-            'fechaNacimiento','region','comuna','activo','createdAt','updatedAt','role'
+            'uid','email','displayName','photoURL','backgroundURL','nombre','apodo',
+            'fechaNacimiento','region','comuna','activo','createdAt','updatedAt','role',
+            'followersCount','followingCount','badgesCount','placesVisitedCount',
+            'isPublic','showBadges','showAlbum'
           ])) &&
           (data.uid is string) &&
           (data.email is string) &&
           (data.displayName is string || data.displayName == null) &&
           (data.photoURL is string || data.photoURL == null) &&
+          (data.backgroundURL is string || data.backgroundURL == null) &&
           (data.nombre is string || data.nombre == null) &&
           (data.apodo is string || data.apodo == null) &&
           (data.fechaNacimiento is string || data.fechaNacimiento == null) &&
           (data.region is string || data.region == null) &&
           (data.comuna is string || data.comuna == null) &&
           (data.activo is bool || data.activo == null) &&
-          (data.role is string || data.role == null);
+          (data.role is string || data.role == null) &&
+          // Nuevos campos sociales
+          (data.get('followersCount', 0) is number) &&
+          (data.get('followingCount', 0) is number) &&
+          (data.get('badgesCount', 0) is number) &&
+          (data.get('placesVisitedCount', 0) is number) &&
+          (data.get('isPublic', true) is bool) &&
+          (data.get('showBadges', true) is bool) &&
+          (data.get('showAlbum', true) is bool);
       }
 
-      allow create: if request.auth != null
-                    && request.auth.uid == uid
-                    && isValidUser(request.resource.data);
+      // Función para validar actualizaciones parciales
+      function isValidPartialUpdate() {
+        let allowedKeys = ['nombre', 'apodo', 'displayName', 'photoURL', 'backgroundURL', 'region', 'comuna', 'updatedAt', 'isPublic', 'showBadges', 'showAlbum', 'followersCount', 'followingCount', 'badgesCount', 'placesVisitedCount'];
+        let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return affectedKeys.hasOnly(allowedKeys);
+      }
 
-      allow update: if request.auth != null
-                    && isValidUser(request.resource.data)
-                    && (
-                      // El usuario puede actualizar su propio perfil (excepto role)
-                      (request.auth.uid == uid && 
-                       (request.resource.data.role == resource.data.role || request.resource.data.role == null)) ||
-                      // Los administradores pueden cambiar cualquier rol
-                      isAdmin()
-                    )
-                    // No permitir que el cliente cambie createdAt
-                    && (request.resource.data.createdAt == resource.data.createdAt);
+      // Función para validar actualización solo de contadores sociales
+      function isValidSocialCountersUpdate() {
+        let allowedKeys = ['followersCount', 'followingCount', 'badgesCount', 'placesVisitedCount', 'updatedAt'];
+        let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        return affectedKeys.hasOnly(allowedKeys);
+      }
 
-      // ----- ESTACIONES VISITADAS (subcollection) -----
+      // Creación: Sólo el propio usuario puede crearse y debe pasar validación
+      allow create: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidUser(request.resource.data);
+
+      // Actualización: Debe pasar validación y ser dueño o admin.
+      allow update: if isAuthenticated()
+                       && (
+                         // Actualización completa del documento
+                         (isValidUser(request.resource.data) && 
+                          (
+                            // DUEÑO: Puede actualizar su perfil, PERO no cambiar el 'role' (o establecerlo como null)
+                            (request.auth.uid == uid &&
+                             (request.resource.data.role == resource.data.role || request.resource.data.role == null))
+                            // ADMIN: Puede cambiar todo
+                            || isAdmin()
+                          )
+                          // No permitir que el cliente cambie 'createdAt'
+                          && (request.resource.data.createdAt == resource.data.createdAt))
+                         // O actualización parcial de campos permitidos (solo el dueño)
+                         || (request.auth.uid == uid && isValidPartialUpdate() && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                         // O actualización de contadores sociales (cualquier usuario autenticado)
+                         || isValidSocialCountersUpdate()
+                       );
+
+
+      // --- SUBCOLECCIÓN: estaciones_visitadas ---
       match /estaciones_visitadas/{estacionVisitadaId} {
-        // Solo el dueño puede leer/escribir sus estaciones visitadas
-        allow read, create, update, delete: if request.auth != null && request.auth.uid == uid;
-
         // Validación de esquema para estaciones visitadas
         function isValidEstacionVisitada(data) {
           return
@@ -128,23 +126,24 @@ service cloud.firestore {
             (data.longitudVisita is number || data.longitudVisita == null);
         }
 
-        allow create: if request.auth != null 
-                      && request.auth.uid == uid 
-                      && isValidEstacionVisitada(request.resource.data);
+        // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
+        // Escritura: Solo el dueño
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidEstacionVisitada(request.resource.data);
+
+        allow update: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidEstacionVisitada(request.resource.data);
         
-        allow update: if request.auth != null 
-                      && request.auth.uid == uid 
-                      && isValidEstacionVisitada(request.resource.data);
+        allow delete: if isAuthenticated() && request.auth.uid == uid;
       }
 
-      // ----- INSIGNIAS POR USUARIO (subcollection) -----
-      // Permite que el propio usuario o un administrador creen/lean las insignias
+      // --- SUBCOLECCIÓN: insignias ---
       match /insignias/{insigniaId} {
         // Validación simple para el documento de insignia del usuario
         function isValidUserInsignia(data) {
-          // Validamos únicamente la presencia de fechaObtenida (timestamp).
-          // No comprobamos el tipo de `estacionRef` porque el tipo `reference`
-          // puede causar errores de análisis en algunos entornos de reglas.
           return (
             data.keys().hasOnly(['fechaObtenida']) ||
             data.keys().hasOnly(['fechaObtenida','estacionRef'])
@@ -152,16 +151,51 @@ service cloud.firestore {
           && (data.fechaObtenida is timestamp);
         }
 
-        // Lectura: dueño o admin
-        allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+        // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
+        // Escritura: dueño o admin
+        allow read: if isAuthenticated();
 
-        // Crear: dueño o admin
-        allow create: if request.auth != null
-                      && (request.auth.uid == uid || isAdmin())
-                      && isValidUserInsignia(request.resource.data);
+        // Crear: dueño o admin, y debe pasar validación de esquema
+        allow create: if isAuthenticated()
+                       && (request.auth.uid == uid || isAdmin())
+                       && isValidUserInsignia(request.resource.data);
 
         // Update/Delete: dueño o admin
-        allow update, delete: if request.auth != null && (request.auth.uid == uid || isAdmin());
+        allow update, delete: if isAuthenticated() && (request.auth.uid == uid || isAdmin());
+      }
+
+      // --- SUBCOLECCIÓN: album_photos ---
+      match /album_photos/{photoId} {
+        // Validación de esquema para fotos del álbum
+        function isValidAlbumPhoto(data) {
+          return
+            (data.keys().hasOnly([
+              'id', 'badgeId', 'imageUrl', 'thumbnailUrl', 'description',
+              'uploadDate', 'location', 'metadata'
+            ])) &&
+            (data.id is string) &&
+            (data.badgeId is string) &&
+            (data.imageUrl is string) &&
+            (data.thumbnailUrl is string || data.thumbnailUrl == null) &&
+            (data.description is string || data.description == null) &&
+            (data.uploadDate is timestamp) &&
+            (data.location is string || data.location == null) &&
+            (data.metadata is map || data.metadata == null);
+        }
+
+        // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
+        // Escritura: Solo el dueño
+        allow read: if isAuthenticated();
+
+        allow create: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidAlbumPhoto(request.resource.data);
+
+        allow update: if isAuthenticated()
+                       && request.auth.uid == uid
+                       && isValidAlbumPhoto(request.resource.data);
+
+        allow delete: if isAuthenticated() && request.auth.uid == uid;
       }
 
       // ----- FOTOS DEL ÁLBUM (subcollection) -----
@@ -195,15 +229,13 @@ service cloud.firestore {
       }
     }
 
-    // ----- PLACES (legacy) -----
-    // Mantener reglas para compatibilidad con documentos históricos bajo 'places'.
+    // --- COLECCIÓN: PLACES (legado) ---
     match /places/{placeId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null;
+      allow create, update, delete: if isAuthenticated();
     }
 
-    // ----- INSIGNIAS -----
-    // Colección de insignias (top-level)
+    // --- COLECCIÓN: INSIGNIAS (top-level) ---
     match /insignias/{insigniaId} {
       function isValidInsignia(data) {
         return data.keys().hasOnly(['nombre','descripcion','imagenUrl','fechaCreacion'])
@@ -214,14 +246,151 @@ service cloud.firestore {
       }
 
       // Lectura: cualquiera autenticado puede leer la lista de insignias
-      allow read: if request.auth != null;
+      allow read: if isAuthenticated();
 
       // Crear/Actualizar/Borrar: solo administradores
-      allow create: if request.auth != null && isAdmin() && isValidInsignia(request.resource.data);
-      allow update, delete: if request.auth != null && isAdmin();
+      allow create: if isAdmin() && isValidInsignia(request.resource.data);
+      allow update, delete: if isAdmin();
     }
 
-    // No necesitamos esta sección duplicada ya que las reglas de estaciones 
-    // están definidas arriba
+    // --- COLECCIÓN: ESTACIONES ---
+    match /estaciones/{estacionId} {
+
+      // Validación de esquema para estaciones
+      function isValidEstacion(data) {
+        // Aceptar dos variantes de keys: con o sin `insigniaID` (es opcional)
+        return (
+          data.keys().hasOnly([
+            'codigo', 'codigoQR', 'nombre', 'descripcion',
+            'latitud', 'longitud', 'fechaCreacion', 'activa', 'rating', 'totalRatings', 'updatedAt'
+          ])
+        ||
+          data.keys().hasOnly([
+            'codigo', 'codigoQR', 'nombre', 'descripcion',
+            'latitud', 'longitud', 'fechaCreacion', 'activa', 'insigniaID', 'rating', 'totalRatings', 'updatedAt'
+          ])
+        )
+        && (data.codigo is string)
+        && (data.codigoQR is string)
+        && (data.nombre is string)
+        && (data.descripcion is string)
+        && (data.latitud is number)
+        && (data.longitud is number)
+        && (data.fechaCreacion is timestamp)
+        && (data.activa is bool)
+        // Añadir validación de tipos para los campos de rating
+        && (data.rating is number)
+        && (data.totalRatings is number)
+        && (data.updatedAt is timestamp);
+      }
+
+      // Cualquiera autenticado puede leer las estaciones
+      allow read: if isAuthenticated();
+
+      // Creación: Solo administradores y pasa validación
+      allow create: if isAdmin()
+                       && isValidEstacion(request.resource.data)
+                       // en creación, solo permitir insigniaID si es null o el creador es admin
+                       && (request.resource.data.insigniaID == null || isAdmin());
+
+      // Actualización: Solo campos de rating (para el público) o ser admin
+      allow update: if isAuthenticated() &&
+        (
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['rating', 'totalRatings', 'updatedAt'])
+          // Si no está actualizando solo el rating, debe ser un administrador
+          || isAdmin()
+        );
+
+      // Borrar: Solo administradores
+      allow delete: if isAdmin();
+
+      // --- SUBCOLECCIÓN: ratings ---
+      match /ratings/{ratingId} {
+        // Cualquiera puede ver los ratings
+        allow read: if true;
+
+        // Solo usuarios autenticados y verificados pueden crear/actualizar su propio rating
+        allow create: if isAuthenticated() && isEmailVerified() &&
+          ratingId == request.auth.uid &&
+          request.resource.data.keys().hasAll(['rating', 'userId', 'fecha']) &&
+          request.resource.data.userId == request.auth.uid &&
+          isValidRating();
+
+        allow update: if isAuthenticated() && isEmailVerified() &&
+          ratingId == request.auth.uid &&
+          request.resource.data.userId == request.auth.uid &&
+          resource.data.userId == request.auth.uid &&
+          isValidRating();
+
+        // Solo el dueño del rating o un admin pueden borrarlo
+        allow delete: if isAuthenticated() &&
+          (ratingId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // --- COLECCIÓN: FOLLOWERS ---
+    match /followers/{userId}/followers/{followerId} {
+      // Validación de esquema para followers
+      function isValidFollower(data) {
+        return data.keys().hasOnly(['displayName', 'photoURL', 'timestamp']) &&
+               (data.displayName is string) &&
+               (data.photoURL is string || data.photoURL == null) &&
+               (data.timestamp is timestamp);
+      }
+
+      // Lectura: Cualquiera autenticado puede ver los seguidores
+      allow read: if isAuthenticated();
+
+      // Escritura: Solo el follower puede agregarse/quitarse como seguidor
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == followerId &&
+                       isValidFollower(request.resource.data);
+
+      allow delete: if isAuthenticated() && request.auth.uid == followerId;
+    }
+
+    // --- COLECCIÓN: FOLLOWING ---
+    match /following/{userId}/following/{followingId} {
+      // Validación de esquema para following
+      function isValidFollowing(data) {
+        return data.keys().hasOnly(['displayName', 'photoURL', 'timestamp']) &&
+               (data.displayName is string) &&
+               (data.photoURL is string || data.photoURL == null) &&
+               (data.timestamp is timestamp);
+      }
+
+      // Lectura: Cualquiera autenticado puede ver a quién sigue un usuario
+      allow read: if isAuthenticated();
+
+      // Escritura: Solo el usuario puede agregar/quitar a alguien que sigue
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       isValidFollowing(request.resource.data);
+
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // --- COLECCIÓN: FEED ---
+    match /feed/{userId}/items/{itemId} {
+      // Validación de esquema para items del feed
+      function isValidFeedItem(data) {
+        return data.keys().hasAny(['type', 'userId', 'userName', 'timestamp']) &&
+               (data.type is string) &&
+               (data.userId is string) &&
+               (data.userName is string) &&
+               (data.timestamp is timestamp);
+      }
+
+      // Lectura: Solo el dueño del feed puede leer sus items
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+
+      // Escritura: Sistema puede crear items (a través de Cloud Functions)
+      // Por ahora, permitimos que el usuario que realiza la acción cree su item
+      allow create: if isAuthenticated() && isValidFeedItem(request.resource.data);
+
+      // Borrar: El dueño del feed puede borrar items
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
   }
 }
