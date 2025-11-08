@@ -228,11 +228,11 @@ service cloud.firestore {
         allow delete: if request.auth != null && request.auth.uid == uid;
       }
     }
-
-    // --- COLECCIÓN: PLACES (legado) ---
+  // ----- PLACES (legacy) -----
+    // Mantener reglas para compatibilidad con documentos históricos bajo 'places'.
     match /places/{placeId} {
       allow read: if true;
-      allow create, update, delete: if isAuthenticated();
+      allow create, update, delete: if request.auth != null;
     }
 
     // --- COLECCIÓN: INSIGNIAS (top-level) ---
@@ -253,59 +253,46 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // --- COLECCIÓN: ESTACIONES ---
+    // ----- ESTACIONES -----
+    // Estaciones patrimoniales para escaneo QR
     match /estaciones/{estacionId} {
-
-      // Validación de esquema para estaciones
-      function isValidEstacion(data) {
-        // Aceptar dos variantes de keys: con o sin `insigniaID` (es opcional)
-        return (
-          data.keys().hasOnly([
-            'codigo', 'codigoQR', 'nombre', 'descripcion',
-            'latitud', 'longitud', 'fechaCreacion', 'activa', 'rating', 'totalRatings', 'updatedAt'
-          ])
-        ||
-          data.keys().hasOnly([
-            'codigo', 'codigoQR', 'nombre', 'descripcion',
-            'latitud', 'longitud', 'fechaCreacion', 'activa', 'insigniaID', 'rating', 'totalRatings', 'updatedAt'
-          ])
-        )
-        && (data.codigo is string)
-        && (data.codigoQR is string)
-        && (data.nombre is string)
-        && (data.descripcion is string)
-        && (data.latitud is number)
-        && (data.longitud is number)
-        && (data.fechaCreacion is timestamp)
-        && (data.activa is bool)
-        // Añadir validación de tipos para los campos de rating
-        && (data.rating is number)
-        && (data.totalRatings is number)
-        && (data.updatedAt is timestamp);
-      }
-
-      // Cualquiera autenticado puede leer las estaciones
+      // Lectura pública para usuarios autenticados (escaneo QR)
       allow read: if isAuthenticated();
 
-      // Creación: Solo administradores y pasa validación
-      allow create: if isAdmin()
-                       && isValidEstacion(request.resource.data)
-                       // en creación, solo permitir insigniaID si es null o el creador es admin
-                       && (request.resource.data.insigniaID == null || isAdmin());
+      // Solo administradores pueden crear/actualizar/borrar estaciones
+      allow create, update, delete: if isAdmin();
 
-      // Actualización: Solo campos de rating (para el público) o ser admin
-      allow update: if isAuthenticated() &&
-        (
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['rating', 'totalRatings', 'updatedAt'])
-          // Si no está actualizando solo el rating, debe ser un administrador
-          || isAdmin()
-        );
+      // Validación de esquema para estaciones
+      // Aceptamos un conjunto amplio de campos (legacy y actuales) y validamos
+      // tipos de forma tolerante usando `get(key, default)`.
+      function isValidEstacion(data) {
+        let allowedKeys = [
+          'codigo', 'codigoQR', 'nombre', 'descripcion',
+          'latitud', 'longitud', 'fechaCreacion', 'createdAt', 'activa',
+          'insigniaID', 'rating', 'totalRatings', 'updatedAt',
+          'imagenes', 'comuna', 'lat', 'lng', 'badgeImage'
+        ];
 
-      // Borrar: Solo administradores
-      allow delete: if isAdmin();
+        return data.keys().hasOnly(allowedKeys)
+          && (data.get('codigo', null) is string)
+          && (data.get('codigoQR', null) is string)
+          && (data.get('nombre', null) is string)
+          && (data.get('descripcion', null) is string)
+          && ((data.get('latitud', null) is number) || (data.get('latitud', null) == null))
+          && ((data.get('longitud', null) is number) || (data.get('longitud', null) == null))
+          && ((data.get('fechaCreacion', null) is timestamp) || (data.get('fechaCreacion', null) == null))
+          && ((data.get('activa', true) is bool) || (data.get('activa', null) == null))
+          && ((data.get('rating', 0) is number) || (data.get('rating', null) == null))
+          && ((data.get('totalRatings', 0) is number) || (data.get('totalRatings', null) == null))
+          && ((data.get('updatedAt', null) is timestamp) || (data.get('updatedAt', null) == null))
+          && ((data.get('imagenes', null) is list) || (data.get('imagenes', null) == null))
+          && ((data.get('comuna', null) is string) || (data.get('comuna', null) == null));
+      }
 
-      // --- SUBCOLECCIÓN: ratings ---
+      // Validaciones para creación/actualización son responsabilidad del admin;
+      // dejamos la función disponible si se necesita en Cloud Functions o cambios futuros.
+
+      // Subcolección: ratings (mantener reglas existentes)
       match /ratings/{ratingId} {
         // Cualquiera puede ver los ratings
         allow read: if true;

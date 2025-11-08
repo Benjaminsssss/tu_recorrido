@@ -22,6 +22,11 @@ class EstacionService {
         );
       }
 
+      // Validación mínima en cliente para evitar payloads inválidos
+      if (estacion.codigo.trim().isEmpty) {
+        throw Exception('El código de la estación no puede estar vacío');
+      }
+
       // Generar código QR único si no se proporcionó
       String codigoQR = estacion.codigoQR;
       if (codigoQR.isEmpty) {
@@ -32,17 +37,50 @@ class EstacionService {
       final estacionConQR = estacion.copyWith(codigoQR: codigoQR);
 
       // Preparar payload garantizando compatibilidad con consumidores (Home, UI)
-      final Map<String, dynamic> payload =
-          Map.from(estacionConQR.toFirestore());
+      final Map<String, dynamic> base = Map.from(estacionConQR.toFirestore());
 
-      // Algunos consumidores/consultas esperan 'createdAt', 'lat' y 'lng'
-      // Añadimos serverTimestamp para createdAt y duplicamos latitud/longitud a lat/lng
+      // Normalizamos el payload: usamos server timestamps para fechas de creación
+      // y añadimos campos por defecto para evitar rechazos por reglas estrictas.
+      final Map<String, dynamic> payload = {};
+
+      // Copiar solo keys esperadas para evitar enviar keys extra
+      final allowed = [
+        'insigniaID',
+        'codigo',
+        'codigoQR',
+        'nombre',
+        'descripcion',
+        'comuna',
+        'imagenes',
+        'latitud',
+        'longitud',
+        'activa'
+      ];
+
+      for (final k in allowed) {
+        if (base.containsKey(k)) payload[k] = base[k];
+      }
+
+      // Fechas: preferimos serverTimestamp para consistencia
+      payload['fechaCreacion'] = FieldValue.serverTimestamp();
+      // Legacy: mantener createdAt para compatibilidad con UI antigua
       payload['createdAt'] = FieldValue.serverTimestamp();
+
+      // Duplicados legacy de coordenadas que consumen algunas vistas
       payload['lat'] = estacionConQR.latitud;
       payload['lng'] = estacionConQR.longitud;
 
+      // Campos de rating por defecto
+      payload['rating'] = 0;
+      payload['totalRatings'] = 0;
+
+      // updatedAt para marcar la operación inicial
+      payload['updatedAt'] = FieldValue.serverTimestamp();
+
       // Guardar en Firestore
       final docRef = await _firestore.collection(_collection).add(payload);
+
+      AppLogger.info('Estación creada: ${docRef.id} (codigo: ${estacion.codigo})');
 
       return docRef.id;
     } catch (e) {
