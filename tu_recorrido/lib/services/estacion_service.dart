@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models/estacion.dart';
 import 'qr_service.dart';
 import '../utils/app_logger.dart';
@@ -7,6 +8,7 @@ import '../utils/app_logger.dart';
 /// Permite crear, leer, actualizar y eliminar estaciones
 class EstacionService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseStorage _storage = FirebaseStorage.instance;
   static const String _collection = 'estaciones';
 
   /// Crea una nueva estación con código QR único
@@ -175,6 +177,53 @@ class EstacionService {
       });
     } catch (e) {
       throw Exception('Error al desactivar estación: $e');
+    }
+  }
+
+  /// Elimina permanentemente una estación y sus recursos relacionados.
+  /// Intentará eliminar las imágenes referenciadas en `imagenes` y `badgeImage`
+  /// en Storage (si las URLs son referencias de Firebase Storage). Si la
+  /// eliminación de algún archivo falla, seguirá con la eliminación del
+  /// documento para no dejar inconsistencias vistas desde la app.
+  static Future<void> deleteEstacion(String id) async {
+    try {
+      final docRef = _firestore.collection(_collection).doc(id);
+      final snapshot = await docRef.get();
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+
+        // Borrar imágenes listadas en `imagenes` (si tienen 'url')
+        final imgs = (data['imagenes'] as List<dynamic>?) ?? [];
+        for (final imgRaw in imgs) {
+          try {
+            final img = imgRaw as Map<String, dynamic>;
+            final url = img['url'] as String?;
+            if (url != null && url.isNotEmpty) {
+              final ref = _storage.refFromURL(url);
+              await ref.delete();
+            }
+          } catch (e) {
+            // No interrumpir si no podemos borrar un archivo.
+          }
+        }
+
+        // Borrar badgeImage si existe
+        try {
+          final badge = data['badgeImage'] as Map<String, dynamic>?;
+          final badgeUrl = badge?['url'] as String?;
+          if (badgeUrl != null && badgeUrl.isNotEmpty) {
+            final ref = _storage.refFromURL(badgeUrl);
+            await ref.delete();
+          }
+        } catch (e) {
+          // ignorar error de borrado de badge
+        }
+      }
+
+      // Finalmente eliminar documento
+      await _firestore.collection(_collection).doc(id).delete();
+    } catch (e) {
+      throw Exception('Error al eliminar estación: $e');
     }
   }
 

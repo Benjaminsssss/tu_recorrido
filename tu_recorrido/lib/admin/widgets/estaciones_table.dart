@@ -117,12 +117,13 @@ class _EstacionesTableState extends State<EstacionesTable> {
   }
 
   Future<void> _confirmDeactivate(Estacion est) async {
+    // Confirmación para eliminar permanentemente la estación
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
+        title: const Text('Eliminar estación'),
         content: Text(
-            '¿Desactivar la estación "${est.nombre}"? Esta acción la ocultará del sistema.'),
+            '¿Eliminar permanentemente la estación "${est.nombre}"? Esta acción borrará el documento y las imágenes asociadas.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -131,26 +132,24 @@ class _EstacionesTableState extends State<EstacionesTable> {
               onPressed: () => Navigator.of(ctx).pop(true),
               style: ElevatedButton.styleFrom(
                   backgroundColor: Coloressito.badgeRed),
-              child: const Text('Desactivar'))
+              child: const Text('Eliminar'))
         ],
       ),
     );
 
-    if (confirm != true) {
-      return;
-    }
+    if (confirm != true) return;
 
     try {
-      await EstacionService.desactivarEstacion(est.id);
+      await EstacionService.deleteEstacion(est.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Estación desactivada')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Estación eliminada')));
         await _load();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error al desactivar: $e')));
+            .showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
       }
     }
   }
