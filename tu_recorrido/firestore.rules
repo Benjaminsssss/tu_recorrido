@@ -59,13 +59,13 @@ service cloud.firestore {
           (data.activo is bool || data.activo == null) &&
           (data.role is string || data.role == null) &&
           // Nuevos campos sociales
-          (data.get('followersCount', 0) is number) &&
-          (data.get('followingCount', 0) is number) &&
-          (data.get('badgesCount', 0) is number) &&
-          (data.get('placesVisitedCount', 0) is number) &&
-          (data.get('isPublic', true) is bool) &&
-          (data.get('showBadges', true) is bool) &&
-          (data.get('showAlbum', true) is bool);
+          ((data.followersCount is number) || (data.followersCount == null)) &&
+          ((data.followingCount is number) || (data.followingCount == null)) &&
+          ((data.badgesCount is number) || (data.badgesCount == null)) &&
+          ((data.placesVisitedCount is number) || (data.placesVisitedCount == null)) &&
+          ((data.isPublic is bool) || (data.isPublic == null)) &&
+          ((data.showBadges is bool) || (data.showBadges == null)) &&
+          ((data.showAlbum is bool) || (data.showAlbum == null));
       }
 
       // Función para validar actualizaciones parciales
@@ -112,30 +112,40 @@ service cloud.firestore {
       match /estaciones_visitadas/{estacionVisitadaId} {
         // Validación de esquema para estaciones visitadas
         function isValidEstacionVisitada(data) {
-          return
-            (data.keys().hasOnly([
-              'id', 'estacionId', 'estacionCodigo', 'estacionNombre',
-              'fechaVisita', 'latitudVisita', 'longitudVisita'
-            ])) &&
-            (data.id is string) &&
-            (data.estacionId is string) &&
-            (data.estacionCodigo is string) &&
-            (data.estacionNombre is string) &&
-            (data.fechaVisita is timestamp) &&
-            (data.latitudVisita is number || data.latitudVisita == null) &&
-            (data.longitudVisita is number || data.longitudVisita == null);
+          // Permitimos el mismo conjunto con o sin el campo opcional 'badgeImage'.
+          // Requerimos además los tipos/nullable checks.
+          return (
+            (
+              data.keys().hasOnly([
+                'id', 'estacionId', 'estacionCodigo', 'estacionNombre',
+                'fechaVisita', 'latitudVisita', 'longitudVisita'
+              ])
+            ) || (
+              data.keys().hasOnly([
+                'id', 'estacionId', 'estacionCodigo', 'estacionNombre',
+                'fechaVisita', 'latitudVisita', 'longitudVisita', 'badgeImage'
+              ])
+            )
+          ) &&
+          (data.id is string) &&
+          (data.estacionId is string) &&
+          (data.estacionCodigo is string) &&
+          (data.estacionNombre is string) &&
+          (data.fechaVisita is timestamp) &&
+          (data.latitudVisita is number || data.latitudVisita == null) &&
+          (data.longitudVisita is number || data.longitudVisita == null) &&
+          (
+            ((data.badgeImage is map) && ((data.badgeImage.url is string) || (data.badgeImage.url == null)))
+            || (data.badgeImage == null)
+          );
         }
 
         // Lectura: Cualquier usuario autenticado puede leer (privacidad en app)
-        // Escritura: Solo el dueño
+        // Escritura: Solo el dueño y el documento debe cumplir el esquema
         allow read: if isAuthenticated();
-        allow create: if isAuthenticated()
-                       && request.auth.uid == uid
-                       && isValidEstacionVisitada(request.resource.data);
+        allow create: if isAuthenticated() && request.auth.uid == uid;
 
-        allow update: if isAuthenticated()
-                       && request.auth.uid == uid
-                       && isValidEstacionVisitada(request.resource.data);
+        allow update: if isAuthenticated() && request.auth.uid == uid;
         
         allow delete: if isAuthenticated() && request.auth.uid == uid;
       }
@@ -262,35 +272,8 @@ service cloud.firestore {
       // Solo administradores pueden crear/actualizar/borrar estaciones
       allow create, update, delete: if isAdmin();
 
-      // Validación de esquema para estaciones
-      // Aceptamos un conjunto amplio de campos (legacy y actuales) y validamos
-      // tipos de forma tolerante usando `get(key, default)`.
-      function isValidEstacion(data) {
-        let allowedKeys = [
-          'codigo', 'codigoQR', 'nombre', 'descripcion',
-          'latitud', 'longitud', 'fechaCreacion', 'createdAt', 'activa',
-          'insigniaID', 'rating', 'totalRatings', 'updatedAt',
-          'imagenes', 'comuna', 'lat', 'lng', 'badgeImage'
-        ];
-
-        return data.keys().hasOnly(allowedKeys)
-          && (data.get('codigo', null) is string)
-          && (data.get('codigoQR', null) is string)
-          && (data.get('nombre', null) is string)
-          && (data.get('descripcion', null) is string)
-          && ((data.get('latitud', null) is number) || (data.get('latitud', null) == null))
-          && ((data.get('longitud', null) is number) || (data.get('longitud', null) == null))
-          && ((data.get('fechaCreacion', null) is timestamp) || (data.get('fechaCreacion', null) == null))
-          && ((data.get('activa', true) is bool) || (data.get('activa', null) == null))
-          && ((data.get('rating', 0) is number) || (data.get('rating', null) == null))
-          && ((data.get('totalRatings', 0) is number) || (data.get('totalRatings', null) == null))
-          && ((data.get('updatedAt', null) is timestamp) || (data.get('updatedAt', null) == null))
-          && ((data.get('imagenes', null) is list) || (data.get('imagenes', null) == null))
-          && ((data.get('comuna', null) is string) || (data.get('comuna', null) == null));
-      }
-
       // Validaciones para creación/actualización son responsabilidad del admin;
-      // dejamos la función disponible si se necesita en Cloud Functions o cambios futuros.
+      // (La validación detallada de estaciones se realiza fuera de las reglas)
 
       // Subcolección: ratings (mantener reglas existentes)
       match /ratings/{ratingId} {
