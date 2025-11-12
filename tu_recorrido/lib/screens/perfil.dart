@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:tu_recorrido/screens/escanerqr.dart';
 import '../models/regioycomu.dart';
 import '../models/user_state.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -45,6 +48,11 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   List<String> _sellos = [];
   List<String> _amigos = [];
   Locale? _selectedLocale;
+  String? _photoBase64;
+  String? _nombre;
+  String? _correo;
+  String? _nivel;
+  Uint8List? _localBytes;
 
 
   @override
@@ -62,10 +70,11 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
 
   Future<void> _loadUser() async {
     final user = FirebaseAuth.instance.currentUser;
+    String? avatarB64;
     if (user != null) {
+      avatarB64 = await ProfileService.getAvatarBase64(user.uid);
       // Inicializar regiones y comunas
       setState(() {
-        // Obtener la lista de regiones del mapa
         if (_selectedRegion.isEmpty && regionesYComunas.isNotEmpty) {
           _selectedRegion = regionesYComunas.keys.first;
           _comunas = regionesYComunas[_selectedRegion] ?? [];
@@ -76,11 +85,14 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         }
       });
     }
-    
     setState(() {
+      _photoBase64 = avatarB64;
+      _nombre = user?.displayName ?? '';
+      _correo = user?.email ?? '';
+      _nivel = 'Nivel Viajero 1';
       _sellos = [];
       _amigos = [];
-      _selectedLocale = Locale('es');
+      _selectedLocale = const Locale('es');
     });
   }
 
@@ -245,6 +257,41 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
       child: ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       children: [
+        // Header compacto
+        Column(
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: const Color(0xFFD6EFC7), // verde claro rural
+              backgroundImage: avatarProvider,
+              child: (avatarProvider == null)
+                  ? const Icon(Icons.person,
+                      color: Color(0xFF7C6F57), // marrón rural
+                      size: 40)
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _nombre ?? '',
+              style: const TextStyle(
+                fontFamily: 'Pacifico',
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: Color(0xFF7C6F57), // marrón rural
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(handle,
+                style: const TextStyle(color: Color(0xFFBCA177), fontSize: 15)),
+            const SizedBox(height: 2),
+            Text(_nivel ?? 'Nivel Viajero 1',
+                style: const TextStyle(
+                    color: Color(0xFF7C9A5B), // verde hoja
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15)),
+          ],
+        ),
+        const SizedBox(height: 18),
         // Quick actions
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -929,8 +976,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
               ),
             ],
           ],
+        ),
       ),
-    )
     );
   }
 

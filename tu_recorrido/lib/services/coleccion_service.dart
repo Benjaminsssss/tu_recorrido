@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/estacion.dart';
 import '../models/estacion_visitada.dart';
 import '../models/place.dart';
-import 'auth_local_service.dart';
+
 
 /// Servicio para manejar la colección de estaciones visitadas por el usuario
 /// Ahora usa subcolecciones: users/{userId}/estaciones_visitadas/{estacionId}

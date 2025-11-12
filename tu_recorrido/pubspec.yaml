@@ -51,7 +51,7 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   share_plus: ^12.0.1
   path_provider: ^2.1.5
-  timeago: ^3.7.0
+  timeago: ^3.7.1
   # NOTA: Si necesitas la librería 'js' que se mencionó como eliminada, agrégala aquí con la versión correcta.
 
 dev_dependencies:
