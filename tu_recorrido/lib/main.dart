@@ -12,6 +12,8 @@ import 'user_state_provider.dart';
 import 'models/user_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'services/notifications_service.dart';
+
 
 Future<void> main() async {
   // Mantener todo en la misma zona evita 'Zone mismatch' en Web
@@ -65,6 +67,19 @@ Future<void> main() async {
                   if (userState.avatarUrl != savedUrl) {
                     await userState.setAvatarUrl(savedUrl);
                   }
+                }
+
+                // Inicializar Awesome Notifications y programar recordatorios
+                try {
+                  final an = AwesomeNotifService.instance;
+                  await an.init();
+                  await an.requestPermissionIfNeeded();
+                  // Opcional: mostrar una vez inmediata
+                  // await an.showExploreReminder();
+                  // Ahora: recordatorio cada hora (minuto :00)
+                  await an.scheduleHourlyExploreReminders(minute: 0);
+                } catch (e) {
+                  debugPrint('AwesomeNotifications init error: $e');
                 }
               });
               return const MyApp();

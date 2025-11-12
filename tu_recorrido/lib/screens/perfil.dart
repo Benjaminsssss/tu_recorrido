@@ -5,6 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import 'dart:io';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import '../models/user_state.dart';
 import '../models/regioycomu.dart';
@@ -37,6 +42,8 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   String? _correo;
   String? _nivel;
   String _selectedRegion = '';
+  // Clave para capturar el widget del perfil (modo hub)
+  final GlobalKey _captureKey = GlobalKey();
   String _selectedComuna = '';
   List<String> _comunas = [];
   Stream<Map<String, dynamic>>? _progresoStream;
@@ -257,7 +264,9 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Stack(
+    return RepaintBoundary(
+      key: _captureKey,
+      child: Stack(
       children: [
         // Blur + dim del fondo
         AnimatedBuilder(
@@ -339,6 +348,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -358,7 +368,9 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
       } catch (_) {}
     }
     // ...existing code...
-    return ListView(
+    return Container(
+      color: isDark ? Coloressito.backgroundDark : Colors.white,
+      child: ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       children: [
         // Header compacto
@@ -426,7 +438,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             _QuickAction(
                 icon: Icons.share,
                 label: 'Compartir',
-                onTap: () {},
+                onTap: _showShareOptions,
                 iconColor: Color(0xFF7C9A5B)),
           ],
         ),
@@ -457,8 +469,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
             height: 1,
             thickness: 1,
             color: Color.fromARGB((0.18 * 255).round(), 188, 161, 119)),
-        const SizedBox(height: 14),
-        _buildStreakCard(),
+     
         const SizedBox(height: 10),
         Divider(
             height: 1,
@@ -467,6 +478,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         const SizedBox(height: 14),
         _buildFriendsCard(),
       ],
+    ),
     );
   }
 
@@ -806,6 +818,94 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
 
 
 
+  // --- Captura y compartición del perfil ---
+  Future<Uint8List?> _captureProfilePng() async {
+    try {
+      final boundary = _captureKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      final image = await boundary.toImage(pixelRatio: dpr);
+      final byteData = await image.toByteData(format: ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo capturar el perfil: $e')),
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<void> _shareAsImage() async {
+    final png = await _captureProfilePng();
+    if (png == null) return;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/perfil_${DateTime.now().millisecondsSinceEpoch}.png');
+    await file.writeAsBytes(png);
+    await Share.shareXFiles([
+      XFile(file.path, mimeType: 'image/png', name: 'perfil.png')
+    ], text: 'Mi perfil en Tu Recorrido');
+  }
+
+  Future<void> _uploadAndShareLink() async {
+    try {
+      final png = await _captureProfilePng();
+      if (png == null) return;
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('shared_profiles')
+          .child('${uid}_${DateTime.now().millisecondsSinceEpoch}.png');
+      await ref.putData(
+        png,
+        SettableMetadata(contentType: 'image/png'),
+      );
+      final url = await ref.getDownloadURL();
+  await Share.share('Mira mi perfil en Tu Recorrido: $url');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo compartir el enlace: $e')),
+        );
+      }
+    }
+  }
+
+  void _showShareOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('Compartir como imagen'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _shareAsImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.link),
+                title: const Text('Subir y compartir link'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _uploadAndShareLink();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSavedPlacesCard() {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -1120,32 +1220,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     )
     );
   }
-  Widget _buildStreakCard() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      elevation: 0,
-      color: Coloressito.surfaceLight,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Racha de exploración',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.local_fire_department, color: Coloressito.badgeRed),
-                const SizedBox(width: 8),
-                Text('0 días seguidos',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildFriendsCard() {
     final empty = _amigos.isEmpty;

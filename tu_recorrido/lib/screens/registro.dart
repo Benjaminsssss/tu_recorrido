@@ -4,6 +4,7 @@ import '../utils/colores.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../utils/terminos_condiciones.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -29,6 +30,7 @@ class RegistroScreenState extends State<RegistroScreen> {
   List<String> comunas = [];
 
   bool isLoading = false;
+  bool _acceptedLegal = false; // debe estar marcado para permitir registro
 
   // Regex
   final RegExp nombreReg = RegExp(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{3,20}$");
@@ -393,12 +395,19 @@ class RegistroScreenState extends State<RegistroScreen> {
                           },
                         ),
                         const SizedBox(height: 18),
+                        // === Términos, Condiciones y Políticas ===
+                        _LegalAgreementSection(onAcceptedChanged: (v){
+                          setState((){
+                            _acceptedLegal = v;
+                          });
+                        }),
+                        const SizedBox(height: 12),
 
                         // ====== EL BOTÓN QUE LLAMA A submit() ======
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: isLoading ? null : submit,
+                            onPressed: isLoading || !_acceptedLegal ? null : submit,
                             child: isLoading
                                 ? const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -442,3 +451,175 @@ class RegistroScreenState extends State<RegistroScreen> {
     );
   }
 }
+
+// ===== Componente de aceptación legal =====
+class _LegalAgreementSection extends StatefulWidget {
+  final ValueChanged<bool> onAcceptedChanged;
+  const _LegalAgreementSection({required this.onAcceptedChanged});
+  @override
+  State<_LegalAgreementSection> createState() => _LegalAgreementSectionState();
+}
+
+class _LegalAgreementSectionState extends State<_LegalAgreementSection> {
+  bool accepted = false;
+  void _openModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: DefaultTabController(
+            length: 3,
+            child: SizedBox(
+              width: 480,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header con título y cerrar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Términos, Condiciones y Políticas',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Cerrar',
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        )
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Divider(height: 1),
+                  // Tabs
+                  const TabBar(
+                    isScrollable: true,
+                    tabs: [
+                      Tab(text: 'Términos'),
+                      Tab(text: 'Privacidad'),
+                      Tab(text: 'Seguridad'),
+                    ],
+                  ),
+                  const Divider(height: 1),
+                  // Contenido por pestaña
+                  Flexible(
+                    child: TabBarView(
+                      children: [
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: const _LegalDocBlock(
+                            title: 'Términos y Condiciones',
+                            text: LegalDocuments.termsAndConditionsText,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: const _LegalDocBlock(
+                            title: 'Política de Privacidad',
+                            text: LegalDocuments.privacyPolicyText,
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: const _LegalDocBlock(
+                            title: 'Política de Seguridad',
+                            text: LegalDocuments.securityPolicyText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  // Botón aceptar
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() { accepted = true; });
+                              widget.onAcceptedChanged(true);
+                              Navigator.of(ctx).pop();
+                            },
+                            child: const Text('Acepto'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _openModal,
+                child: RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: const [
+                      TextSpan(text: 'Al registrarte aceptas los ', style: TextStyle(color: Colors.black87)),
+                      TextSpan(text: 'Términos, Condiciones y Políticas', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                      TextSpan(text: ' de Tu Recorrido.', style: TextStyle(color: Colors.black87)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Checkbox(
+              value: accepted,
+              onChanged: (v) {
+                setState(() { accepted = v ?? false; });
+                widget.onAcceptedChanged(accepted);
+              },
+            ),
+          ],
+        ),
+        if(!accepted)
+          const Padding(
+            padding: EdgeInsets.only(left:4, top:4),
+            child: Text('Debes aceptar los términos para continuar', style: TextStyle(fontSize: 11, color: Colors.red)),
+          ),
+      ],
+    );
+  }
+}
+
+class _LegalDocBlock extends StatelessWidget {
+  final String title;
+  final String text;
+  const _LegalDocBlock({required this.title, required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Text(text, style: const TextStyle(fontSize: 13, height: 1.35)),
+      ],
+    );
+  }
+}
+
