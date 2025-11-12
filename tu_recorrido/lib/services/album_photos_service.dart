@@ -207,17 +207,17 @@ class AlbumPhotosService {
     }
   }
 
-  /// Obtener todas las fotos del álbum del usuario
-  static Future<List<AlbumPhoto>> getUserPhotos() async {
-    final userId = await _getCurrentUserId();
-    if (userId == null) {
+  /// Obtener todas las fotos del álbum del usuario especificado o el actual
+  static Future<List<AlbumPhoto>> getUserPhotos({String? userId}) async {
+    final uid = userId ?? await _getCurrentUserId();
+    if (uid == null) {
       throw Exception('Usuario no autenticado');
     }
 
     try {
       final querySnapshot = await _firestore
           .collection(_usersCollection)
-          .doc(userId)
+          .doc(uid)
           .collection(_albumPhotosSubcollection)
           .orderBy('uploadDate', descending: true)
           .get();
@@ -231,25 +231,25 @@ class AlbumPhotosService {
     }
   }
 
-  /// Stream para escuchar cambios en las fotos del usuario en tiempo real
-  static Stream<List<AlbumPhoto>> watchUserPhotos() {
-    return Stream.fromFuture(_getCurrentUserId()).asyncExpand((userId) {
-      if (userId == null) {
-        return Stream.error(Exception('Usuario no autenticado'));
-      }
+  /// Stream para escuchar cambios en las fotos del usuario especificado o el actual en tiempo real
+  static Stream<List<AlbumPhoto>> watchUserPhotos({String? userId}) async* {
+    final uid = userId ?? await _getCurrentUserId();
+    if (uid == null) {
+      yield* Stream.error(Exception('Usuario no autenticado'));
+      return;
+    }
 
-      return _firestore
-          .collection(_usersCollection)
-          .doc(userId)
-          .collection(_albumPhotosSubcollection)
-          .orderBy('uploadDate', descending: true)
-          .snapshots()
-          .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          final data = doc.data();
-          return AlbumPhoto.fromJson(data);
-        }).toList();
-      });
+    yield* _firestore
+        .collection(_usersCollection)
+        .doc(uid)
+        .collection(_albumPhotosSubcollection)
+        .orderBy('uploadDate', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return AlbumPhoto.fromJson(data);
+      }).toList();
     });
   }
 

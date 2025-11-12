@@ -49,6 +49,7 @@ class EstacionVisitada {
   /// Convertir a Map para Firestore
   Map<String, dynamic> toFirestore() {
     final map = {
+      'id': id,
       'estacionId': estacionId,
       'estacionCodigo': estacionCodigo,
       'estacionNombre': estacionNombre,

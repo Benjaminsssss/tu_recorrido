@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -179,16 +180,40 @@ class AuthService {
   // ---------------------------------------------------------------------------
   static Future<void> signOut() async {
     try {
+      // Limpiar solo los datos del usuario en SharedPreferences (selectivo)
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      
+      // Solo eliminar claves relacionadas con el usuario
+      for (final key in keys) {
+        if (key.startsWith('user_') || 
+            key.startsWith('album_') ||
+            key == 'nombre' ||
+            key == 'avatarUrl' ||
+            key == 'backgroundUrl') {
+          await prefs.remove(key);
+          if (kDebugMode) {
+            print('🧹 Removido: $key');
+          }
+        }
+      }
+      
+      if (kDebugMode) {
+        print('🧹 SharedPreferences del usuario limpiados');
+      }
+      
+      // Cerrar sesión en Firebase y Google
       await Future.wait([
         _auth.signOut(),
         _googleSignIn.signOut(),
       ]);
+      
       if (kDebugMode) {
-        print('Usuario cerró sesión');
+        print('✅ Usuario cerró sesión completamente');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error al cerrar sesión: $e');
+        print('❌ Error al cerrar sesión: $e');
       }
       throw 'Error al cerrar sesión';
     }

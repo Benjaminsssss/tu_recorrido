@@ -16,22 +16,20 @@ class ColeccionService {
 
   /// Obtener el ID del usuario actual
   static Future<String?> _obtenerUserId() async {
-    // Intentar obtener usuario de Firebase
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-    if (firebaseUser != null) {
-      return firebaseUser.uid;
+    // Exigir que exista un usuario autenticado en Firebase y NO anónimo.
+    // Si no hay un usuario (o es anónimo), devolvemos null para que el caller
+    // lance la excepción y la UI pida al usuario autenticarse.
+    try {
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser != null && firebaseUser.isAnonymous == false) {
+        return firebaseUser.uid;
+      }
+      // No autenticado o usuario anónimo -> no permitimos continuar
+      return null;
+    } catch (e) {
+      // En caso de error inesperado, no permitimos operaciones sin auth
+      return null;
     }
-
-    // Si no hay usuario de Firebase, verificar si hay uno local
-    final localUser = await AuthLocalService.obtenerUsuarioActual();
-    if (localUser != null) {
-      return localUser['id'];
-    }
-
-    // Si no hay usuario local, inicializar uno por defecto para desarrollo
-    await AuthLocalService.inicializarUsuarioPorDefecto();
-    final nuevoUsuario = await AuthLocalService.obtenerUsuarioActual();
-    return nuevoUsuario?['id'];
   }
 
   /// Marca una estación como visitada por el usuario actual
@@ -82,28 +80,48 @@ class ColeccionService {
       );
 
       // Guarda en la subcolección del usuario
-      await _firestore
-          .collection(_usersCollection)
-          .doc(userId)
-          .collection(_estacionesVisitadasSubcollection)
-          .doc(estacion.id) // Usar el ID de la estación como ID del documento
-          .set(visita.toFirestore());
+      final payload = visita.toFirestore();
+
+      // Comprobar que el uid autenticado coincide con la ruta destino
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final currentUid = currentUser?.uid;
+      if (currentUid == null) {
+        throw Exception('Usuario no autenticado en Firebase (currentUid == null)');
+      }
+      if (currentUid != userId) {
+        // UID mismatch -> no intentamos escribir para otro usuario
+        throw Exception('UID mismatch: FirebaseAuth uid=$currentUid does not match target userId=$userId. Escribe solamente en users/{yourUid}.');
+      }
+
+      try {
+        await _firestore
+            .collection(_usersCollection)
+            .doc(userId)
+            .collection(_estacionesVisitadasSubcollection)
+            .doc(estacion.id) // Usar el ID de la estación como ID del documento
+            .set(payload);
+      } on FirebaseException catch (fe) {
+        if (fe.code == 'permission-denied') {
+          throw Exception('Permission denied al escribir visita: ${fe.message}. Verifica reglas de Firestore y que el UID autenticado coincida con la ruta users/{uid}.');
+        }
+        rethrow;
+      }
     } catch (e) {
       throw Exception('Error al marcar estación como visitada: $e');
     }
   }
 
-  /// Obtiene todas las estaciones visitadas por el usuario actual
-  static Future<List<EstacionVisitada>> obtenerEstacionesVisitadas() async {
-    final userId = await _obtenerUserId();
-    if (userId == null) {
+  /// Obtiene todas las estaciones visitadas por el usuario especificado o el actual
+  static Future<List<EstacionVisitada>> obtenerEstacionesVisitadas({String? userId}) async {
+    final uid = userId ?? await _obtenerUserId();
+    if (uid == null) {
       return [];
     }
 
     try {
       final query = await _firestore
           .collection(_usersCollection)
-          .doc(userId)
+          .doc(uid)
           .collection(_estacionesVisitadasSubcollection)
           .orderBy('fechaVisita', descending: true)
           .get();
@@ -116,18 +134,18 @@ class ColeccionService {
     }
   }
 
-  /// Observa en tiempo real las estaciones visitadas por el usuario actual.
+  /// Observa en tiempo real las estaciones visitadas por el usuario especificado o el actual.
   /// Devuelve un Stream que emite la lista ordenada por fecha (desc).
-  static Stream<List<EstacionVisitada>> watchEstacionesVisitadas() async* {
-    final userId = await _obtenerUserId();
-    if (userId == null) {
+  static Stream<List<EstacionVisitada>> watchEstacionesVisitadas({String? userId}) async* {
+    final uid = userId ?? await _obtenerUserId();
+    if (uid == null) {
       yield [];
       return;
     }
 
     final coll = _firestore
         .collection(_usersCollection)
-        .doc(userId)
+        .doc(uid)
         .collection(_estacionesVisitadasSubcollection)
         .orderBy('fechaVisita', descending: true);
 
@@ -195,16 +213,13 @@ class ColeccionService {
     }
 
     try {
-      await _firestore
-          .collection(_usersCollection)
-          .doc(userId)
-          .collection(_estacionesVisitadasSubcollection)
-          .doc(estacionId)
-          .delete();
-
-      print('✅ Visita eliminada: $estacionId para usuario: $userId');
+    await _firestore
+      .collection(_usersCollection)
+      .doc(userId)
+      .collection(_estacionesVisitadasSubcollection)
+      .doc(estacionId)
+      .delete();
     } catch (e) {
-      print('❌ Error eliminando visita: $e');
       throw Exception('Error al eliminar visita: $e');
     }
   }

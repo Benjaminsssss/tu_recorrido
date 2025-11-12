@@ -1,0 +1,434 @@
+import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import '../services/social_services.dart';
+import '../models/social_models.dart';
+
+/// Tab que muestra el feed social de actividades de usuarios seguidos
+class FollowingTab extends StatefulWidget {
+  const FollowingTab({super.key});
+
+  @override
+  State<FollowingTab> createState() => _FollowingTabState();
+}
+
+class _FollowingTabState extends State<FollowingTab> {
+  final _feedService = SocialFeedService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Configurar el locale para timeago en español
+    timeago.setLocaleMessages('es', timeago.EsMessages());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<FeedItem>>(
+      stream: _feedService.getFeedStream(limit: 50),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error al cargar el feed',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${snapshot.error}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        final feedItems = snapshot.data ?? [];
+
+        if (feedItems.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.people_outline,
+                  size: 80,
+                  color: Colors.grey[300],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'No hay actividad reciente',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 48),
+                  child: Text(
+                    'Sigue a otros usuarios para ver su actividad aquí',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Navegar a búsqueda de usuarios
+                    Navigator.pushNamed(context, '/user-search');
+                  },
+                  icon: const Icon(Icons.search),
+                  label: const Text('Buscar usuarios'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Refrescar el feed
+            setState(() {});
+          },
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: feedItems.length,
+            itemBuilder: (context, index) {
+              final item = feedItems[index];
+              return _buildFeedItem(context, item);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeedItem(BuildContext context, FeedItem item) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          // Navegar al álbum del usuario que realizó la acción
+          Navigator.pushNamed(
+            context,
+            '/user-profile/${item.userId}',
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Avatar + Nombre + Tiempo
+              Row(
+                children: [
+                  // Avatar del usuario
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: const Color(0xFF156A79),
+                    backgroundImage: item.userPhotoURL != null
+                        ? NetworkImage(item.userPhotoURL!)
+                        : null,
+                    child: item.userPhotoURL == null
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  // Nombre y tiempo
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.userName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          _formatTimestamp(item.timestamp),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Icono del tipo de actividad
+                  _buildActivityIcon(item.type),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Contenido según el tipo
+              _buildContent(context, item),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityIcon(FeedItemType type) {
+    IconData icon;
+    Color color;
+
+    switch (type) {
+      case FeedItemType.badgeObtained:
+        icon = Icons.stars_rounded;
+        color = Colors.amber[700]!;
+        break;
+      case FeedItemType.placeVisited:
+        icon = Icons.place_rounded;
+        color = Colors.green[700]!;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        icon,
+        size: 18,
+        color: color,
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, FeedItem item) {
+    switch (item.type) {
+      case FeedItemType.badgeObtained:
+        return _buildBadgeContent(item);
+      case FeedItemType.placeVisited:
+        return _buildPlaceContent(item);
+    }
+  }
+
+  Widget _buildBadgeContent(FeedItem item) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.amber[200]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Imagen de la insignia
+          if (item.badgeImageUrl != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                item.badgeImageUrl!,
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.stars, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(width: 12),
+          // Texto
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.stars_rounded,
+                      size: 16,
+                      color: Colors.amber,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Insignia obtenida',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.badgeName ?? 'Insignia',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceContent(FeedItem item) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.green[200]!,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen del lugar (si existe)
+          if (item.placeImageUrl != null)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
+              ),
+              child: Image.network(
+                item.placeImageUrl!,
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: double.infinity,
+                    height: 180,
+                    color: Colors.grey[300],
+                    child: const Icon(
+                      Icons.place,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                  );
+                },
+              ),
+            ),
+          // Texto
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.place_rounded,
+                      size: 16,
+                      color: Colors.green,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Visitó un lugar',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.placeName ?? 'Lugar',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    try {
+      return timeago.format(timestamp, locale: 'es');
+    } catch (e) {
+      final now = DateTime.now();
+      final diff = now.difference(timestamp);
+
+      if (diff.inDays > 365) {
+        final years = (diff.inDays / 365).floor();
+        return 'Hace ${years}a';
+      } else if (diff.inDays > 30) {
+        final months = (diff.inDays / 30).floor();
+        return 'Hace ${months}m';
+      } else if (diff.inDays > 0) {
+        return 'Hace ${diff.inDays}d';
+      } else if (diff.inHours > 0) {
+        return 'Hace ${diff.inHours}h';
+      } else if (diff.inMinutes > 0) {
+        return 'Hace ${diff.inMinutes}min';
+      } else {
+        return 'Ahora';
+      }
+    }
+  }
+}
