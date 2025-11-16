@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firestore_service.dart';
 import '../models/place.dart';
@@ -320,6 +321,9 @@ class _PlaceCardState extends State<_PlaceCard> {
                     children: [
                       PageView.builder(
                         controller: _pageController,
+                        physics: const PageScrollPhysics(),
+                        dragStartBehavior: DragStartBehavior.down,
+                        allowImplicitScrolling: true,
                         itemCount: widget.place.imagenes.length,
                         onPageChanged: (index) {
                           setState(() => _currentPage = index);

@@ -1,4 +1,3 @@
-
 class LegalDocuments {
   
   static const String termsAndConditionsText = """
@@ -173,6 +172,3 @@ cualquier vulnerabilidad o actividad no autorizada en su cuenta a **Tu Recorrido
 Para reportar cualquier fallo de seguridad, por favor contacte a: [tu correo de contacto].
 """;
 }
-
-
-

@@ -13,10 +13,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userState = context.watch<UserState>();
-    // Si el provider aún no se ha inicializado, mostrar un indicador de carga.
-    if (userState == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    // `UserState` se provee mediante Provider y no es nulo en tiempo de ejecución.
     return userState.isAuthenticated ? signedIn : signedOut;
   }
 }

@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class EstacionImageManagerDialog extends StatefulWidget {
   final String estacionId;

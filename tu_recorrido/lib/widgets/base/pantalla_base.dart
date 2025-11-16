@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 /// Widget base reutilizable para pantallas de la app
 /// Proporciona estructura consistente con AppBar y body personalizable

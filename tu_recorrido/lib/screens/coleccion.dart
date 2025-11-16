@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/estacion_visitada.dart';
 import '../services/coleccion_service.dart';
-import '../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:tu_recorrido/widgets/base/estado_vacio.dart';
 import 'package:tu_recorrido/widgets/modulos_ui/estadisticas_progreso.dart';
 import 'package:tu_recorrido/widgets/listas/lista_estaciones.dart';

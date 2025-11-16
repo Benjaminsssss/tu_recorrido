@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/regioycomu.dart';
-import '../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
-import '../utils/terminos_condiciones.dart';
+import 'package:tu_recorrido/utils/docs/terminos_condiciones.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});

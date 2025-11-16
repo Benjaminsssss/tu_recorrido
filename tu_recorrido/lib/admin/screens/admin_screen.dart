@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
 import '../widgets/management_cards_row.dart';

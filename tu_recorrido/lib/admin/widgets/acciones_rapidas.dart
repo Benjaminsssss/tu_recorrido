@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class AccionesRapidasWidget extends StatelessWidget {
   final VoidCallback? onShowQR;

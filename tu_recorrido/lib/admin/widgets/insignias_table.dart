@@ -10,7 +10,7 @@ import '../../models/estacion.dart';
 import '../../services/insignia_service.dart';
 import '../../services/estacion_service.dart';
 import '../../services/storage_service.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InsigniasTable extends StatefulWidget {

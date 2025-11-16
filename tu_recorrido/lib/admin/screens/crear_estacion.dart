@@ -9,7 +9,7 @@ import '../../services/storage_service.dart';
 import '../../services/firestore_service.dart';
 import '../../models/estacion.dart';
 import '../../services/estacion_service.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
 import '../widgets/formulario_estacion.dart';

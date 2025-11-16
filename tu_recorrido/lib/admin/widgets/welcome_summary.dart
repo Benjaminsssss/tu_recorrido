@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 /// Welcome summary styled like the provided example.
 /// Shows three live metrics: Estaciones, Usuarios, Insignias with small delta text.

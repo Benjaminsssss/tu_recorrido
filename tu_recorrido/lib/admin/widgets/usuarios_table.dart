@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/app_user.dart';
 import '../../models/user_role.dart';
 import '../../services/user_role_service.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class UsuariosTable extends StatefulWidget {
   const UsuariosTable({super.key});

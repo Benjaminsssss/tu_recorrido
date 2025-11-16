@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'utils/app_theme.dart';
+import 'package:tu_recorrido/utils/theme/app_theme.dart';
 
 // Screens
 import 'screens/home.dart';
@@ -34,6 +35,16 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
+
+      // Permitir arrastre con distintos dispositivos (mouse/trackpad) en web
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.unknown,
+        },
+      ),
 
       // Usamos AuthGate en la raíz: decide Home o Login según sesión
       initialRoute: '/',

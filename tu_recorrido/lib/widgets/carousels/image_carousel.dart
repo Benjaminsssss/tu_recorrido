@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import '../../models/place.dart';
 
 class ImageCarousel extends StatefulWidget {

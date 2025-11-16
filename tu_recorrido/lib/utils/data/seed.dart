@@ -1,6 +1,6 @@
 // lib/utils/seed.dart
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/firestore_service.dart';
+import '../../services/firestore_service.dart';
 
 /// Carga 3 lugares de ejemplo en la colección `places`.
 /// Ejecuta esta función una sola vez (luego borra el botón que la llama).

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../models/place.dart';
-import '../carousels/image_carousel.dart';
-import '../modales/place_modal.dart';
+import 'package:tu_recorrido/models/place.dart';
+import 'package:tu_recorrido/widgets/carousels/image_carousel.dart';
+import 'package:tu_recorrido/widgets/modales/place_modal.dart';
+import 'package:tu_recorrido/widgets/modales/simple_insignia_modal.dart';
+
 
 class PlaceHeroCard extends StatelessWidget {
   final Place place;

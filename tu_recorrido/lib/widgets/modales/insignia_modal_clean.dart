@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../models/estacion.dart';
 
-class InsigniaModalClean extends StatefulWidget {
+class InsigniaModal extends StatefulWidget {
   final Estacion estacion;
   final VoidCallback onClose;
 
-  const InsigniaModalClean({
+  const InsigniaModal({
     super.key,
     required this.estacion,
     required this.onClose,
   });
 
   @override
-  State<InsigniaModalClean> createState() => _InsigniaModalCleanState();
+  State<InsigniaModal> createState() => _InsigniaModalState();
 }
 
-class _InsigniaModalCleanState extends State<InsigniaModalClean>
+class _InsigniaModalState extends State<InsigniaModal>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;

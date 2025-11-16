@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../services/feed_service.dart';
 import '../models/feed_place_post.dart';
@@ -253,6 +254,9 @@ class _FeedPlaceCardState extends State<_FeedPlaceCard> {
           height: 320,
           child: PageView.builder(
             controller: _pageController,
+            physics: const PageScrollPhysics(),
+            dragStartBehavior: DragStartBehavior.down,
+            allowImplicitScrolling: true,
             onPageChanged: (index) {
               setState(() {
                 _currentPhotoIndex = index;

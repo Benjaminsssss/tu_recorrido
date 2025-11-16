@@ -240,7 +240,6 @@ class _InsigniaModalState extends State<InsigniaModal>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
-                elevation: 3,
               ),
               child: const Text(
                 '✨ Continuar Aventura ✨',

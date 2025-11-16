@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../models/estacion.dart';
 import '../../services/coleccion_service.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 /// Dialog para ingresar código QR manualmente
 class DialogCodigoQR extends StatelessWidget {

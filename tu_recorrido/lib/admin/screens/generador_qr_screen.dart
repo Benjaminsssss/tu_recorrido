@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../models/estacion.dart';
 import '../../services/estacion_service.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 
 /// Pantalla para generar y mostrar códigos QR de estaciones

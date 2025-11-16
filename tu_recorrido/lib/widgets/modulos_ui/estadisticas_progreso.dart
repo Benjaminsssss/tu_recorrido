@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tu_recorrido/utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 /// Widget reutilizable para mostrar estadísticas de progreso
 /// Mostramos visitadas, total y porcentaje con barra de progreso

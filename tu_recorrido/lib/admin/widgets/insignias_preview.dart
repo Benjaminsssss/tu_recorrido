@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/insignia.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class InsigniasPreview extends StatelessWidget {
   final List<Insignia> insignias;

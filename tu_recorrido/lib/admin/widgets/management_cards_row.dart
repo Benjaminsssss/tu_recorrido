@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/insignias_admin_screen.dart';
 import '../screens/user_management_screen.dart';
 import '../screens/gestion_estaciones_screen.dart';
-import '../../utils/colores.dart';
+import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class ManagementCardsRow extends StatelessWidget {
   const ManagementCardsRow({super.key});
