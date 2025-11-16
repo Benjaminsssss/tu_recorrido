@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/feed_item.dart';
+import 'package:tu_recorrido/models/feed_item.dart';
 
 /// Servicio para gestionar el feed social de actividades
 class SocialFeedService {

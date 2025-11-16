@@ -13,7 +13,7 @@ import 'user_state_provider.dart';
 import 'models/user_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'services/notifications_service.dart';
+import 'package:tu_recorrido/services/notifications/notifications_service.dart';
 
 
 Future<void> main() async {

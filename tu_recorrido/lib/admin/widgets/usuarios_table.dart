@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../models/app_user.dart';
 import '../../models/user_role.dart';
-import '../../services/user_role_service.dart';
+import 'package:tu_recorrido/services/auth/user_role_service.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class UsuariosTable extends StatefulWidget {

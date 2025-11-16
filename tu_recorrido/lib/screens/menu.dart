@@ -9,7 +9,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:tu_recorrido/models/lugares.dart';
-import 'package:tu_recorrido/services/estamayrai.dart';
+import 'package:tu_recorrido/services/places/estamayrai.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class Mapita extends StatefulWidget {

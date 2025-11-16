@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/feed_place_post.dart';
+import 'package:tu_recorrido/models/feed_place_post.dart';
 
 /// Servicio para gestionar el feed de actividad reciente de usuarios seguidos
 class FeedService {

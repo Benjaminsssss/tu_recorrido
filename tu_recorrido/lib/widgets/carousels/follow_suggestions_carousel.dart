@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import '../../services/follow_service.dart';
+import 'package:tu_recorrido/services/social/follow_service.dart';
 import '../../screens/album.dart';
 
 /// Carrusel horizontal de sugerencias de seguidores tipo Instagram

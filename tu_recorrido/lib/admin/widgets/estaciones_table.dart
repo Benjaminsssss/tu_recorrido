@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../../models/estacion.dart';
-import '../../services/estacion_service.dart';
+import 'package:tu_recorrido/services/places/estacion_service.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 import '../screens/crear_estacion.dart';
 import 'estacion_image_manager_dialog.dart';

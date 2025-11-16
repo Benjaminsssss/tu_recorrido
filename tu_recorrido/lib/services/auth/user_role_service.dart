@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../models/app_user.dart';
-import '../models/user_role.dart';
+import 'package:tu_recorrido/models/app_user.dart';
+import 'package:tu_recorrido/models/user_role.dart';
 
 /// Servicio para gestionar usuarios y roles en el sistema
 class UserRoleService {

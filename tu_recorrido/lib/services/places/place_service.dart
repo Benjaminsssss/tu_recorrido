@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import '../models/place.dart';
+import 'package:tu_recorrido/models/place.dart';
 
 class PlaceService {
   /// Carga los lugares desde el archivo JSON local en assets/data/places.json

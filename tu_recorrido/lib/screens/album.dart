@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../services/coleccion_service.dart';
-import '../services/album_photos_service.dart';
+import 'package:tu_recorrido/services/places/coleccion_service.dart';
+import 'package:tu_recorrido/services/album/album_photos_service.dart';
 import '../models/estacion_visitada.dart';
 import '../models/place.dart';
 import '../models/user_state.dart';
@@ -1374,7 +1374,7 @@ class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha((0.05 * 255).round()),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1397,7 +1397,7 @@ class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
                             size: 28,
                             shadows: [
                               Shadow(
-                                color: Colors.amber.withAlpha((0.5 * 255).round()),
+                                color: Colors.amber.withOpacity(0.5),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

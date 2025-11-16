@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
-import '../services/auth_service.dart';
+import 'package:tu_recorrido/services/auth/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RecuperarScreen extends StatefulWidget {

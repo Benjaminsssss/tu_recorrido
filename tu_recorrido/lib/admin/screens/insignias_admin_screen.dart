@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 // dart:typed_data not required here
 import 'package:tu_recorrido/models/insignia.dart';
 import 'package:tu_recorrido/models/estacion.dart';
-import 'package:tu_recorrido/services/insignia_service.dart';
-import 'package:tu_recorrido/services/estacion_service.dart';
-import 'package:tu_recorrido/services/coleccion_service.dart';
+import 'package:tu_recorrido/services/insignias/insignia_service.dart';
+import 'package:tu_recorrido/services/places/estacion_service.dart';
+import 'package:tu_recorrido/services/places/coleccion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // removed unused import
 import 'package:tu_recorrido/admin/widgets/insignias_table.dart';

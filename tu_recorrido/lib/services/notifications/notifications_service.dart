@@ -113,4 +113,3 @@ class AwesomeNotifService {
 		await AwesomeNotifications().cancelAll();
 	}
 }
-

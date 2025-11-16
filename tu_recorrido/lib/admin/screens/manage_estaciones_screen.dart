@@ -8,8 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
-import '../../services/firestore_service.dart';
-import '../../services/storage_service.dart';
+import 'package:tu_recorrido/services/infra/firestore_service.dart';
+import 'package:tu_recorrido/services/storage/storage_service.dart';
 
 class ManageEstacionesScreen extends StatefulWidget {
   const ManageEstacionesScreen({super.key});

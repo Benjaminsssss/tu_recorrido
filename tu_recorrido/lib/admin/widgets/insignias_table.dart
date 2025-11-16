@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/insignia.dart';
 import '../../models/estacion.dart';
-import '../../services/insignia_service.dart';
-import '../../services/estacion_service.dart';
-import '../../services/storage_service.dart';
+import 'package:tu_recorrido/services/insignias/insignia_service.dart';
+import 'package:tu_recorrido/services/places/estacion_service.dart';
+import 'package:tu_recorrido/services/storage/storage_service.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 

@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 import '../../models/user_state.dart';
-import '../../services/user_profile_service.dart';
-import '../../services/follow_service.dart';
+import 'package:tu_recorrido/services/social/user_profile_service.dart';
+import 'package:tu_recorrido/services/social/follow_service.dart';
 import '../../models/user_profile.dart';
 import '../../screens/followers_list_screen.dart';
 

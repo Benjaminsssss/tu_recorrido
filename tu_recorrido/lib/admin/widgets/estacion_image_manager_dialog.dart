@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../services/firestore_service.dart';
-import '../../services/storage_service.dart';
+import 'package:tu_recorrido/services/infra/firestore_service.dart';
+import 'package:tu_recorrido/services/storage/storage_service.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 
 class EstacionImageManagerDialog extends StatefulWidget {

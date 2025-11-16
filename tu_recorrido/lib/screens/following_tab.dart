@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../services/feed_service.dart';
+import 'package:tu_recorrido/services/social/feed_service.dart';
 import '../models/feed_place_post.dart';
 
 /// Tab "Siguiendo" - Muestra actividad reciente de usuarios seguidos

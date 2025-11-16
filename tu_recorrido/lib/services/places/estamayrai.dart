@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../models/lugares.dart';
+import 'package:tu_recorrido/models/lugares.dart';
 
 class EstacionesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

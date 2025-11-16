@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/estacion.dart';
-import '../models/estacion_visitada.dart';
-import '../models/place.dart';
-
+import 'package:tu_recorrido/models/estacion.dart';
+import 'package:tu_recorrido/models/estacion_visitada.dart';
+import 'package:tu_recorrido/models/place.dart';
 
 /// Servicio para manejar la colección de estaciones visitadas por el usuario
 /// Ahora usa subcolecciones: users/{userId}/estaciones_visitadas/{estacionId}

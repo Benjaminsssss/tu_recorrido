@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/follow_relation.dart';
-import '../models/user_profile.dart';
+import 'package:tu_recorrido/models/follow_relation.dart';
+import 'package:tu_recorrido/models/user_profile.dart';
 
 /// Servicio para gestionar el seguimiento de usuarios
 class FollowService {

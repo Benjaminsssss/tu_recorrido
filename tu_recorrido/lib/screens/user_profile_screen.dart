@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/social_services.dart';
+import 'package:tu_recorrido/services/social/social_services.dart';
 import '../models/social_models.dart';
 import '../models/album_photo.dart';
 

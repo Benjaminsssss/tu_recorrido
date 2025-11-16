@@ -15,7 +15,7 @@ import '../models/user_state.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'login.dart';
-import '../services/profile_service.dart';
+import 'package:tu_recorrido/services/social/profile_service.dart';
 
 class Perfil extends StatefulWidget {
   const Perfil({super.key});

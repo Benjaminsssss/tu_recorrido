@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/debug_auth_service.dart';
-import '../services/album_migration_service.dart';
+import 'package:tu_recorrido/services/auth/debug_auth_service.dart';
+import 'package:tu_recorrido/services/album/album_migration_service.dart';
 
 class DebugAuthScreen extends StatefulWidget {
   const DebugAuthScreen({super.key});

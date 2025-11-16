@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/firestore_service.dart';
+import 'package:tu_recorrido/services/infra/firestore_service.dart';
 import '../models/place.dart';
 import 'package:tu_recorrido/widgets/modales/place_modal.dart';
 import 'package:tu_recorrido/widgets/carousels/follow_suggestions_carousel.dart';

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../services/estacion_service.dart';
-import '../../services/qr_service.dart';
+import 'package:tu_recorrido/services/places/estacion_service.dart';
+import 'package:tu_recorrido/services/qr/qr_service.dart';
 import 'package:tu_recorrido/utils/logging/app_logger.dart';
 
 /// Helper para generar códigos QR para estaciones existentes en Firestore

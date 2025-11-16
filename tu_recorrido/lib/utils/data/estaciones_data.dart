@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../models/estacion.dart';
-import '../../services/estacion_service.dart';
+import 'package:tu_recorrido/services/places/estacion_service.dart';
 
 /// Datos de ejemplo para estaciones patrimoniales de Santiago
 /// testing

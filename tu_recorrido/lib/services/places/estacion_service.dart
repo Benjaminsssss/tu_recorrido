@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '../models/estacion.dart';
-import 'qr_service.dart';
+import 'package:tu_recorrido/models/estacion.dart';
+import 'package:tu_recorrido/services/qr/qr_service.dart';
 import 'package:tu_recorrido/utils/logging/app_logger.dart';
 
 /// Servicio para manejar estaciones patrimoniales en Firestore

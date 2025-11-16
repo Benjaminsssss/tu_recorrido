@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/estacion.dart';
-import '../services/estacion_service.dart';
-import '../services/coleccion_service.dart';
+import 'package:tu_recorrido/services/places/estacion_service.dart';
+import 'package:tu_recorrido/services/places/coleccion_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/insignia_service.dart';
+import 'package:tu_recorrido/services/insignias/insignia_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// vista para escanear códigos QR de estaciones patrimoniales

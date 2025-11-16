@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/social_services.dart';
+import 'package:tu_recorrido/services/social/social_services.dart';
 import '../models/social_models.dart';
 
 /// Pantalla para buscar usuarios

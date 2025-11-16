@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/regioycomu.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
-import '../services/auth_service.dart';
+import 'package:tu_recorrido/services/auth/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/firestore_service.dart';
+import 'package:tu_recorrido/services/infra/firestore_service.dart';
 import 'package:tu_recorrido/utils/docs/terminos_condiciones.dart';
 
 class RegistroScreen extends StatefulWidget {

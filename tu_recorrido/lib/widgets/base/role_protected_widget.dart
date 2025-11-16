@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/user_role.dart';
-import '../../services/user_role_service.dart';
+import 'package:tu_recorrido/services/auth/user_role_service.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 
 /// Protege rutas basado en roles de usuario

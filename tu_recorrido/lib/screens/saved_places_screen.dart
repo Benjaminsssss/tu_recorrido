@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/place.dart';
 import 'package:tu_recorrido/widgets/modales/place_modal.dart';
-import '../services/saved_places_notifier.dart';
+import 'package:tu_recorrido/services/saved/saved_places_notifier.dart';
 
 class SavedPlacesScreen extends StatelessWidget {
   const SavedPlacesScreen({super.key});
