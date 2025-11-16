@@ -1,11 +1,8 @@
 import 'dart:ui';
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image/image.dart' as img;
 import 'dart:io';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
@@ -603,9 +600,11 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/perfil_${DateTime.now().millisecondsSinceEpoch}.png');
     await file.writeAsBytes(png);
-    await Share.shareXFiles([
-      XFile(file.path, mimeType: 'image/png', name: 'perfil.png')
-    ], text: 'Mi perfil en Tu Recorrido');
+    final params = ShareParams(
+      files: [XFile(file.path, mimeType: 'image/png', name: 'perfil.png')],
+      text: 'Mi perfil en Tu Recorrido',
+    );
+    await SharePlus.instance.share(params);
   }
 
   Future<void> _uploadAndShareLink() async {
@@ -622,7 +621,7 @@ class _PerfilState extends State<Perfil> with SingleTickerProviderStateMixin {
         SettableMetadata(contentType: 'image/png'),
       );
       final url = await ref.getDownloadURL();
-  await Share.share('Mira mi perfil en Tu Recorrido: $url');
+  await SharePlus.instance.share(ShareParams(text: 'Mira mi perfil en Tu Recorrido: $url'));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

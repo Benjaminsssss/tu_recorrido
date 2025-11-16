@@ -167,7 +167,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withOpacity(0.7),
+                              Colors.black.withAlpha((0.7 * 255).round()),
                             ],
                           ),
                         ),

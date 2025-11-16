@@ -319,7 +319,7 @@ class _FeedPlaceCardState extends State<_FeedPlaceCard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withAlpha((0.6 * 255).round()),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -334,7 +334,7 @@ class _FeedPlaceCardState extends State<_FeedPlaceCard> {
                         shape: BoxShape.circle,
                         color: _currentPhotoIndex == index
                             ? Colors.white
-                            : Colors.white.withOpacity(0.4),
+                            : Colors.white.withAlpha((0.4 * 255).round()),
                       ),
                     ),
                   ),
@@ -351,7 +351,7 @@ class _FeedPlaceCardState extends State<_FeedPlaceCard> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withAlpha((0.6 * 255).round()),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -388,8 +388,8 @@ class _FeedPlaceCardState extends State<_FeedPlaceCard> {
           // Icono de ubicación
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF156A79).withOpacity(0.1),
+              decoration: BoxDecoration(
+                color: const Color(0xFF156A79).withAlpha((0.1 * 255).round()),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
-import '../models/estacion.dart';
-import '../services/coleccion_service.dart';
-import '../utils/colores.dart';
+import '../../models/estacion.dart';
+import '../../services/coleccion_service.dart';
+import '../../utils/colores.dart';
 
 /// Dialog para ingresar código QR manualmente
 class DialogCodigoQR extends StatelessWidget {
@@ -193,6 +193,7 @@ class DialogEstacionEncontrada extends StatelessWidget {
       ],
     );
   }
+
 }
 
 /// Servicio helper para manejar las acciones del escáner

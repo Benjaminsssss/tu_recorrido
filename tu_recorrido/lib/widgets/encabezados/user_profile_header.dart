@@ -5,11 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-import '../models/user_state.dart';
-import '../services/user_profile_service.dart';
-import '../services/follow_service.dart';
-import '../models/user_profile.dart';
-import '../screens/followers_list_screen.dart';
+import '../../models/user_state.dart';
+import '../../services/user_profile_service.dart';
+import '../../services/follow_service.dart';
+import '../../models/user_profile.dart';
+import '../../screens/followers_list_screen.dart';
 
 class UserProfileHeader extends StatefulWidget {
   final String? userId; // ID del usuario a mostrar (null = usuario actual)
@@ -81,8 +81,9 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
         final profile = await _userProfileService.getUserProfile(widget.userId!);
         
         if (profile != null) {
-          final following = await _followService.isFollowing(widget.userId!);
-          
+          final following = await _followServiceIsFollowingSafe(widget.userId!);
+          if (!mounted) return;
+
           setState(() {
             _userProfile = profile;
             _isOwnProfile = false;
@@ -96,6 +97,15 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
         print('Error cargando perfil: $e');
         setState(() => _loadingProfile = false);
       }
+    }
+  }
+
+  // Helper safe call to avoid direct dependency issues in hot moves
+  Future<bool> _followServiceIsFollowingSafe(String userId) async {
+    try {
+      return await _followService.isFollowing(userId);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -127,9 +137,10 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Ahora sigues a ${_userProfile?.displayName ?? "este usuario"}'),
-              duration: const Duration(seconds: 2),
+            const SnackBar(
+              content: Text('Ahora sigues a este usuario!'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.green,
             ),
           );
         }
@@ -150,6 +161,7 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
 
   Future<void> _changeBackgroundImage() async {
     if (_uploadingBackground) return;
+    final messenger = ScaffoldMessenger.of(context);
     
     try {
       final XFile? image = await _picker.pickImage(
@@ -163,24 +175,23 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
       setState(() => _uploadingBackground = true);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-                SizedBox(width: 12),
-                Text('Subiendo imagen de fondo...'),
-              ],
-            ),
-            duration: Duration(seconds: 30),
+        messenger.showSnackBar(SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              ),
+              SizedBox(width: 12),
+              Text('Subiendo imagen de fondo...'),
+            ],
           ),
-        );
+          duration: const Duration(seconds: 30),
+        ));
       }
-      
+
+      if (!mounted) return;
       final userState = context.read<UserState>();
       if (userState.userId == null) {
         throw Exception('Usuario no autenticado');
@@ -209,21 +220,20 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
       // Guardar la URL en UserState (que también actualiza Firestore)
       await userState.setBackgroundUrl(downloadUrl);
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Imagen de fondo actualizada'),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('✅ Imagen de fondo actualizada'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       debugPrint('❌ Error al cambiar imagen de fondo: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error al cambiar imagen de fondo: $e'),
             backgroundColor: Colors.red,
@@ -239,6 +249,7 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
 
   Future<void> _changeProfileImage() async {
     if (_uploadingProfile) return;
+    final messenger = ScaffoldMessenger.of(context);
     
     try {
       final XFile? image = await _picker.pickImage(
@@ -253,24 +264,23 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
       setState(() => _uploadingProfile = true);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-                SizedBox(width: 12),
-                Text('Subiendo foto de perfil...'),
-              ],
-            ),
-            duration: Duration(seconds: 30),
+        messenger.showSnackBar(SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              ),
+              SizedBox(width: 12),
+              Text('Subiendo foto de perfil...'),
+            ],
           ),
-        );
+          duration: const Duration(seconds: 30),
+        ));
       }
-      
+
+      if (!mounted) return;
       final userState = context.read<UserState>();
       if (userState.userId == null) {
         throw Exception('Usuario no autenticado');
@@ -299,21 +309,20 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
       // Guardar la URL en UserState (que también actualiza Firestore)
       await userState.setAvatarUrl(downloadUrl);
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Foto de perfil actualizada'),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('✅ Foto de perfil actualizada'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       debugPrint('❌ Error al cambiar foto de perfil: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error al cambiar foto de perfil: $e'),
             backgroundColor: Colors.red,
@@ -545,7 +554,7 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
         border: Border.all(color: Colors.white, width: 4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha((0.2 * 255).round()),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -619,7 +628,7 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.3),
+                          Colors.black.withAlpha((0.3 * 255).round()),
                         ],
                       ),
                     ),
@@ -636,7 +645,7 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
                       top: 20,
                       right: 20,
                       child: Material(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withAlpha((0.5 * 255).round()),
                         shape: const CircleBorder(),
                         child: InkWell(
                           onTap: _showEditOptions,
@@ -659,8 +668,8 @@ class _UserProfileHeaderState extends State<UserProfileHeader> {
                       right: 20,
                       child: Material(
                         color: _isFollowing 
-                          ? Colors.grey[700]?.withOpacity(0.9) 
-                          : const Color(0xFFDAA520).withOpacity(0.9),
+                          ? Colors.grey[700]?.withAlpha((0.9 * 255).round()) 
+                          : const Color(0xFFDAA520).withAlpha((0.9 * 255).round()),
                         borderRadius: BorderRadius.circular(20),
                         child: InkWell(
                           onTap: _toggleFollow,

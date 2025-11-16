@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/user_role.dart';
-import '../services/user_role_service.dart';
-import '../utils/colores.dart';
+import '../../models/user_role.dart';
+import '../../services/user_role_service.dart';
+import '../../utils/colores.dart';
 
 /// Protege rutas basado en roles de usuario
 class RoleProtectedWidget extends StatefulWidget {

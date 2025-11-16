@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/firestore_service.dart';
 import '../models/place.dart';
-import '../widgets/place_modal.dart';
-import '../widgets/follow_suggestions_carousel.dart';
+import 'package:tu_recorrido/widgets/modales/place_modal.dart';
+import 'package:tu_recorrido/widgets/carousels/follow_suggestions_carousel.dart';
 
 /// Tab "Explorar" - Muestra lugares para descubrir (código del home original)
 class ExploreTab extends StatefulWidget {
@@ -431,7 +431,7 @@ class _PlaceCardState extends State<_PlaceCard> {
                         style: const TextStyle(fontSize: 12),
                       ),
                       backgroundColor:
-                          const Color(0xFF156A79).withOpacity(0.1),
+                          const Color(0xFF156A79).withAlpha((0.1 * 255).round()),
                       labelStyle: const TextStyle(
                         color: Color(0xFF156A79),
                         fontWeight: FontWeight.w500,

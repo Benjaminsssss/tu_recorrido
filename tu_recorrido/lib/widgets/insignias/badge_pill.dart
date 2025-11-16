@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/place.dart';
+import '../../models/place.dart';
 
 class BadgePill extends StatelessWidget {
   final PlaceBadge badge;

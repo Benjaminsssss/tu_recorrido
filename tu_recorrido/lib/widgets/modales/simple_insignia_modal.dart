@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../models/estacion_visitada.dart';
-import '../widgets/pulse_glow.dart';
+import '../../models/estacion_visitada.dart';
+import '../efectos/pulse_glow.dart';
 
 /// Modal simple y épico que solo muestra la insignia con efectos
 class SimpleInsigniaModal extends StatefulWidget {

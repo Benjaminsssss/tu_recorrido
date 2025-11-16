@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/colores.dart';
-import '../../widgets/pantalla_base.dart';
-import '../../widgets/role_protected_widget.dart';
+import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
+import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
 import '../widgets/management_cards_row.dart';
 import '../widgets/welcome_summary.dart';
 import '../widgets/acciones_rapidas.dart';

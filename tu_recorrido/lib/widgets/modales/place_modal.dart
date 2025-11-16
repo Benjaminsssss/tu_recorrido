@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/place.dart';
-import 'image_carousel.dart';
+import '../../models/place.dart';
+import '../carousels/image_carousel.dart';
 
 class PlaceModal extends StatelessWidget {
   final Place place;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/colores.dart';
+import '../../utils/colores.dart';
 
 /// Widget reutilizable
 /// Se puede usar en diferentes vistas

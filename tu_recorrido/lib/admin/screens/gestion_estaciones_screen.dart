@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../widgets/pantalla_base.dart';
-import '../../widgets/role_protected_widget.dart';
+import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
+import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
 import '../widgets/estaciones_table.dart';
 
 /// Nueva pantalla que contiene la tabla de gestión de estaciones

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/place.dart';
-import '../widgets/place_hero_card.dart';
+import '../../models/place.dart';
+import 'package:tu_recorrido/widgets/insignias/place_hero_card.dart';
 
 /// Widget principal del feed vertical de lugares.
 /// Reemplaza `mockPlaces` por tu fuente de datos remota cuando lo necesites.

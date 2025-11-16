@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/place.dart';
+import '../../models/place.dart';
 
 class PlaceSearchBar extends StatefulWidget {
   final List<Place> allPlaces;

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/estacion_visitada.dart';
 import '../services/coleccion_service.dart';
 import '../utils/colores.dart';
-import '../widgets/estado_vacio.dart';
-import '../widgets/estadisticas_progreso.dart';
-import '../widgets/lista_estaciones.dart';
-import '../widgets/pantalla_base.dart';
+import 'package:tu_recorrido/widgets/base/estado_vacio.dart';
+import 'package:tu_recorrido/widgets/modulos_ui/estadisticas_progreso.dart';
+import 'package:tu_recorrido/widgets/listas/lista_estaciones.dart';
+import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 
 /// vista que muestra la coleccion de "estaciones" que visito el usuario
 /// en pocas palabras es un pasaporte virtual

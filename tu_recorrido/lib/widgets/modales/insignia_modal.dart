@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/estacion.dart';
+import '../../models/estacion.dart';
 
 class InsigniaModal extends StatefulWidget {
   final Estacion estacion;
@@ -24,29 +24,31 @@ class _InsigniaModalState extends State<InsigniaModal>
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
+    _startAnimation();
+  }
 
+  void _setupAnimations() {
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.7,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
 
+  void _startAnimation() {
     _animationController.forward();
+  }
+
+  void _closeModal() {
+    widget.onClose();
   }
 
   @override
@@ -55,51 +57,62 @@ class _InsigniaModalState extends State<InsigniaModal>
     super.dispose();
   }
 
-  void _closeModal() {
-    _animationController.reverse().then((_) {
-      widget.onClose();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withAlpha((0.8 * 255).round()),
-      body: GestureDetector(
-        onTap: _closeModal,
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _scaleAnimation.value,
-                child: Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: GestureDetector(
-                    onTap:
-                        () {}, // Evita que se cierre cuando tocas la insignia
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Fondo negro con desenfoque
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeModal,
+              child: Container(
+                color: Colors.black.withAlpha((0.8 * 255).round()),
+              ),
+            ),
+          ),
+
+          // Contenido principal - exactamente como en la imagen
+          Center(
+            child: AnimatedBuilder(
+              animation: Listenable.merge([_scaleAnimation, _fadeAnimation]),
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Opacity(
+                    opacity: _fadeAnimation.value,
                     child: _buildInsigniaCard(),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildInsigniaCard() {
     return Container(
-      width: 320,
       margin: const EdgeInsets.all(32),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF2C5530), // Color verde oscuro de fondo
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFFD700), // Borde dorado
+          width: 3,
+        ),
         boxShadow: [
+          // Resplandor dorado como en la imagen
           BoxShadow(
-            color: Colors.black.withAlpha((0.3 * 255).round()),
+            color: const Color(0xFFFFD700).withAlpha((0.6 * 255).round()),
+            blurRadius: 30,
+            spreadRadius: 8,
+          ),
+          BoxShadow(
+            color: Colors.black.withAlpha((0.5 * 255).round()),
             blurRadius: 20,
             spreadRadius: 5,
           ),
@@ -120,7 +133,7 @@ class _InsigniaModalState extends State<InsigniaModal>
               borderRadius: BorderRadius.circular(25),
             ),
             child: const Text(
-              '🏆 ¡INSIGNIA DESBLOQUEADA!',
+              'BARRO LASTARRIA',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -132,27 +145,36 @@ class _InsigniaModalState extends State<InsigniaModal>
 
           const SizedBox(height: 24),
 
-          // Insignia
+          // Insignia circular - exactamente como en la imagen
           Container(
-            width: 150,
-            height: 150,
+            width: 200,
+            height: 200,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFFFFD700),
-                width: 3,
+                color: const Color(0xFFFFD700), // Borde dorado
+                width: 4,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD700).withAlpha((0.4 * 255).round()),
+                  blurRadius: 20,
+                  spreadRadius: 3,
+                ),
+              ],
             ),
             child: ClipOval(
               child: widget.estacion.imagenes.isNotEmpty
                   ? Image.network(
                       widget.estacion.imagenes.first['url'] ?? '',
                       fit: BoxFit.cover,
+                      width: 200,
+                      height: 200,
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: Colors.green,
                         child: const Icon(
                           Icons.location_on,
-                          size: 60,
+                          size: 80,
                           color: Colors.white,
                         ),
                       ),
@@ -161,7 +183,7 @@ class _InsigniaModalState extends State<InsigniaModal>
                       color: Colors.green,
                       child: const Icon(
                         Icons.location_on,
-                        size: 60,
+                        size: 80,
                         color: Colors.white,
                       ),
                     ),
@@ -175,47 +197,46 @@ class _InsigniaModalState extends State<InsigniaModal>
             widget.estacion.nombre,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.black87,
+              color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // Mensaje
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: const Color(0xFFFFD700).withAlpha((0.3 * 255).round()),
-                width: 1,
-              ),
-            ),
-            child: const Text(
-              '¡Felicitaciones! Has completado esta parada de tu recorrido por Santiago',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 16,
-                height: 1.4,
-              ),
+          // Ubicación
+          const Text(
+            'SANTIAGO • CHILE',
+            style: TextStyle(
+              color: Color(0xFFFFD700),
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Botón de continuar
-          SizedBox(
-            width: double.infinity,
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFD700), Color(0xFFB8860B)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(30),
+            ),
             child: ElevatedButton(
               onPressed: _closeModal,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFD700),
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -224,8 +245,9 @@ class _InsigniaModalState extends State<InsigniaModal>
               child: const Text(
                 '✨ Continuar Aventura ✨',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),

@@ -20,7 +20,7 @@ import 'admin/screens/admin_screen.dart';
 import 'admin/screens/generador_qr_screen.dart';
 
 // AuthGate & Protection
-import 'widgets/auth_gate.dart';
+import 'package:tu_recorrido/widgets/auth_gate.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
       // Usamos AuthGate en la raíz: decide Home o Login según sesión
       initialRoute: '/',
       routes: {
-        '/': (_) => const AuthGate(
+        '/': (_) => AuthGate(
               signedIn: HomeScreen(),
               signedOut: LoginScreen(),
             ),

@@ -25,7 +25,7 @@ class ProfileService {
 
       // Obtener la ubicación actual
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       // Obtener el nombre de la comuna desde Firebase

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/user_role_service.dart';
 import '../../utils/colores.dart';
-import '../../widgets/role_protected_widget.dart';
-import '../../widgets/pantalla_base.dart';
+import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
+import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 import '../widgets/usuarios_table.dart';
 
 /// vista para gestionar usuarios y roles

@@ -14,10 +14,10 @@ import '../services/album_photos_service.dart';
 import '../models/estacion_visitada.dart';
 import '../models/place.dart';
 import '../models/user_state.dart';
-import '../widgets/simple_insignia_modal.dart';
+import 'package:tu_recorrido/widgets/modales/simple_insignia_modal.dart';
 
 import '../components/bottom_nav_bar.dart';
-import '../widgets/user_profile_header.dart';
+import 'package:tu_recorrido/widgets/encabezados/user_profile_header.dart';
 
 /// Album/colección: muestra insignias (badges) y sus fotos asociadas.
 /// Puede mostrar el álbum propio o de otro usuario según userId
@@ -1374,7 +1374,7 @@ class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha((0.05 * 255).round()),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1397,7 +1397,7 @@ class _InsigniasCounterDelegate extends SliverPersistentHeaderDelegate {
                             size: 28,
                             shadows: [
                               Shadow(
-                                color: Colors.amber.withOpacity(0.5),
+                                color: Colors.amber.withAlpha((0.5 * 255).round()),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

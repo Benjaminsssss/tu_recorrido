@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/place.dart';
+import '../../models/place.dart';
 
 class ImageCarousel extends StatefulWidget {
   final List<PlaceImage> images;

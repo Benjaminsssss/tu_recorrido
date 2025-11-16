@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import '../services/follow_service.dart';
-import '../screens/album.dart';
+import '../../services/follow_service.dart';
+import '../../screens/album.dart';
 
 /// Carrusel horizontal de sugerencias de seguidores tipo Instagram
 class FollowSuggestionsCarousel extends StatefulWidget {
@@ -182,7 +182,7 @@ class _FollowSuggestionsCarouselState
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withAlpha((0.05 * 255).round()),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
