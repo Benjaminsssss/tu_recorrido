@@ -20,6 +20,24 @@ class EstacionesService {
             .map((doc) {
               try {
                 final data = doc.data();
+                String? imageUrl;
+                String? badgeImageUrl;
+                if (data['images'] != null && data['images'] is List && (data['images'] as List).isNotEmpty) {
+                  final imagesList = (data['images'] as List);
+                  print('🔎 images para ${data['nombre'] ?? doc.id}: $imagesList');
+                  final img0 = imagesList[0];
+                  if (img0 is Map && img0['url'] != null && img0['url'] is String && (img0['url'] as String).isNotEmpty) {
+                    imageUrl = img0['url'] as String;
+                  }
+                }
+                if (data['badgeImage'] != null && data['badgeImage'] is Map && data['badgeImage']['url'] != null && data['badgeImage']['url'] is String && (data['badgeImage']['url'] as String).isNotEmpty) {
+                  badgeImageUrl = data['badgeImage']['url'] as String;
+                }
+                if (badgeImageUrl == null) {
+                  print('⚠️ Sin badgeImage para ${data['nombre'] ?? doc.id}');
+                } else {
+                  print('🏅 BadgeImage: $badgeImageUrl');
+                }
                 return PlaceResult(
                   placeId: doc.id,
                   nombre: data['nombre'] ?? 'Estación sin nombre',
@@ -29,6 +47,8 @@ class EstacionesService {
                   ),
                   rating: (data['rating'] as num?)?.toDouble(),
                   esGenerado: false,
+                  imageUrl: imageUrl,
+                  badgeImageUrl: badgeImageUrl,
                 );
               } catch (e) {
                 print('❌ Error al procesar documento ${doc.id}: $e');

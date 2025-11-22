@@ -10,6 +10,8 @@ class PlaceResult {
   final LatLng ubicacion;
   double? rating; // ⭐️ Cambiado a no-final para poder actualizar
   final bool esGenerado;
+  final String? imageUrl; // url de la imagen principal
+  final String? badgeImageUrl; // url del badge principal
 
   PlaceResult({
     required this.placeId,
@@ -17,10 +19,23 @@ class PlaceResult {
     required this.ubicacion,
     this.rating,
     this.esGenerado = false,
+    this.imageUrl,
+    this.badgeImageUrl,
   });
 
   factory PlaceResult.fromJson(Map<String, dynamic> json) {
     final geo = json['geometry']?['location'];
+    String? imageUrl;
+    String? badgeImageUrl;
+    if (json['images'] != null && json['images'] is List && (json['images'] as List).isNotEmpty) {
+      final img0 = (json['images'] as List)[0];
+      if (img0 is Map && img0['url'] != null) {
+        imageUrl = img0['url'] as String?;
+      }
+    }
+    if (json['badgeImage'] != null && json['badgeImage'] is Map && json['badgeImage']['url'] != null) {
+      badgeImageUrl = json['badgeImage']['url'] as String?;
+    }
     return PlaceResult(
       placeId: json['place_id'] ?? '',
       nombre: json['name'] ?? 'Sin nombre',
@@ -31,6 +46,8 @@ class PlaceResult {
       rating:
           json['rating'] == null ? null : (json['rating'] as num).toDouble(),
       esGenerado: false,
+      imageUrl: imageUrl,
+      badgeImageUrl: badgeImageUrl,
     );
   }
 
@@ -41,6 +58,8 @@ class PlaceResult {
         'lng': ubicacion.longitude,
         'rating': rating,
         'esGenerado': esGenerado,
+        'imageUrl': imageUrl,
+        'badgeImageUrl': badgeImageUrl,
       };
 
   PlaceResult copyWith({
@@ -49,6 +68,8 @@ class PlaceResult {
     LatLng? ubicacion,
     double? rating,
     bool? esGenerado,
+    String? imageUrl,
+    String? badgeImageUrl,
   }) {
     return PlaceResult(
       placeId: placeId ?? this.placeId,
@@ -56,6 +77,8 @@ class PlaceResult {
       ubicacion: ubicacion ?? this.ubicacion,
       rating: rating ?? this.rating,
       esGenerado: esGenerado ?? this.esGenerado,
+      imageUrl: imageUrl ?? this.imageUrl,
+      badgeImageUrl: badgeImageUrl ?? this.badgeImageUrl,
     );
   }
 }
