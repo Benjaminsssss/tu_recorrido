@@ -18,10 +18,10 @@ class FeedService {
 
     // Stream de los usuarios que sigo
     await for (final followingSnapshot in _db
-        .collection('following')
-        .doc(currentUser.uid)
-        .collection('following')
-        .snapshots()) {
+      .collection('users')
+      .doc(currentUser.uid)
+      .collection('following')
+      .snapshots()) {
       
       if (followingSnapshot.docs.isEmpty) {
         yield [];
@@ -148,7 +148,7 @@ class FeedService {
 
     try {
       final snapshot = await _db
-          .collection('following')
+          .collection('users')
           .doc(currentUser.uid)
           .collection('following')
           .get();

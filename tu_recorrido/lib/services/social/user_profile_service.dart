@@ -282,14 +282,14 @@ class UserProfileService {
       if (isPublic) return true;
 
       // Si es privado, verificar si lo sigue
-      final followingDoc = await _firestore
-          .collection('following')
+        final followingDoc = await _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .doc(targetUserId)
           .get();
 
-      return followingDoc.exists;
+        return followingDoc.exists;
     } catch (e) {
       print('Error al verificar permisos de visualización: $e');
       return false;

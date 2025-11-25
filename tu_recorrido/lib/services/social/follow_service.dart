@@ -68,30 +68,40 @@ class FollowService {
       final batch = _firestore.batch();
 
       // 1. Agregar a la lista de "following" del usuario actual
-      final followingRef = _firestore
-          .collection('following')
+      // Escribimos en ambas ubicaciones para mantener compatibilidad:
+      // - top-level: /following/{current}/following/{target}
+      // - subcollection: /users/{current}/following/{target}
+      // Solo subcolección bajo users/{current}/following/{target}
+      final followingUsersRef = _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .doc(targetUserId);
 
-      batch.set(followingRef, {
+      final followingData = {
         'displayName': targetUserName,
         'photoURL': targetUserPhoto,
         'timestamp': now,
-      });
+      };
+
+      batch.set(followingUsersRef, followingData);
 
       // 2. Agregar a la lista de "followers" del usuario objetivo
-      final followersRef = _firestore
-          .collection('followers')
+      // 2. Agregar a la lista de "followers" del usuario objetivo (ambas ubicaciones)
+      // Solo subcolección bajo users/{target}/followers/{current}
+      final followersUsersRef = _firestore
+          .collection('users')
           .doc(targetUserId)
           .collection('followers')
           .doc(currentUserId);
 
-      batch.set(followersRef, {
+      final followerData = {
         'displayName': currentUserName,
         'photoURL': currentUserPhoto,
         'timestamp': now,
-      });
+      };
+
+      batch.set(followersUsersRef, followerData);
 
       // 3. Incrementar contador de "following" del usuario actual
       final currentUserRef = _firestore.collection('users').doc(currentUserId);
@@ -137,22 +147,22 @@ class FollowService {
       final batch = _firestore.batch();
 
       // 1. Eliminar de la lista de "following" del usuario actual
-      final followingRef = _firestore
-          .collection('following')
+        final followingUsersRef = _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .doc(targetUserId);
 
-      batch.delete(followingRef);
+        batch.delete(followingUsersRef);
 
       // 2. Eliminar de la lista de "followers" del usuario objetivo
-      final followersRef = _firestore
-          .collection('followers')
+        final followersUsersRef = _firestore
+          .collection('users')
           .doc(targetUserId)
           .collection('followers')
           .doc(currentUserId);
 
-      batch.delete(followersRef);
+        batch.delete(followersUsersRef);
 
       // 3. Decrementar contador de "following" del usuario actual
       final currentUserRef = _firestore.collection('users').doc(currentUserId);
@@ -181,14 +191,14 @@ class FollowService {
     if (currentUserId == targetUserId) return false;
 
     try {
-      final doc = await _firestore
-          .collection('following')
+      // Primero verificar subcolección dentro de users/
+      final usersDoc = await _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .doc(targetUserId)
           .get();
-
-      return doc.exists;
+      return usersDoc.exists;
     } catch (e) {
       print('Error al verificar si sigue al usuario: $e');
       return false;
@@ -211,12 +221,9 @@ class FollowService {
     }
 
     try {
-      Query query = _firestore
-          .collection('followers')
-          .doc(targetUserId)
-          .collection('followers')
-          .orderBy('timestamp', descending: true)
-          .limit(limit);
+      // Leer únicamente subcolección bajo users/{uid}/followers
+      final usersRef = _firestore.collection('users').doc(targetUserId).collection('followers');
+      Query query = usersRef.orderBy('timestamp', descending: true).limit(limit);
 
       if (startAfter != null) {
         query = query.startAfterDocument(startAfter);
@@ -248,12 +255,9 @@ class FollowService {
     }
 
     try {
-      Query query = _firestore
-          .collection('following')
-          .doc(targetUserId)
-          .collection('following')
-          .orderBy('timestamp', descending: true)
-          .limit(limit);
+      // Leer únicamente subcolección bajo users/{uid}/following
+      final usersRef = _firestore.collection('users').doc(targetUserId).collection('following');
+      Query query = usersRef.orderBy('timestamp', descending: true).limit(limit);
 
       if (startAfter != null) {
         query = query.startAfterDocument(startAfter);
@@ -302,7 +306,7 @@ class FollowService {
     }
 
     return _firestore
-        .collection('following')
+        .collection('users')
         .doc(currentUserId)
         .collection('following')
         .doc(targetUserId)
@@ -314,44 +318,42 @@ class FollowService {
   Stream<List<FollowRelation>> followersStream({
     String? userId,
     int limit = 20,
-  }) {
+  }) async* {
     final targetUserId = userId ?? currentUserId;
     if (targetUserId == null) {
-      return Stream.value([]);
+      yield [];
+      return;
     }
 
-    return _firestore
-        .collection('followers')
-        .doc(targetUserId)
-        .collection('followers')
+    final usersRef = _firestore.collection('users').doc(targetUserId).collection('followers');
+    yield* usersRef
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => FollowRelation.fromFollowerDoc(targetUserId, doc))
-            .toList());
+          .map((doc) => FollowRelation.fromFollowerDoc(targetUserId, doc))
+          .toList());
   }
 
   /// Stream de usuarios seguidos
   Stream<List<FollowRelation>> followingStream({
     String? userId,
     int limit = 20,
-  }) {
+  }) async* {
     final targetUserId = userId ?? currentUserId;
     if (targetUserId == null) {
-      return Stream.value([]);
+      yield [];
+      return;
     }
 
-    return _firestore
-        .collection('following')
-        .doc(targetUserId)
-        .collection('following')
+    final usersRef = _firestore.collection('users').doc(targetUserId).collection('following');
+    yield* usersRef
         .orderBy('timestamp', descending: true)
         .limit(limit)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => FollowRelation.fromFollowingDoc(targetUserId, doc))
-            .toList());
+          .map((doc) => FollowRelation.fromFollowingDoc(targetUserId, doc))
+          .toList());
   }
 
   /// Obtiene usuarios sugeridos para seguir
@@ -364,7 +366,7 @@ class FollowService {
     try {
       // Obtener lista de usuarios que ya sigue
       final followingSnapshot = await _firestore
-          .collection('following')
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .get();

@@ -39,9 +39,9 @@ class _FollowSuggestionsCarouselState
     if (currentUserId == null) return;
     
     _followingSubscription = FirebaseFirestore.instance
-        .collection('following')
-        .doc(currentUserId)
-        .collection('following')
+      .collection('users')
+      .doc(currentUserId)
+      .collection('following')
         .snapshots()
         .listen((snapshot) {
       final followedIds = snapshot.docs.map((doc) => doc.id).toSet();
@@ -62,8 +62,8 @@ class _FollowSuggestionsCarouselState
     
     try {
       // Cargar desde la subcolección following
-      final followingSnapshot = await FirebaseFirestore.instance
-          .collection('following')
+        final followingSnapshot = await FirebaseFirestore.instance
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .get();

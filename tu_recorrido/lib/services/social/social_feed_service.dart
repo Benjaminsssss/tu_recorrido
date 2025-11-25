@@ -95,8 +95,8 @@ class SocialFeedService {
       );
 
       // Obtener lista de seguidores
-      final followersSnapshot = await _firestore
-          .collection('followers')
+        final followersSnapshot = await _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('followers')
           .get();
@@ -161,8 +161,8 @@ class SocialFeedService {
       );
 
       // Obtener lista de seguidores
-      final followersSnapshot = await _firestore
-          .collection('followers')
+        final followersSnapshot = await _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('followers')
           .get();
@@ -270,8 +270,8 @@ class SocialFeedService {
 
     try {
       // Obtener lista de usuarios seguidos
-      final followingSnapshot = await _firestore
-          .collection('following')
+        final followingSnapshot = await _firestore
+          .collection('users')
           .doc(currentUserId)
           .collection('following')
           .get();
