@@ -51,11 +51,12 @@ class AwesomeNotifService {
 		);
 	}
 
-	/// Programa recordatorios diarios (abre una vez y quedan persistentes incluso tras reinicio)
+	/// Programa solo 3 recordatorios diarios (garantizado, sin duplicados)
 	Future<void> scheduleDailyExploreReminders() async {
+		await cancelAll(); // Cancela todas las notificaciones previas
 		final now = DateTime.now();
 		// Horas definitivas aproximadamente cada 8h
-		final hours = [9, 17, 1];
+		final hours = [9, 17, 22];
 		final ids = [8001, 8002, 8003];
 		for (var i = 0; i < hours.length; i++) {
 			final target = DateTime(now.year, now.month, now.day, hours[i]);

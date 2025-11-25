@@ -25,7 +25,7 @@ class ProfileService {
 
       // Obtener la ubicación actual
       Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        desiredAccuracy: LocationAccuracy.high
       );
 
       // Obtener el nombre de la comuna desde Firebase
@@ -137,11 +137,11 @@ class ProfileService {
     try {
       debugPrint('Buscando estaciones en comuna: $comuna');
       
-      // Obtener todas las estaciones activas en la comuna
-      final estacionesStream = _firestore
+        // Obtener todas las estaciones activas en la comuna (ajustado para buscar solo el nombre de la comuna)
+        final estacionesStream = _firestore
           .collection('estaciones')
           .where('activa', isEqualTo: true)
-          .where('comuna', isEqualTo: '$comuna, Santiago de Chile')
+          .where('comuna', isEqualTo: comuna)
           .snapshots();
 
       // Obtener las estaciones visitadas por el usuario

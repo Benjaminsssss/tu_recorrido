@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -60,10 +60,11 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
   LatLng? _currentDestination;
 
   // Variables de estado
-  static const double _arrivalToleranceMeters =
-      20000.0; // 20 km de rango para mostrar el botón de rating
+      static const double _arrivalToleranceMeters =
+        15.0; // 15 metros: sólo muestra botón de rating y modal al estar muy cerca
   bool _isRouteActive = false;
   bool _arrivalHandled = false;
+  bool _shownLowAccuracyWarning = false; // Evita spam de snackbar de precisión
 
   // Lugares
   PlaceResult? _destinationPlace;
@@ -81,38 +82,20 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
   BitmapDescriptor? _customMarkerIcon;
 
   Future<void> _createCustomMarker() async {
-    final recoder = ui.PictureRecorder();
-    final canvas = Canvas(recoder);
-    // Dibujar el círculo de fondo
-    final paint = Paint()
-      ..color = const ui.Color.fromARGB(255, 223, 233, 232)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(const Offset(24, 24), 24, paint);
-
-    // Dibujar el icono de cámara
-    TextPainter textPainter = TextPainter(textDirection: TextDirection.ltr);
-    textPainter.text = TextSpan(
-      text: String.fromCharCode(Icons.camera_alt.codePoint),
-      style: TextStyle(
-        fontSize: 30,
-        fontFamily: Icons.camera_alt.fontFamily,
-        color: Colors.white,
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, const Offset(9, 9));
-
-    final picture = recoder.endRecording();
-    final image = await picture.toImage(48, 48);
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-
-    setState(() {
-      // Use the new BitmapDescriptor.bytes constructor where available.
-      // Fallback to the older API if needed via an ignore.
-      final u8 = bytes!.buffer.asUint8List();
-      // New API: BitmapDescriptor.bytes(Uint8List)
-      _customMarkerIcon = BitmapDescriptor.bytes(u8);
-    });
+    if (_customMarkerIcon != null) return; // Ya cargado
+    try {
+      // Cargar el logo desde assets como icono del marcador
+      final icon = await BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(size: Size(48, 48)),
+        'assets/img/logo.png',
+      );
+      if (!mounted) return;
+      setState(() {
+        _customMarkerIcon = icon;
+      });
+    } catch (e, st) {
+      dev.log('Error cargando logo.png para marcador: $e', stackTrace: st);
+    }
   }
 
   Future<void> _initializeMap() async {
@@ -222,62 +205,33 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
   void _pageControllerListener() {
     if (_pageController.page != null) {
       int next = _pageController.page!.round();
+      // Usar la lista filtrada para el carrusel
+      final filtered = _lugaresCercanos();
       if (_currentPage != next) {
         setState(() {
           _currentPage = next;
           if (!_isRouteActive) _polylines.clear();
         });
-        if (next >= 0 && next < _lugares.length) {
-          _goToPosition(_lugares[next].ubicacion, zoom: 17.0);
+        if (next >= 0 && next < filtered.length) {
+          _goToPosition(filtered[next].ubicacion, zoom: 17.0);
         }
       }
     }
   }
 
-  void _filterPlacesByDistance() {
-    if (_currentPosition == null) return;
-
-    const double maxDistanceMeters = 5000;
-    // Filtrar las estaciones que ya tenemos cargadas de Firestore
-    final List<PlaceResult> nearbyPlaces = _lugares.where((estacion) {
-      final d = Geolocator.distanceBetween(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-        estacion.ubicacion.latitude,
-        estacion.ubicacion.longitude,
-      );
-      return d <= maxDistanceMeters;
-    }).toList();
-
-    nearbyPlaces.sort((a, b) {
-      final da = Geolocator.distanceBetween(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-        a.ubicacion.latitude,
-        a.ubicacion.longitude,
-      );
-      final db = Geolocator.distanceBetween(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-        b.ubicacion.latitude,
-        b.ubicacion.longitude,
-      );
-      return da.compareTo(db);
-    });
-
+  // Actualiza todos los marcadores sin aplicar ningún filtro por distancia.
+  void _actualizarMarcadores() {
+    if (!mounted) return;
     setState(() {
-      _lugares = nearbyPlaces;
       _markers.clear();
-
       if (_userMarker != null) _markers.add(_userMarker!);
 
-      for (final estacion in nearbyPlaces) {
+      for (final estacion in _lugares) {
         _markers.add(
           Marker(
             markerId: MarkerId(estacion.placeId),
             position: estacion.ubicacion,
-            icon: _customMarkerIcon ??
-                BitmapDescriptor.defaultMarkerWithHue(220.0),
+            icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(220.0),
             infoWindow: InfoWindow(
               title: estacion.nombre,
               snippet: estacion.rating != null
@@ -285,15 +239,17 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                   : 'Sin calificar',
             ),
             onTap: () {
-              final index =
-                  _lugares.indexWhere((p) => p.placeId == estacion.placeId);
-              if (index != -1 && _pageController.hasClients) {
+              // Usar la lista filtrada para evitar desbordes del carrusel
+              final filtered = _lugaresCercanos();
+              final filteredIndex = filtered.indexWhere((p) => p.placeId == estacion.placeId);
+              if (filteredIndex != -1 && _pageController.hasClients) {
                 _pageController.animateToPage(
-                  index,
+                  filteredIndex,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                 );
               } else {
+                // Si el lugar está fuera de los 5 km, sólo centramos el mapa
                 _goToPosition(estacion.ubicacion, zoom: 17.0);
               }
             },
@@ -307,6 +263,39 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
         _currentPage = newPage;
       }
     });
+  }
+
+  // Obtiene los lugares dentro de 5 km de la posición actual para el carrusel.
+  List<PlaceResult> _lugaresCercanos() {
+    if (_currentPosition == null) return [];
+    const double maxDistanceMeters = 5000; // 5 km
+    final origen = _currentPosition!;
+    final List<PlaceResult> resultado = _lugares.where((l) {
+      final d = Geolocator.distanceBetween(
+        origen.latitude,
+        origen.longitude,
+        l.ubicacion.latitude,
+        l.ubicacion.longitude,
+      );
+      return d <= maxDistanceMeters;
+    }).toList();
+    // Ordenar por distancia creciente
+    resultado.sort((a, b) {
+      final da = Geolocator.distanceBetween(
+        origen.latitude,
+        origen.longitude,
+        a.ubicacion.latitude,
+        a.ubicacion.longitude,
+      );
+      final db = Geolocator.distanceBetween(
+        origen.latitude,
+        origen.longitude,
+        b.ubicacion.latitude,
+        b.ubicacion.longitude,
+      );
+      return da.compareTo(db);
+    });
+    return resultado;
   }
 
   Future<void> _determinePositionAndStartListening() async {
@@ -356,7 +345,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
             CameraPosition(target: _currentPosition!, zoom: 16.0);
       });
 
-      _filterPlacesByDistance();
+      _actualizarMarcadores();
       _listenForRealTimeUpdates();
     } catch (e) {
       dev.log("❌ Error al obtener la ubicación inicial: $e");
@@ -379,10 +368,10 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
     ).listen((Position position) async {
       if (!mounted) return;
 
-      if (position.accuracy > 20.0) {
-        dev.log(
-            '⚠️ Precisión baja (${position.accuracy.toStringAsFixed(1)}m), ignorando lectura.');
-        return;
+      // Mostrar aviso una sola vez si la precisión es peor que el umbral de llegada.
+      if (position.accuracy > _arrivalToleranceMeters && _isRouteActive && !_shownLowAccuracyWarning) {
+        _shownLowAccuracyWarning = true;
+        _showSnackBar('📡 Precisión GPS ${position.accuracy.toStringAsFixed(0)}m. Necesitas ≤ 15m para confirmar llegada. Mejora señal o acércate.');
       }
 
       final newLatLng = LatLng(position.latitude, position.longitude);
@@ -404,7 +393,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
           _markers.add(_userMarker!);
         });
 
-        _filterPlacesByDistance();
+        _actualizarMarcadores();
 
         if (_isRouteActive && _currentDestination != null) {
           final distToDest = Geolocator.distanceBetween(
@@ -443,6 +432,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
       _currentDestination = null;
       _destinationPlace = null;
       _arrivalHandled = false;
+      _shownLowAccuracyWarning = false; // reset aviso de precisión para próxima ruta
     });
     _showSnackBar('🚫 Ruta cancelada.');
   }
@@ -823,6 +813,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
             _arrivalHandled = false;
             _currentDestination = destination;
             _destinationPlace = place;
+            _shownLowAccuracyWarning = false; // permitir nuevo aviso si precisión es alta
 
             dev.log(
                 '🚀 Ruta activada. Destino: ${destination.latitude}, ${destination.longitude}');
@@ -925,6 +916,8 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
       );
       canShowFlagBtn = distToDest <= _arrivalToleranceMeters;
     }
+
+    final lugaresParaCards = _lugaresCercanos();
 
     return Scaffold(
       body: Stack(
@@ -1067,7 +1060,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                 children: [
                   SizedBox(
                     height: _cardHeight,
-                    child: _lugares.isEmpty && _currentPosition != null
+                    child: lugaresParaCards.isEmpty && _currentPosition != null
                         ? Container(
                             width: _cardWidth,
                             height: _cardHeight,
@@ -1085,7 +1078,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                             ),
                             child: const Center(
                               child: Text(
-                                "🔍 No hay lugares en un radio de 5 km",
+                                "🔍 No hay lugares dentro de 5 km",
                                 style: TextStyle(
                                   color: colorGrisCarbon,
                                   fontWeight: FontWeight.bold,
@@ -1098,26 +1091,19 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                         : PageView(
                             controller: _pageController,
                             physics: const ClampingScrollPhysics(),
-                            children: _lugares.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final place = entry.value;
-
-                              return _buildCard(
-                                place.nombre,
-                                'Rating: ${place.rating?.toStringAsFixed(1) ?? 'Sin calificar'}',
-                                index + 1,
-                              );
+                            children: lugaresParaCards.map((place) {
+                              return _buildCard(place);
                             }).toList(),
                           ),
                   ),
                   const SizedBox(height: 12),
 
                   // ⭐ Indicadores de página (dots alargados)
-                  if (_lugares.isNotEmpty)
+                  if (lugaresParaCards.isNotEmpty)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        _lugares.length,
+                        lugaresParaCards.length,
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           margin: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -1184,8 +1170,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
   }
 
   // Widget para construir la tarjeta de cada lugar
-  Widget _buildCard(String title, String subtitle, int cardNumber) {
-    final place = _lugares[cardNumber - 1];
+  Widget _buildCard(PlaceResult place) {
     final bool isDisabled = _isRouteActive;
 
     // Verificar si estamos cerca del destino (5 metros)
@@ -1204,7 +1189,8 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
           _currentDestination != null &&
           place.ubicacion.latitude == _currentDestination!.latitude &&
           place.ubicacion.longitude == _currentDestination!.longitude) {
-        isNearDestination = currentDistance <= 5; // 5 metros
+        // Usar mismo umbral de llegada (15m) para la animación de pulso
+        isNearDestination = currentDistance <= _arrivalToleranceMeters;
         if (isNearDestination && !_pulseController.isAnimating) {
           _pulseController.repeat(reverse: true);
         } else if (!isNearDestination && _pulseController.isAnimating) {
@@ -1216,6 +1202,8 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
     final displayRating = place.rating != null
         ? place.rating!.toStringAsFixed(1)
         : 'Sin calificar';
+
+    // Mostrar badgeImage si existe, si no el icono
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -1244,20 +1232,33 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        // ⭐ Icono circular verde a la izquierda
+                        // ⭐ Imagen circular del lugar o icono por defecto
                         Container(
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
-                            color:
-                                colorVerdeOliva.withAlpha((0.2 * 255).round()),
+                            color: colorVerdeOliva.withAlpha((0.2 * 255).round()),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.place,
-                            color: colorVerdeOliva,
-                            size: 32,
-                          ),
+                          child: place.badgeImageUrl != null
+                              ? ClipOval(
+                                  child: Image.network(
+                                    place.badgeImageUrl!,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => const Icon(
+                                      Icons.place,
+                                      color: colorVerdeOliva,
+                                      size: 32,
+                                    ),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.place,
+                                  color: colorVerdeOliva,
+                                  size: 32,
+                                ),
                         ),
                         const SizedBox(width: 16),
 
@@ -1269,7 +1270,7 @@ class _MapitaState extends State<Mapita> with TickerProviderStateMixin {
                             children: [
                               // Título del lugar
                               Text(
-                                title,
+                                place.nombre,
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
