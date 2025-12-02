@@ -5,7 +5,7 @@ import 'package:tu_recorrido/services/places/estacion_service.dart';
 import 'package:tu_recorrido/utils/theme/colores.dart';
 import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 
-/// Pantalla para generar y mostrar códigos QR de estaciones
+/// Vista para generar y mostrar códigos QR de estaciones
 /// Permite a los administradores ver y descargar QR de lugares
 class GeneradorQRScreen extends StatefulWidget {
   const GeneradorQRScreen({super.key});
@@ -206,7 +206,7 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  // QR line highlighted in a subtle rounded box to make it stand out
+                  // Código QR dentro de un contenedor destacado
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -274,7 +274,7 @@ class _GeneradorQRScreenState extends State<GeneradorQRScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                // QR code text inside a highlighted pill
+                // Código QR dentro de un contenedor destacado
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

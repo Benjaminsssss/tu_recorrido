@@ -1,18 +1,14 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
-
 import 'package:flutter/material.dart';
-// dart:typed_data not required here
 import 'package:tu_recorrido/models/insignia.dart';
 import 'package:tu_recorrido/models/estacion.dart';
 import 'package:tu_recorrido/services/insignias/insignia_service.dart';
 import 'package:tu_recorrido/services/places/estacion_service.dart';
 import 'package:tu_recorrido/services/places/coleccion_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// removed unused import
 import 'package:tu_recorrido/admin/widgets/insignias_table.dart';
 
-/// Pantalla básica de administración de insignias.
-/// Esta pantalla provee un listado y un formulario simple para crear insignias.
+/// Vista básica de administración de insignias.
+/// Esta Vista provee un listado y un formulario simple para crear insignias.
 class InsigniasAdminScreen extends StatefulWidget {
   const InsigniasAdminScreen({super.key});
 
@@ -22,7 +18,7 @@ class InsigniasAdminScreen extends StatefulWidget {
 
 class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   List<Insignia> _insignias = [];
-  // removed unused loading flag (InsigniasTable handles its own loading)
+  // Se eliminó la variable de carga local, ya que InsigniasTable maneja su propio estado de carga.
   // Mapa para saber por insigniaId qué estación la tiene asignada
   final Map<String, Estacion> _estacionPorInsignia = {};
 
@@ -33,7 +29,6 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
   }
 
   Future<void> _load() async {
-    // loading handled by InsigniasTable; skip local loading flag
     // debug: iniciar carga
     // ignore: avoid_print
     print('InsigniasAdminScreen._load: starting');
@@ -58,7 +53,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         debugPrint(st.toString());
       }
     } on FirebaseException catch (e) {
-      // Handle Firestore permission errors or other Firebase exceptions
+      // Manejar errores de permisos de Firestore u otras excepciones de Firebase
       _insignias = [];
       // debug: log mensaje de FirebaseException
       debugPrint(
@@ -69,7 +64,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
       }
     } catch (e, st) {
       _insignias = [];
-      // debug: log error y stacktrace
+      // debug: log error inesperado
       debugPrint('InsigniasAdminScreen._load: unexpected error -> $e');
       debugPrint(st.toString());
       if (mounted) {
@@ -77,11 +72,12 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
             content: Text('Error inesperado al cargar insignias: $e')));
       }
     } finally {
-      // no local loading state to update
+      // debug: carga finalizada
+      debugPrint('InsigniasAdminScreen._load: finished loading');
     }
   }
 
-  // _crearInsignia removed: InsigniasTable implements create flows
+  // Migrar insignias existentes para que aparezcan en el Álbum de los usuarios
 
   Future<void> _migrarInsigniasExistentes() async {
     final messenger = ScaffoldMessenger.of(context);
@@ -109,7 +105,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
     if (confirmar != true) return;
 
     try {
-      // no local loading state to update
+      // Iniciar migracion
       messenger.showSnackBar(
         const SnackBar(content: Text('Iniciando migración...')),
       );
@@ -134,7 +130,8 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         );
       }
     } finally {
-      // no local loading state to update
+      // debug: migración finalizada
+      debugPrint('InsigniasAdminScreen._migrarInsigniasExistentes: finished');
     }
   }
 
@@ -234,7 +231,7 @@ class _InsigniasAdminScreenState extends State<InsigniasAdminScreen> {
         padding: EdgeInsets.all(16),
         child: InsigniasTable(),
       ),
-      // InsigniasTable includes its own create button
+      // El formulario de creación se maneja dentro de InsigniasTable
     );
   }
 }

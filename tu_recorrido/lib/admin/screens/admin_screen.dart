@@ -9,13 +9,10 @@ import '../widgets/actividad_reciente.dart';
 import 'crear_estacion.dart';
 import 'generador_qr_screen.dart';
 import 'manage_estaciones_screen.dart';
-// services are used by other admin screens; keep imports minimal here
 
 /// Acceso a todas las funcionalidades de admin (protegido por roles)
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
-
-  // QR management helpers removed from AdminScreen; functionality kept in tools/services.
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +26,15 @@ class AdminScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Welcome + summary row (moved above the management buttons)
+              // Fila de bienvenida + resumen de estadisticas
               _buildWelcomeCard(context),
               const SizedBox(height: 20),
 
-              // Top management cards (like the design attachment)
+              // Tarjetas de gestión principales (como en el diseño adjunto)
               _buildTopGestiones(context),
               const SizedBox(height: 20),
 
-              // Two-column area: Acciones Rápidas | Actividad Reciente
+              // Área de dos columnas: Acciones Rápidas | Actividad Reciente
               LayoutBuilder(builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 800;
                 if (isWide) {
@@ -61,11 +58,9 @@ class AdminScreen extends StatelessWidget {
               }),
               const SizedBox(height: 16),
 
-              // Estadísticas (reuse previous section)
+              // Estadísticas 
               _buildSeccionEstadisticas(),
               const SizedBox(height: 16),
-              // Tabla de gestión de estaciones removed from home — use the
-              // "Gestión Estación" card to navigate to the dedicated view.
             ],
           ),
         ),
@@ -73,7 +68,7 @@ class AdminScreen extends StatelessWidget {
     );
   }
 
-  /// Top management cards (Estación, Insignia, Usuarios)
+  /// Tarjetas de gestión principales (Estación, Insignia, Usuarios)
   Widget _buildTopGestiones(BuildContext context) {
     return const ManagementCardsRow();
   }
@@ -82,7 +77,7 @@ class AdminScreen extends StatelessWidget {
     return const WelcomeSummary();
   }
 
-  // _statCard removed; stats widget moved to `WelcomeSummary` in widgets.
+  // Área de acciones rápidas
 
   Widget _buildAccionesRapidas(BuildContext context) {
     return AccionesRapidasWidget(
@@ -99,9 +94,7 @@ class AdminScreen extends StatelessWidget {
     return const ActividadRecienteWidget();
   }
 
-  // _actividadStream removed; activity feed is provided by `ActividadRecienteWidget`.
-
-  // Header and sections refactored into widgets under lib/admin/widgets
+  // seccion de estadisticas generales
 
   Widget _buildSeccionEstadisticas() {
     return Container(
@@ -137,6 +130,4 @@ class AdminScreen extends StatelessWidget {
       ),
     );
   }
-
-  // Decorative helper removed; cards and buttons are provided by widgets.
 }

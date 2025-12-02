@@ -111,7 +111,7 @@ class _CrearEstacionCardScreenState extends State<CrearEstacionCardScreen> {
             await FirestoreService.instance
                 .addPlaceImage(placeId: estacionId, image: imageObj);
           } catch (e) {
-            // ignore errors for single images
+            // Continuar con la siguiente imagen en caso de error
             debugPrint('Error subiendo imagen $idx: $e');
             continue;
           }

@@ -56,7 +56,7 @@ class _UserManagementContentState extends State<_UserManagementContent> {
     }
   }
 
-  // Changing user roles is done via UsuariosTable; keep logic there for single-responsibility.
+  // UI principal de gesion de usuaios y roles
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +134,7 @@ class _UserManagementContentState extends State<_UserManagementContent> {
   }
 
   Widget _buildUsersList() {
-    // Use the reusable UsuariosTable widget for consistency with other management tables
+    // tabla de usuarios
     return const UsuariosTable();
   }
 }

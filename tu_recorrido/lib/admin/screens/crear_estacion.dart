@@ -14,7 +14,7 @@ import 'package:tu_recorrido/widgets/base/pantalla_base.dart';
 import 'package:tu_recorrido/widgets/base/role_protected_widget.dart';
 import '../widgets/formulario_estacion.dart';
 
-/// Pantalla para crear nuevas estaciones patrimoniales
+/// Vista para crear nuevas estaciones patrimoniales
 /// Solo admin puede acceder
 class CrearEstacionScreen extends StatefulWidget {
   const CrearEstacionScreen({super.key});
@@ -29,7 +29,7 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
   final _descripcionController = TextEditingController();
   final _comunaController = TextEditingController();
   // Nota: el card usará la descripción de la colección de estación (_descripcionController)
-  // Nota: usamos la misma descripción de la estación para el card.
+  // usamos la misma descripción de la estación para el card.
 
   bool _cargando = false;
   // Puede ser un Position (cuando usamos Geolocator) o un objeto con latitude/longitude (LatLng)
@@ -467,7 +467,6 @@ class _CrearEstacionScreenState extends State<CrearEstacionScreen> {
                       label: const Text('Seleccionar en mapa'),
                     ),
                   ),
-                  // Se eliminó el botón de "Usar mi ubicación" según solicitud.
                 ],
               ),
               const SizedBox(height: 12),
